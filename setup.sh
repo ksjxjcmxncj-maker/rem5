@@ -7,8 +7,8 @@
 
 # Safe stdin redirect khi chạy qua pipe
 [ -t 0 ] || exec </dev/tty 2>/dev/null || {
-  echo "[ERR] Hãy chạy theo cách này:"
-  echo "  curl -fsSL https://raw.githubusercontent.com/akah3674-glitch/rem5/main/setup.sh -o /tmp/tm.sh && bash /tmp/tm.sh"
+  echo "[ERR] Hãy chạy lệnh đúng:"
+  echo "  curl -L --max-redirs 15 https://raw.githubusercontent.com/akah3674-glitch/rem5/main/setup.sh -o ~/tm.sh && bash ~/tm.sh"
   exit 1
 }
 
