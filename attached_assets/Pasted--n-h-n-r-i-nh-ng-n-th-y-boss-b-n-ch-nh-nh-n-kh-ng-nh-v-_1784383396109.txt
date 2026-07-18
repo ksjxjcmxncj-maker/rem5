@@ -1,0 +1,48 @@
+Ổn hơn rồi nhưng nó thấy boss bản chính đánh nó không đánh, với cả bản chính dùng skill nó không dùng skill với lại icon ở bảng skill không hiện ( thiết kế cho mình đi )
+
+Từ ảnh thấy: icon đã hiện ✅, clone skin đúng ✅. Còn 3 vấn đề mới. Tìm nhanh code liên quan song song:
+
+Thấy 3 gốc rễ:
+
+Clone không đánh boss: idleAttackMob() chỉ scan zone.mobs — boss là Player (isBoss=true), nằm trong zone.bosses, không phải zone.mobs
+Clone không dùng skill: useSkillAlone() (AoE skills) không gọi mirrorClonesAttack
+Icon Phân Thân: icon_id=11190 không có trong atlas client
+Đọc thêm code cần thiết:
+
+Icon skill không đúng bị trùng với skill khác nên phải thiết kế lại cái mớ không được trùng
+
+Cần xem tất cả icon_id đang được dùng trong skill_template để tìm cái chưa trùng:
+
+Thấy vấn đề: icon 11190 (Phân Thân) nằm sát 11191 (Biến Hình) → gần như cùng hình. Các slot chưa dùng: 11192, 11195+. Đổi sang 11192 (unique, cùng atlas với 11191 đang hoạt động):
+
+Đã update DB xong. Tiếp tục fix 2 vấn đề còn lại (clone không đánh boss + không mirror skill) song song với DB:
+
+Zone không có getBosses() getter. Fix tất cả song song — thêm getter vào Zone + fix PhanThanClone + mirror AoE:
+
+Thêm getBosses() vào Zone + fix PhanThanClone + mirror AoE — tất cả song song:
+
+Tiếp tục các edit còn lại song song:
+
+Commit và deploy tất cả lên Codespace:
+
+Zone.java trên Codespace đã có getBosses() rồi — python script thêm trùng. Xóa duplicate và recompile:
+
+Zone.java trên Codespace có getBosses() ở 2 chỗ khác nhau — cần xem thực tế file:
+
+Có 2 getBosses() — line 86 (từ deploy trước) + line 222 (mới thêm). Xóa cái trùng ở line 222:
+
+Compile thành công (EXIT:0), server đã restart (PID 67888). Vào test lại:
+
+Những gì vừa fix:
+
+Fix
+Icon Phân Thân bị trùng	✅ DB: icon_id đổi từ 11190 → 11192 (slot trống, không trùng skill nào)
+Clone không đánh boss	✅ attackNearest() giờ scan cả zone.getBosses() — Boss là Player riêng, không nằm trong zone.mobs
+Clone không mirror skill AoE	✅ useSkillAlone() giờ gọi mirrorClonesAttack(player, null, null) → mỗi clone gọi mirrorSkill() tự tìm mục tiêu gần nhất
+Chưa thấy ncp mới nào, chưa thấy cải trang mới ở trong shop? Bạn chưa up lên server à?
+
+Kiểm tra Phase 16 (cải trang + NPC mới) đã được deploy chưa:
+
+DB đã có 351 cải trang rồi. Vấn đề là NPC shop chưa bán — kiểm tra nhanh:
+
+You've reached your daily free quota limit. It will reset at 12:00 AM UTC.
