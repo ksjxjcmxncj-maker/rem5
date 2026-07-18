@@ -1,30 +1,20 @@
 -- ============================================================
 -- Fix skill icon IDs cho template 27 (Biến Hình) và 28 (Phân Thân)
 -- 
--- Lỗi: 
---   Template 27 dùng icon_id=718 (ảnh SRC-Team, không có trong Teamobi client)
---   Template 28 dùng icon_id sai → client hiển thị avatar nhân vật
+-- Nguồn đúng: nro_srcteam.sql + nro_upgrade_data.sql
+--   Skill 27 nclass 0 (Trái Đất) = 26247
+--   Skill 27 nclass 1 (Namếc)    = 26253
+--   Skill 27 nclass 2 (Saijan)   = 26241
+--   Skill 28 Phân Thân (all)     = 31142
 --
--- Fix: đổi sang icon đã xác nhận hoạt động trong Teamobi2026 client
+-- LƯU Ý: KHÔNG đổi sang 3783/3784 — trùng với item Sách Dịch Chuyển
+--        và Khiên năng lượng, gây lỗi icon lây sang trang phục
 -- ============================================================
 
--- Kiểm tra trước khi sửa
-SELECT id, nclass_id, name, icon_id 
-FROM skill_template 
-WHERE id IN (27, 28)
-ORDER BY id, nclass_id;
+UPDATE skill_template SET icon_id = 26247 WHERE nclass_id = 0 AND id = 27;
+UPDATE skill_template SET icon_id = 26253 WHERE nclass_id = 1 AND id = 27;
+UPDATE skill_template SET icon_id = 26241 WHERE nclass_id = 2 AND id = 27;
+UPDATE skill_template SET icon_id = 31142 WHERE id = 28;
 
--- Biến Hình (template_id = 27):
--- Đổi từ 718 (icon SRC-Team) sang 3783 (icon Dịch Chuyển Tức Thời, confirmed working)
-UPDATE skill_template SET icon_id = 3783 WHERE id = 27;
-
--- Phân Thân (template_id = 28):
--- Đổi sang 3784 (icon Khiên Năng Lượng, confirmed working)
--- Fix đồng thời lỗi "icon quá to" vì icon nhân vật (character sprite) lớn hơn skill icon
-UPDATE skill_template SET icon_id = 3784 WHERE id = 28;
-
--- Verify sau khi sửa
-SELECT id, nclass_id, name, icon_id 
-FROM skill_template 
-WHERE id IN (27, 28)
-ORDER BY id, nclass_id;
+-- Verify
+SELECT nclass_id, id, name, icon_id FROM skill_template WHERE id IN (27,28) ORDER BY id, nclass_id;

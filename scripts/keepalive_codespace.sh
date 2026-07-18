@@ -1783,6 +1783,16 @@ javac -cp "$JAR:lib/*" -d $OUT \
 
 # ── 5. RESTART NẾU CÓ COMPILE THÀNH CÔNG ─────────────────────────
 echo ""
+echo "=== 4b. Fix skill icon 27/28 (BẮT BUỘC — không ghi đè) ==="
+mysql -u root nro1 << 'ICONFIX'
+UPDATE skill_template SET icon_id = 26247 WHERE nclass_id = 0 AND id = 27;
+UPDATE skill_template SET icon_id = 26253 WHERE nclass_id = 1 AND id = 27;
+UPDATE skill_template SET icon_id = 26241 WHERE nclass_id = 2 AND id = 27;
+UPDATE skill_template SET icon_id = 31142 WHERE id = 28;
+ICONFIX
+mysql -u root nro1 -se "SELECT nclass_id,id,name,icon_id FROM skill_template WHERE id IN (27,28);" 2>/dev/null
+
+echo ""
 echo "=== 5. Server restart ==="
 if [ "$COMPILE_OK" -eq 1 ]; then
   pkill -9 -f NgocRongOnline 2>/dev/null; sleep 3
