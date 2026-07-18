@@ -210,6 +210,10 @@ public class Zone {
         return this.bosses.size();
     }
 
+    public List<Player> getBosses() {
+        return new java.util.ArrayList<>(this.bosses);
+    }
+
     public boolean isBossCanJoin(Boss boss) {
         for (Player b : this.bosses) {
             if (b.id == boss.id) {

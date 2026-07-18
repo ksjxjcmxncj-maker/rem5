@@ -631,7 +631,11 @@ public class SkillService {
                 || player.phanThanClones.isEmpty()) return;
         for (nro.models.player.PhanThanClone clone
                 : new java.util.ArrayList<>(player.phanThanClones)) {
-            clone.mirrorAttack(plTarget, mobTarget);
+            if (plTarget != null || mobTarget != null) {
+                clone.mirrorAttack(plTarget, mobTarget); // đánh đúng mục tiêu master
+            } else {
+                clone.mirrorSkill(); // AoE: clone tự tìm mục tiêu gần nhất
+            }
         }
     }
 
@@ -879,6 +883,8 @@ public class SkillService {
             }
             affterUseSkill(player, player.playerSkill.skillSelect.template.id);
         }
+        // Clone tự tìm mục tiêu khi master dùng skill AoE
+        mirrorClonesAttack(player, null, null);
     }
 
     private void phanSatThuong(Player plAtt, Player plTarget, long dame) {
