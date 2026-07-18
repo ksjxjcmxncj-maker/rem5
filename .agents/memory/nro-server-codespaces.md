@@ -54,9 +54,34 @@ Token:  Replit Secret GITHUB_PERSONAL_ACCESS_TOKEN
 ## Game Server Info
 
 ```
-IP/Port game: bore.pub:5798 (tunnel qua frp.freefrp.net:21445)
+IP/Port game: 23.95.31.196:21445  ← ĐÚNG (frp.freefrp.net:21445)
 Admin:        username=admin / pass=12345678 / char=memeiue
 DB:           nro1 (MariaDB local trên Codespace)
+```
+
+⚠️ bore.pub:5798 là NHẦM — không dùng nữa!
+
+## Tunnel (frpc) Config
+
+```toml
+# /tmp/frpc_nro.toml trên Codespace
+serverAddr = "frp.freefrp.net"
+serverPort = 7000
+auth.token = "freefrp.net"
+
+[[proxies]]
+name = "nro-game"
+localPort = 14445  →  remotePort = 21445   ← game client kết nối vào đây
+[[proxies]]
+name = "nro-register"
+localPort = 8090   →  remotePort = 28090
+```
+
+Restart tunnel:
+```bash
+pkill -9 -f frpc; sleep 2
+nohup /tmp/frp_0.61.0_linux_amd64/frpc -c /tmp/frpc_nro.toml >> ~/logs/frp.log 2>&1 &
+tail -5 ~/logs/frp.log   # phải thấy "start proxy success"
 ```
 
 ## Phase keepalive đã hoàn thành: 1→16 ✅
