@@ -94,32 +94,32 @@ public class TOP {
     public static TOPBuilder builder() { return new TOPBuilder(); }
     public static class TOPBuilder {
         private TOP t = new TOP();
-        public Builder name(String v)        { t.name = v; return this; }
-        public Builder gender(byte v)        { t.gender = v; return this; }
-        public Builder head(short v)         { t.head = v; return this; }
-        public Builder body(short v)         { t.body = v; return this; }
-        public Builder leg(short v)          { t.leg = v; return this; }
-        public Builder power(long v)         { t.power = v; return this; }
-        public Builder ki(long v)            { t.ki = v; return this; }
-        public Builder hp(long v)            { t.hp = v; return this; }
-        public Builder sd(long v)            { t.sd = v; return this; }
-        public Builder nv(byte v)            { t.nv = v; return this; }
-        public Builder subnv(byte v)         { t.subnv = v; return this; }
-        public Builder sk(int v)             { t.sk = v; return this; }
-        public Builder pvp(int v)            { t.pvp = v; return this; }
-        public Builder nhs(int v)            { t.nhs = v; return this; }
-        public Builder dicanh(int v)         { t.dicanh = v; return this; }
-        public Builder divdst(int v)         { t.divdst = v; return this; }
-        public Builder juventus(int v)       { t.juventus = v; return this; }
-        public Builder lasttime(long v)      { t.lasttime = v; return this; }
-        public Builder time(long v)          { t.time = v; return this; }
-        public Builder level(int v)          { t.level = v; return this; }
-        public Builder cash(int v)           { t.cash = v; return this; }
-        public Builder thoivang(int v)       { t.thoivang = v; return this; }
-        public Builder id_player(int v)      { t.id_player = v; return this; }
-        public Builder info1(String v)       { t.info1 = v; return this; }
-        public Builder info2(String v)       { t.info2 = v; return this; }
-        public Builder paramCompare(long v)  { t.paramCompare = v; return this; }
+        public TOPBuilder name(String v)        { t.name = v; return this; }
+        public TOPBuilder gender(byte v)        { t.gender = v; return this; }
+        public TOPBuilder head(short v)         { t.head = v; return this; }
+        public TOPBuilder body(short v)         { t.body = v; return this; }
+        public TOPBuilder leg(short v)          { t.leg = v; return this; }
+        public TOPBuilder power(long v)         { t.power = v; return this; }
+        public TOPBuilder ki(long v)            { t.ki = v; return this; }
+        public TOPBuilder hp(long v)            { t.hp = v; return this; }
+        public TOPBuilder sd(long v)            { t.sd = v; return this; }
+        public TOPBuilder nv(byte v)            { t.nv = v; return this; }
+        public TOPBuilder subnv(byte v)         { t.subnv = v; return this; }
+        public TOPBuilder sk(int v)             { t.sk = v; return this; }
+        public TOPBuilder pvp(int v)            { t.pvp = v; return this; }
+        public TOPBuilder nhs(int v)            { t.nhs = v; return this; }
+        public TOPBuilder dicanh(int v)         { t.dicanh = v; return this; }
+        public TOPBuilder divdst(int v)         { t.divdst = v; return this; }
+        public TOPBuilder juventus(int v)       { t.juventus = v; return this; }
+        public TOPBuilder lasttime(long v)      { t.lasttime = v; return this; }
+        public TOPBuilder time(long v)          { t.time = v; return this; }
+        public TOPBuilder level(int v)          { t.level = v; return this; }
+        public TOPBuilder cash(int v)           { t.cash = v; return this; }
+        public TOPBuilder thoivang(int v)       { t.thoivang = v; return this; }
+        public TOPBuilder id_player(int v)      { t.id_player = v; return this; }
+        public TOPBuilder info1(String v)       { t.info1 = v; return this; }
+        public TOPBuilder info2(String v)       { t.info2 = v; return this; }
+        public TOPBuilder paramCompare(long v)  { t.paramCompare = v; return this; }
         public TOP build()                   { return t; }
     }
 }
