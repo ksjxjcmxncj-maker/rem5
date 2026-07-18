@@ -283,22 +283,76 @@ public class EffectSkillService {
         }
     }
 
+    /** Bonus %dame theo cấp Biến Hình 1-5 */
+    private static final int[] BIEN_HINH_DAME = {0, 15, 25, 40, 55, 75};
+    /** Bonus %def theo cấp Biến Hình 1-5 */
+    private static final int[] BIEN_HINH_DEF  = {0, 10, 15, 25, 35, 50};
+
     public void setBienHinh(Player player) {
-        if (player.effectSkill == null) return;
+        if (player.effectSkill == null || player.nPoint == null) return;
+        byte level = (byte) Math.max(1, Math.min(player.playerSkill.skillSelect.point, 5));
         player.effectSkill.isBienHinh = true;
-        player.effectSkill.levelBienHinh = (byte) Math.max(1, Math.min(player.playerSkill.skillSelect.point, 5));
+        player.effectSkill.levelBienHinh = level;
         player.effectSkill.lastTimeBienHinh = System.currentTimeMillis();
-        player.effectSkill.timeBienHinh = 30000 + player.playerSkill.skillSelect.point * 5000;
+        player.effectSkill.timeBienHinh = 30000 + level * 5000; // 35s–55s
+        // Áp dụng bonus stat
+        player.nPoint.bienHinhDameBonus = BIEN_HINH_DAME[level];
+        player.nPoint.bienHinhDefBonus  = BIEN_HINH_DEF[level];
+        player.nPoint.calPoint();
         Service.gI().Send_Caitrang(player);
         Service.gI().Send_Info_NV(player);
+        Service.gI().point(player);
+        Service.gI().sendThongBao(player, "Biến Hình cấp " + level
+            + ": +" + BIEN_HINH_DAME[level] + "% tấn công, +" + BIEN_HINH_DEF[level] + "% phòng thủ!");
     }
 
     public void bienHinhDown(Player player) {
-        if (player.effectSkill == null) return;
+        if (player.effectSkill == null || player.nPoint == null) return;
         player.effectSkill.isBienHinh = false;
         player.effectSkill.levelBienHinh = 0;
+        player.nPoint.bienHinhDameBonus = 0;
+        player.nPoint.bienHinhDefBonus  = 0;
+        player.nPoint.calPoint();
         Service.gI().Send_Caitrang(player);
         Service.gI().Send_Info_NV(player);
+        Service.gI().point(player);
+    }
+
+    /** Tạo N clone phân thân cho player theo cấp skill */
+    public void spawnPhanThanClones(Player player) {
+        if (player == null || player.zone == null || player.effectSkill == null) return;
+        removeAllPhanThanClones(player); // dọn clone cũ nếu có
+
+        int level = Math.max(1, Math.min(player.effectSkill.levelPhanThan, 5));
+        int cloneCount = level * 2; // cấp 1=2, cấp 2=4, cấp 3=6, cấp 4=8, cấp 5=10
+        int[] powerPct  = {0, 20, 35, 50, 70, 90};
+        int power = powerPct[level];
+
+        if (player.phanThanClones == null) return;
+
+        for (int i = 1; i <= cloneCount; i++) {
+            try {
+                nro.models.player.PhanThanClone clone =
+                    new nro.models.player.PhanThanClone(player, power, i);
+                player.phanThanClones.add(clone);
+                nro.models.map.service.ChangeMapService.gI().goToMap(clone, player.zone);
+                player.zone.load_Me_To_Another(clone);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        Service.gI().sendThongBao(player, "Phân Thân cấp " + level
+            + ": tạo " + cloneCount + " phân thân (sức mạnh " + power + "%)!");
+    }
+
+    /** Xóa toàn bộ clone phân thân của player */
+    public void removeAllPhanThanClones(Player player) {
+        if (player == null || player.phanThanClones == null) return;
+        for (nro.models.player.PhanThanClone clone :
+                new java.util.ArrayList<>(player.phanThanClones)) {
+            try { clone.dispose(); } catch (Exception ignored) {}
+        }
+        player.phanThanClones.clear();
     }
 
     public void BinhDown(Player player) {

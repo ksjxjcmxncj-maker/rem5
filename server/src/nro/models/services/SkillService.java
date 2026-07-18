@@ -140,12 +140,16 @@ public class SkillService {
                     AchievementService.gI().checkDoneTask(player, ConstAchievement.TUYET_KY_THANH_THAO);
                 }
                 case Skill.PHAN_THAN -> {
-                    // Hiệu ứng phân thân — gửi visual effect cho toàn map
+                    // Visual effect
                     Service.gI().sendEffAllPlayer(player, 284, 1, -1, -1);
+                    // Set flag + level + timer
                     player.effectSkill.isPhanThan = true;
                     player.effectSkill.levelPhanThan = (byte) player.playerSkill.skillSelect.point;
                     player.effectSkill.lastTimePhanThan = System.currentTimeMillis();
+                    // Thời gian: cấp 1=18s, cấp 2=21s, cấp 3=24s, cấp 4=27s, cấp 5=30s
                     player.effectSkill.timePhanThan = 15000 + player.playerSkill.skillSelect.point * 3000;
+                    // Spawn clone thực sự
+                    EffectSkillService.gI().spawnPhanThanClones(player);
                 }
             }
             affterUseSkill(player, player.playerSkill.skillSelect.template.id);

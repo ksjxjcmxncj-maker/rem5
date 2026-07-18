@@ -199,6 +199,7 @@ public class EffectSkill {
         }
         if (isPhanThan) {
             isPhanThan = false;
+            EffectSkillService.gI().removeAllPhanThanClones(player);
         }
     }
 
@@ -210,7 +211,8 @@ public class EffectSkill {
             EffectSkillService.gI().bienHinhDown(player);
         }
         if (isPhanThan && (Util.canDoWithTime(lastTimePhanThan, timePhanThan))) {
-            player.effectSkill.isPhanThan = false;
+            isPhanThan = false;
+            EffectSkillService.gI().removeAllPhanThanClones(player);
         }
         if (isBinh && (Util.canDoWithTime(lastTimeUpBinh, timeBinh))) {
             EffectSkillService.gI().BinhDown(player);

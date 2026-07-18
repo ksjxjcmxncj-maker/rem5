@@ -183,6 +183,8 @@ public class Player implements Runnable {
     public List<Zone> mapCapsule;
     public Pet pet;
     public NewPet newPet;
+    /** Danh sách clone phân thân hiện đang hoạt động */
+    public java.util.List<PhanThanClone> phanThanClones = new java.util.ArrayList<>();
     public MobMe mobMe;
     public Location location;
     public SetClothes setClothes;
@@ -1690,6 +1692,12 @@ public class Player implements Runnable {
         if (newPet != null) {
             newPet.dispose();
             newPet = null;
+        }
+        if (phanThanClones != null) {
+            for (PhanThanClone c : new java.util.ArrayList<>(phanThanClones)) {
+                try { c.dispose(); } catch (Exception ignored) {}
+            }
+            phanThanClones.clear();
         }
         if (mapBlackBall != null) {
             mapBlackBall.clear();

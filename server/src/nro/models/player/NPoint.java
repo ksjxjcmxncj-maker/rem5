@@ -84,6 +84,14 @@ public class NPoint {
     public int hpAdd, mpAdd, dameAdd, defAdd, critAdd, hpHoiAdd, mpHoiAdd;
 
     /**
+     * Bonus % dame/def từ skill Biến Hình (skill 27).
+     * KHÔNG bị reset trong resetPoint() — persist giữa các lần calPoint().
+     * setBienHinh/bienHinhDown tự set/xóa và gọi calPoint().
+     */
+    public int bienHinhDameBonus = 0;
+    public int bienHinhDefBonus  = 0;
+
+    /**
      * //+#% sức đánh chí mạng
      */
     public List<Integer> tlDameCrit;
@@ -1064,6 +1072,10 @@ public class NPoint {
                 }
             }
         }
+        // Biến Hình (skill 27) dame boost — KHÔNG reset qua resetPoint
+        if (bienHinhDameBonus > 0) {
+            dame += dame * bienHinhDameBonus / 100L;
+        }
         // Xử lý pet pic
         if (this.player.isPet && ((Pet) this.player).typePet == 3 && (((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA || ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2 || ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA3)) {
             dame += (dame * 20 / 100L);
@@ -1216,7 +1228,10 @@ public class NPoint {
     private void setDef() {
         this.def = this.defg * 4;
         this.def += this.defAdd;
-
+        // Biến Hình (skill 27) def boost — KHÔNG reset qua resetPoint
+        if (bienHinhDefBonus > 0) {
+            this.def += this.def * bienHinhDefBonus / 100;
+        }
         if (this.player.itemTime != null && this.player.itemTime.isUseNuocMia3) {
             this.def += this.def * 10 / 100;
         }
