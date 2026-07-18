@@ -81,9 +81,10 @@ public class Player implements Runnable {
 
     public long lastTimeEatPea;
     public Map<Integer, Long> activeEffects = new HashMap<>();
-    @Setter
-    @Getter
     public MySession session;
+
+    public MySession getSession() { return this.session; }
+    public void setSession(MySession session) { this.session = session; }
     public long id;
     public String name;
     public byte gender;
