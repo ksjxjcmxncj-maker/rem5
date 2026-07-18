@@ -1,0 +1,4 @@
+- [NRO Server trên Codespaces](nro-server-codespaces.md) — frp.freefrp.net:21445; 13 phases keepalive xong; Phase 13=Teamobi2026 hoàn tất
+- [Working Preferences](working-preferences.md) — quy tắc làm việc: lưu tiến trình cuối phiên, đánh dấu phần xong, tiết kiệm token, sửa đúng chỗ, sync GitHub
+- [NRO SRC-Team Analysis](nro-srcteam-analysis.md) — 417 Java files + 12744-line SQL; docs tại docs/NRO_UPGRADE*.md, scripts/nro_push_upgrade.sh
+- [NRO Teamobi2026 Upgrade](nro-teamobi2026-upgrade.md) — HOÀN TẤT: 7 DB tables + ALTER player + boss classes compiled; server chạy ổn PID 22212
