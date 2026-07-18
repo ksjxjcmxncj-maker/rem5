@@ -294,7 +294,7 @@ public class EffectSkillService {
         player.effectSkill.isBienHinh = true;
         player.effectSkill.levelBienHinh = level;
         player.effectSkill.lastTimeBienHinh = System.currentTimeMillis();
-        player.effectSkill.timeBienHinh = 30000 + level * 5000; // 35s–55s
+        player.effectSkill.timeBienHinh = 600000; // 10 phút
         // Áp dụng bonus stat
         player.nPoint.bienHinhDameBonus = BIEN_HINH_DAME[level];
         player.nPoint.bienHinhDefBonus  = BIEN_HINH_DEF[level];
@@ -302,8 +302,10 @@ public class EffectSkillService {
         Service.gI().Send_Caitrang(player);
         Service.gI().Send_Info_NV(player);
         Service.gI().point(player);
+        // Hiện timer 10 phút trên màn hình (giống ăn item bổ huyết)
+        ItemTimeService.gI().sendItemTime(player, 433, 600);
         Service.gI().sendThongBao(player, "Biến Hình cấp " + level
-            + ": +" + BIEN_HINH_DAME[level] + "% tấn công, +" + BIEN_HINH_DEF[level] + "% phòng thủ!");
+            + ": +" + BIEN_HINH_DAME[level] + "% tấn công, +" + BIEN_HINH_DEF[level] + "% phòng thủ! (10 phút)");
     }
 
     public void bienHinhDown(Player player) {
@@ -316,6 +318,8 @@ public class EffectSkillService {
         Service.gI().Send_Caitrang(player);
         Service.gI().Send_Info_NV(player);
         Service.gI().point(player);
+        // Xóa timer khỏi màn hình
+        ItemTimeService.gI().sendItemTime(player, 433, 0);
     }
 
     /** Tạo N clone phân thân cho player theo cấp skill */

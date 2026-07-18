@@ -3,46 +3,47 @@ package nro.models.player;
 import nro.models.mob.Mob;
 import nro.models.services.PlayerService;
 import nro.models.utils.Util;
-import java.util.ArrayList;
 
 /**
  * Clone tạo bởi skill Phân Thân (skill 28).
- * Tự động tìm mob gần nhất trong zone và tấn công mỗi 2.5s.
- * Stats = master × powerPercent%.
+ *
+ * Hành vi: GƯƠNG CHIẾU master — khi master đánh mục tiêu nào,
+ * clone đánh đúng mục tiêu đó với dame = master × powerPercent%.
+ *
+ * Không tự chọn mục tiêu độc lập (trừ auto-idle tìm mob khi master đứng yên).
+ * Mirror được kích hoạt từ SkillService.mirrorClonesAttack().
  */
 public class PhanThanClone extends NewPet {
 
-    private static final int ATTACK_RANGE       = 350;
-    private static final int ATTACK_COOLDOWN_MS = 2500;
+    // Cooldown độc lập khi master không attack (fallback)
+    private static final int IDLE_ATTACK_RANGE       = 350;
+    private static final int IDLE_ATTACK_COOLDOWN_MS = 3000;
 
     public final int powerPercent;
-    private long lastTimeAttack = 0;
+    private long lastTimeIdleAttack = 0;
 
     /**
-     * @param master       Người dùng skill
+     * @param master       Người dùng skill Phân Thân
      * @param powerPercent Phần trăm sức mạnh so với master (20-90)
-     * @param index        Thứ tự clone (1-based, dùng cho tên hiển thị)
+     * @param index        Thứ tự clone (1-based)
      */
     public PhanThanClone(Player master, int powerPercent, int index) {
         super(master, master.getHead(), master.getBody(), master.getLeg());
         this.powerPercent = powerPercent;
-        this.name  = master.name + "#" + index;
+        this.name   = master.name + "#" + index;
         this.gender = master.gender;
 
-        // Vị trí ban đầu: lệch nhỏ so với master
         if (master.location != null) {
             this.location.x = master.location.x + Util.nextInt(-80, 80);
             this.location.y = master.location.y;
         }
-
         setupStats();
     }
 
-    /** Copy stats từ master rồi scale theo powerPercent */
+    /** Sao chép chỉ số từ master, scale theo powerPercent */
     private void setupStats() {
         if (master == null || master.nPoint == null) return;
         long pct = powerPercent;
-
         this.nPoint.hpMax = (int) Math.max(1000L, master.nPoint.hpMax * pct / 100L);
         this.nPoint.hp    = this.nPoint.hpMax;
         this.nPoint.mpMax = (int) Math.max(100L,  master.nPoint.mpMax * pct / 100L);
@@ -51,6 +52,31 @@ public class PhanThanClone extends NewPet {
         this.nPoint.def   = (int) Math.max(0L,    master.nPoint.def   * pct / 100L);
         this.nPoint.crit  = master.nPoint.crit;
         this.nPoint.speed = master.nPoint.speed;
+    }
+
+    /**
+     * MIRROR ATTACK — được gọi từ SkillService.mirrorClonesAttack()
+     * mỗi khi master tấn công. Clone đánh đúng cùng mục tiêu.
+     */
+    public void mirrorAttack(Player plTarget, Mob mobTarget) {
+        try {
+            if (isDie() || this.zone == null) return;
+
+            if (plTarget != null && !plTarget.isDie()) {
+                PlayerService.gI().playerMove(this,
+                    plTarget.location.x + Util.nextInt(-45, 45),
+                    plTarget.location.y);
+                long damage = Math.max(1L, (long) this.nPoint.dame);
+                plTarget.injured(this, damage, false, false);
+            }
+            if (mobTarget != null && !mobTarget.isDie()) {
+                PlayerService.gI().playerMove(this,
+                    mobTarget.location.x + Util.nextInt(-30, 30),
+                    mobTarget.location.y);
+                long damage = Math.max(1L, (long) this.nPoint.dame);
+                mobTarget.injured(this, damage, false);
+            }
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -64,53 +90,49 @@ public class PhanThanClone extends NewPet {
                 dispose();
                 return;
             }
-            // Tự join zone master nếu bị lạc
+            // Sync zone với master
             if (this.zone == null || this.zone != master.zone) {
                 joinMapMaster();
                 return;
             }
-            // Master chết → clone tan biến
             if (master.isDie()) {
                 dispose();
                 return;
             }
-            // Tấn công mob gần nhất theo cooldown
-            if (Util.canDoWithTime(lastTimeAttack, ATTACK_COOLDOWN_MS)) {
-                attackNearestMob();
-                lastTimeAttack = System.currentTimeMillis();
+            // Idle fallback: khi master không đánh, tự tìm mob gần nhất
+            if (Util.canDoWithTime(lastTimeIdleAttack, IDLE_ATTACK_COOLDOWN_MS)) {
+                idleAttackMob();
+                lastTimeIdleAttack = System.currentTimeMillis();
             }
         } catch (Exception ignored) {}
     }
 
-    private void attackNearestMob() {
+    /** Tự tấn công mob gần nhất khi master đứng yên (idle behavior) */
+    private void idleAttackMob() {
         if (this.zone == null) return;
+        // Chỉ tự đánh khi master cũng không đang đánh (doesNotAttack)
+        if (master != null && !master.doesNotAttack) return;
 
-        Mob nearestMob = null;
+        Mob nearest = null;
         int minDist = Integer.MAX_VALUE;
-
-        for (Mob mob : new ArrayList<>(this.zone.mobs)) {
+        for (Mob mob : new java.util.ArrayList<>(this.zone.mobs)) {
             if (mob == null || mob.isDie()) continue;
             int dist = Util.getDistance(this, mob);
-            if (dist <= ATTACK_RANGE && dist < minDist) {
+            if (dist <= IDLE_ATTACK_RANGE && dist < minDist) {
                 minDist = dist;
-                nearestMob = mob;
+                nearest = mob;
             }
         }
-
-        if (nearestMob != null) {
-            // Di chuyển sát mục tiêu
+        if (nearest != null) {
             PlayerService.gI().playerMove(this,
-                nearestMob.location.x + Util.nextInt(-25, 25),
-                nearestMob.location.y);
-            // Gây dame dựa trên nPoint.dame của clone
-            long damage = Math.max(1L, (long) this.nPoint.dame);
-            nearestMob.injured(this, damage, false);
+                nearest.location.x + Util.nextInt(-25, 25),
+                nearest.location.y);
+            nearest.injured(this, Math.max(1L, (long) this.nPoint.dame), false);
         }
     }
 
     @Override
     public void dispose() {
-        // Xóa khỏi danh sách clone của master trước khi dispose
         if (master != null && master.phanThanClones != null) {
             master.phanThanClones.remove(this);
         }

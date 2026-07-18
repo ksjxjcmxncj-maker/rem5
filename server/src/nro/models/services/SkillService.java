@@ -590,6 +590,9 @@ public class SkillService {
                 affterUseSkill(player, player.playerSkill.skillSelect.template.id);
                 break;
         }
+        // Phân Thân: clone gương chiếu y hệt master
+        mirrorClonesAttack(player, plTarget, mobTarget);
+
         if (!player.isBoss) {
             if (player.playerSkill != null && player.playerSkill.skillSelect != null && player.playerSkill.skillSelect.template != null) {
                 int skillId = player.playerSkill.skillSelect.template.id;
@@ -613,6 +616,22 @@ public class SkillService {
                 player.lastTimePlayerNotAttack = System.currentTimeMillis();
             } else {
             }
+        }
+    }
+
+    /**
+     * Phân Thân mirror: clone đánh đúng mục tiêu master vừa đánh.
+     * Chỉ chạy khi player THẬT (không phải clone/boss).
+     */
+    private void mirrorClonesAttack(Player player, Player plTarget, Mob mobTarget) {
+        if (player == null
+                || player.isBoss
+                || player instanceof nro.models.player.PhanThanClone
+                || player.phanThanClones == null
+                || player.phanThanClones.isEmpty()) return;
+        for (nro.models.player.PhanThanClone clone
+                : new java.util.ArrayList<>(player.phanThanClones)) {
+            clone.mirrorAttack(plTarget, mobTarget);
         }
     }
 
