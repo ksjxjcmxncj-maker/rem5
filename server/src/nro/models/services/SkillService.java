@@ -147,7 +147,7 @@ public class SkillService {
                     player.effectSkill.levelPhanThan = (byte) player.playerSkill.skillSelect.point;
                     player.effectSkill.lastTimePhanThan = System.currentTimeMillis();
                     // Thời gian: cấp 1=18s, cấp 2=21s, cấp 3=24s, cấp 4=27s, cấp 5=30s
-                    player.effectSkill.timePhanThan = 15000 + player.playerSkill.skillSelect.point * 3000;
+                    player.effectSkill.timePhanThan = 300000; // 5 phút
                     // Spawn clone thực sự
                     EffectSkillService.gI().spawnPhanThanClones(player);
                 }

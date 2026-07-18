@@ -1,5 +1,6 @@
 package nro.models.player;
 
+import nro.models.consts.ConstPlayer;
 import nro.models.mob.Mob;
 import nro.models.services.PlayerService;
 import nro.models.utils.Util;
@@ -10,14 +11,14 @@ import nro.models.utils.Util;
  * Hành vi: GƯƠNG CHIẾU master — khi master đánh mục tiêu nào,
  * clone đánh đúng mục tiêu đó với dame = master × powerPercent%.
  *
- * Không tự chọn mục tiêu độc lập (trừ auto-idle tìm mob khi master đứng yên).
+ * Đồng thời chủ động tìm mob gần nhất để tấn công khi cooldown cho phép.
  * Mirror được kích hoạt từ SkillService.mirrorClonesAttack().
  */
 public class PhanThanClone extends NewPet {
 
-    // Cooldown độc lập khi master không attack (fallback)
-    private static final int IDLE_ATTACK_RANGE       = 350;
-    private static final int IDLE_ATTACK_COOLDOWN_MS = 3000;
+    // Phạm vi và cooldown cho AI chủ động
+    private static final int IDLE_ATTACK_RANGE       = 400;
+    private static final int IDLE_ATTACK_COOLDOWN_MS = 2000; // 2s/đòn
 
     public final int powerPercent;
     private long lastTimeIdleAttack = 0;
@@ -28,7 +29,7 @@ public class PhanThanClone extends NewPet {
      * @param index        Thứ tự clone (1-based)
      */
     public PhanThanClone(Player master, int powerPercent, int index) {
-        super(master, master.getHead(), master.getBody(), master.getLeg());
+        super(master, getCloneHead(master), getCloneBody(master), getCloneLeg(master));
         this.powerPercent = powerPercent;
         this.name   = master.name + "#" + index;
         this.gender = master.gender;
@@ -38,6 +39,23 @@ public class PhanThanClone extends NewPet {
             this.location.y = master.location.y;
         }
         setupStats();
+    }
+
+    // -------------------------------------------------------
+    // Skin riêng cho clone — dùng outfit Biến Hình cấp 2 của
+    // chủng tộc tương ứng, khác hẳn trang bị thường của master.
+    // -------------------------------------------------------
+    private static short getCloneHead(Player master) {
+        int g = Math.min(Math.max(master.gender, 0), 2);
+        return ConstPlayer.OUTFIT_BIEN_HINH[g][1][0]; // cấp 2, [head]
+    }
+    private static short getCloneBody(Player master) {
+        int g = Math.min(Math.max(master.gender, 0), 2);
+        return ConstPlayer.OUTFIT_BIEN_HINH[g][1][1]; // cấp 2, [body]
+    }
+    private static short getCloneLeg(Player master) {
+        int g = Math.min(Math.max(master.gender, 0), 2);
+        return ConstPlayer.OUTFIT_BIEN_HINH[g][1][2]; // cấp 2, [leg]
     }
 
     /** Sao chép chỉ số từ master, scale theo powerPercent */
@@ -99,7 +117,8 @@ public class PhanThanClone extends NewPet {
                 dispose();
                 return;
             }
-            // Idle fallback: khi master không đánh, tự tìm mob gần nhất
+            // AI chủ động: luôn tìm mob gần nhất trong phạm vi để tấn công
+            // (mirrorAttack từ SkillService sẽ override khi master đang đánh)
             if (Util.canDoWithTime(lastTimeIdleAttack, IDLE_ATTACK_COOLDOWN_MS)) {
                 idleAttackMob();
                 lastTimeIdleAttack = System.currentTimeMillis();
@@ -107,11 +126,9 @@ public class PhanThanClone extends NewPet {
         } catch (Exception ignored) {}
     }
 
-    /** Tự tấn công mob gần nhất khi master đứng yên (idle behavior) */
+    /** Tự tấn công mob gần nhất — chủ động đánh kể cả khi master đang đánh */
     private void idleAttackMob() {
         if (this.zone == null) return;
-        // Chỉ tự đánh khi master cũng không đang đánh (doesNotAttack)
-        if (master != null && !master.doesNotAttack) return;
 
         Mob nearest = null;
         int minDist = Integer.MAX_VALUE;

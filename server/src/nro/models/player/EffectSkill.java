@@ -212,7 +212,7 @@ public class EffectSkill {
         }
         if (isPhanThan && (Util.canDoWithTime(lastTimePhanThan, timePhanThan))) {
             isPhanThan = false;
-            EffectSkillService.gI().removeAllPhanThanClones(player);
+            EffectSkillService.gI().removeAllPhanThanClones(player); // cũng xóa timer 31142
         }
         if (isBinh && (Util.canDoWithTime(lastTimeUpBinh, timeBinh))) {
             EffectSkillService.gI().BinhDown(player);
