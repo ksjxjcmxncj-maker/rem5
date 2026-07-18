@@ -2171,7 +2171,37 @@ start_server() {
     sleep 3
     pkill -f playit_old 2>/dev/null; pkill -f frpc 2>/dev/null; pkill -f NgocRongOnline 2>/dev/null; sleep 2
     nohup /tmp/playit_old >> ~/logs/playit_old.log 2>&1 &
-    nohup /tmp/frp_0.61.0_linux_amd64/frpc -c /tmp/frpc_nro.toml >> ~/logs/frp.log 2>&1 &
+    # Tự tải lại frpc nếu /tmp bị xóa sau Codespace restart
+    if [ ! -f "/tmp/frp/frpc" ]; then
+      mkdir -p /tmp/frp
+      curl -sL "https://github.com/fatedier/frp/releases/download/v0.61.0/frp_0.61.0_linux_amd64.tar.gz" \
+        -o /tmp/frp.tar.gz && tar xzf /tmp/frp.tar.gz -C /tmp/frp --strip-components=1
+      chmod +x /tmp/frp/frpc
+    fi
+    # Tạo lại config nếu mất
+    if [ ! -f "/tmp/frpc_nro.toml" ]; then
+      cat > /tmp/frpc_nro.toml << 'CFG'
+serverAddr = "frp.freefrp.net"
+serverPort = 7000
+auth.method = "token"
+auth.token = "freefrp.net"
+
+[[proxies]]
+name = "nro-game"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 14445
+remotePort = 21445
+
+[[proxies]]
+name = "nro-register"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 8090
+remotePort = 28090
+CFG
+    fi
+    nohup /tmp/frp/frpc -c /tmp/frpc_nro.toml >> ~/logs/frp.log 2>&1 &
     sleep 3
     cd ~/nro/SRC
     nohup java -Xms512m -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=30 \
