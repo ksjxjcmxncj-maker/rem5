@@ -1162,6 +1162,12 @@ public class Player implements Runnable {
 
             damage -= ((damage / 100) * tlGiap);
 
+            // Phân Thân (skill 28): giảm sát thương 8% mỗi cấp, tối đa 40% ở cấp 5
+            if (!piercing && effectSkill != null && effectSkill.isPhanThan && effectSkill.levelPhanThan > 0) {
+                int phanThanReduce = Math.min(8 * effectSkill.levelPhanThan, 40);
+                damage -= (damage / 100) * phanThanReduce;
+            }
+
             if (!piercing) {
                 damage = this.nPoint.subDameInjureWithDeff(damage);
             }
