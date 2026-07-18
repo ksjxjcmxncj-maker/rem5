@@ -35,17 +35,42 @@ ls -lh /tmp/*.zip
 
 **Lưu ý:** Mỗi file dùng cookie riêng (`gc_${OUT}.txt`) để tránh xung đột session.
 
+## Giải nén RAR sau khi tải
+
+`unrar` và `7z` cài qua `nix-env` đều **segfault** trong Replit. Phải dùng `nix-shell`:
+
+```bash
+# List nội dung
+nix-shell -p unrar --run "unrar l /tmp/file.rar 2>&1 | head -60"
+
+# Giải nén
+nix-shell -p unrar --run "unrar x -y /tmp/file.rar /tmp/output/ 2>&1 | tail -5"
+
+# Nhiều file song song (mỗi lệnh chạy nền)
+nix-shell -p unrar --run "unrar x -y /tmp/a.rar /tmp/out_a/" &
+nix-shell -p unrar --run "unrar x -y /tmp/b.rar /tmp/out_b/" &
+wait
+```
+
+**Why:** `nix-env -iA nixpkgs.unrar` cài được nhưng binary bị segfault do incompatible glibc. `nix-shell -p unrar` dùng isolated environment chạy đúng.
+
 ## KHÔNG dùng
 
 - `https://drive.google.com/uc?export=download&id=...` → trả HTML virus warning
 - `gdown` → pip install bị chặn trong môi trường Replit
 - `wget` → cũng bị virus warning
+- `nix-env -iA nixpkgs.unrar` rồi gọi thẳng `unrar` → segfault
 
 ## Đã tải thành công (2026-07-18)
 
 | File ID | Tên file | Size |
 |---|---|---|
-| `1X9vHWR-3fbXv8iPutoSaFwgolo57_bE1` | file1.zip (PRJ+HUNR+Teamobi+SRC) | 1.5GB |
-| `1ENWegm_JR1E4kRYGgx1ypgeoIMbkn_aj` | file2.zip | 92MB |
-| `1HlpW2Dg-Tt-UNSLlljC47LB_SrhYYII4` | file3.zip | 332MB |
-| `1XxlILhBTyF-1uRK2NQ7BKAVRYuJ6qhmv` | file4.zip | 428MB |
+| `1X9vHWR-3fbXv8iPutoSaFwgolo57_bE1` | ZIP chứa 4 RAR bên dưới | 1.5GB |
+
+### Nội dung bên trong ZIP (4 RAR):
+| RAR | Nội dung | Size gốc |
+|---|---|---|
+| `SRC-Team.rar` | Java server source + nro.sql + mob data | 428MB |
+| `Teamobi2026.rar` | Teamobi2026 Java server (SRC/20.jar + .class) | 629MB |
+| `PRJ_2Tab_550K.rar` | Unity client (assets x2/x3/x4, nhạc, font) | 332MB |
+| `HUNR_Client.rar` | Unity client HUNR (C#, Visual Studio project) | 92MB |

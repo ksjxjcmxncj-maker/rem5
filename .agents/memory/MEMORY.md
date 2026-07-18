@@ -1,4 +1,5 @@
 - [NRO Server trên Codespaces](nro-server-codespaces.md) — Codespace name, deploy 4 bước, repo github remote, game IP/port
+- [Google Drive Download](gdrive-download.md) — dùng drive.usercontent.google.com + confirm=t; giải nén RAR bằng nix-shell -p unrar (không dùng nix-env)
 - [Working Preferences](working-preferences.md) — lưu cuối phiên, đánh dấu xong, tiết kiệm token, sửa đúng chỗ, push GitHub trước
 - [NRO Skill Code Map](nro-skill-code-map.md) — vị trí chính xác từng dòng/method cho Skill 27 Biến Hình ✅ + Skill 28 Phân Thân ✅
 - [NRO SRC-Team Analysis](nro-srcteam-analysis.md) — 417 Java files + 12744-line SQL; docs tại docs/NRO_UPGRADE*.md, scripts/nro_push_upgrade.sh
