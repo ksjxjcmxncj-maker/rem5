@@ -84,7 +84,18 @@ nohup /tmp/frp_0.61.0_linux_amd64/frpc -c /tmp/frpc_nro.toml >> ~/logs/frp.log 2
 tail -5 ~/logs/frp.log   # phải thấy "start proxy success"
 ```
 
-## Phase keepalive đã hoàn thành: 1→16 ✅
-- Phase 16: cai_trang 351 bộ + items INSERT IGNORE
+## Phase keepalive đã hoàn thành: 1→16 ✅ — ĐỪNG CHỈNH NỮA
+- Phase 16: cai_trang 453 bộ + items INSERT IGNORE
 - Phase 15: fix Map.java spawn offset (mobs bay trên trời)
+- Phase 13: icon skill 27/28 = 26247/26253/26241/31142 (khóa trong keepalive)
 - Xem chi tiết tại: `docs/NRO_UPGRADE_PLAN_TEAMOBI2026.md`
+
+## Keepalive frpc paths — ĐÃ THỐNG NHẤT (2026-07-19)
+- **start_server()**: dùng `/tmp/frp/frpc` ✅ (tự download nếu mất)
+- **upgrade_tunnel()**: đã sửa sang `/tmp/frp/frpc` ✅ (trước đây dùng old path gây lỗi)
+- **⚠️ Không được dùng `/tmp/frp_0.61.0_linux_amd64/frpc`** — path cũ, /tmp bị xóa sau restart
+
+## GitHub push — Lưu ý quan trọng
+- Commit `ab2a28cdb` chứa token lộ trong .replit — NOT ancestor of main (đã rebase)
+- .replit hiện tại đã sạch (xóa [userenv.shared] với token)
+- Nếu push bị block lại: dùng `GH_TOKEN="${GITHUB_PERSONAL_ACCESS_TOKEN}" git push github main`

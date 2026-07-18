@@ -73,12 +73,16 @@ Restart: pkill -9 -f NgocRongOnline; sleep 3; nohup java -Xms256m -Xmx1g -jar Ng
 - `curl` từ GitHub có cache → dùng `cat file | gh codespace ssh -- "cat > remote"` để copy đúng version
 - TOP.java dùng @Data/@Builder: đã có manual getters + TOPBuilder class trong source ✅
 
-## 📌 skill_template — Icon ID đã dùng
+## 📌 skill_template — Icon ID ĐÚNG (xác nhận từ SQL teamobi gốc)
 
 | Template ID | Tên skill | nclass_id | icon_id | Ghi chú |
 |---|---|---|---|---|
-| 27 | Biến Hình | 0,1,2 | 3783 | ✅ confirmed working |
-| 28 | Phân Thân | 0,1,2 | 3784 | ✅ confirmed working |
+| 27 | Biến Hình Trái Đất | 0 | **26247** | ✅ SQL teamobi gốc — đã fix trong DB + Phase 13 |
+| 27 | Biến Hình Namếc | 1 | **26253** | ✅ SQL teamobi gốc |
+| 27 | Biến hình Saijan | 2 | **26241** | ✅ SQL teamobi gốc |
+| 28 | Phân Thân | 0,1,2 | **31142** | ✅ SQL teamobi gốc |
+
+**⚠️ Chú ý:** icon_id 3783/3784 là NHẦM (trùng item khác) — KHÔNG dùng cho skill_template. Đã sửa trong DB và khóa trong keepalive Phase 13.
 
 ---
 
@@ -93,7 +97,7 @@ Restart: pkill -9 -f NgocRongOnline; sleep 3; nohup java -Xms256m -Xmx1g -jar Ng
 | 3779 | Trói | Hold timer | ✅ confirmed |
 | 2755 | Bổ huyết | HP buff timer | ✅ confirmed |
 | 1995 | Cải trang (icon) | ❌ KHÔNG hoạt động trên client | ❌ |
-| 31142 | Phân Thân (icon) | ❌ KHÔNG hoạt động trên client | ❌ |
+| 31142 | Phân Thân (icon) | ❌ KHÔNG hoạt động trên client (sendItemTime) | ❌ |
 | 433 | Cải trang Ginyu | Dùng ở chỗ khác trong EffectSkillService | ✅ |
 
 ---
