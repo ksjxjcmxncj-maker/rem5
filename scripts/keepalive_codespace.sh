@@ -10,10 +10,8 @@ PLAYIT_BIN="/tmp/playit_old"
 DIAG_DONE_FILE="/tmp/nro_diag_done"
 
 CODESPACES=(
-  "cautious-space-halibut-p7rwgqwxrg5gfrrqg|Github|Main"
-  "improved-fishstick-966vx76qqgx7cqjp|GITHUB_PERSONAL_ACCESS_TOKEN|Backup1"
-  "crispy-space-capybara-5v564w74jqgf45x4|GITHUB_PERSONAAL_ACCESS_TOKE2|Backup2"
-  "cuddly-space-orbit-qvvrx7jq5gv6246wg|GITHUB_PERSONAL_ACCESS_TOKEN3|Backup3"
+  "improved-fishstick-966vx76qqgx7cqjp|GITHUB_NRO_TOKEN|Main"
+  "cautious-space-halibut-p7rwgqwxrg5gfrrqg|Github|OldMain"
 )
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"; }
@@ -2283,6 +2281,258 @@ REMOTE
   fi
 }
 
+# Phase 18: Tối ưu mạng cấp độ 2 — Blocking Sender + BufferedOutputStream + ws_bridge v4
+run_phase18() {
+  local CS=$(echo "$1" | cut -d'|' -f1)
+  local TOKEN_VAR=$(echo "$1" | cut -d'|' -f2)
+  local NAME=$(echo "$1" | cut -d'|' -f3)
+
+  [ -f "/tmp/nro_phase18_done" ] && return 0
+  log "[$NAME] ⚡ Phase 18: Blocking Sender + BufferedOutputStream + ws_bridge v4..."
+  auth_as "$TOKEN_VAR"
+
+  $GH_BIN codespace ssh -c "$CS" -- bash -s 2>/dev/null << 'REMOTE'
+set -e
+JAR=~/nro/SRC/NgocRongOnline.jar
+SRC=~/nro/SRC/src
+OUT=/tmp/nro_phase18_out
+mkdir -p $OUT
+
+echo "=== 1. Deploy ws_bridge v4 (immediate drain + SO_KEEPALIVE + 128KB chunk) ==="
+cat > ~/bin/ws_bridge.py << 'PYEOF'
+#!/usr/bin/env python3
+"""NRO WebSocket Bridge v4 — immediate drain + SO_KEEPALIVE + 128KB read"""
+import asyncio, sys, socket, logging
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
+log = logging.getLogger(__name__)
+GAME_HOST = "127.0.0.1"
+GAME_PORT = 14445
+LISTEN_PORT = 8080
+SOCKET_BUF = 524288
+READ_CHUNK = 131072
+try:
+    import websockets
+except ImportError:
+    import subprocess; subprocess.run([sys.executable,"-m","pip","install","websockets","-q"]); import websockets
+try:
+    import uvloop; asyncio.set_event_loop_policy(uvloop.EventLoopPolicy()); log.info("uvloop ON")
+except ImportError:
+    pass
+stats = {"total":0,"active":0,"bytes_up":0,"bytes_down":0}
+async def handle_client(websocket, path=None):
+    stats["total"]+=1; stats["active"]+=1
+    cid=stats["total"]
+    log.info(f"[#{cid}] Kết nối: {websocket.remote_address} (active={stats['active']})")
+    bytes_up=0; bytes_dn=0
+    try:
+        reader,writer = await asyncio.open_connection(GAME_HOST,GAME_PORT)
+        sk=writer.get_extra_info('socket')
+        if sk:
+            sk.setsockopt(socket.IPPROTO_TCP,socket.TCP_NODELAY,1)
+            sk.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,SOCKET_BUF)
+            sk.setsockopt(socket.SOL_SOCKET,socket.SO_SNDBUF,SOCKET_BUF)
+            sk.setsockopt(socket.SOL_SOCKET,socket.SO_KEEPALIVE,1)
+            try:
+                sk.setsockopt(socket.IPPROTO_TCP,socket.TCP_KEEPIDLE,10)
+                sk.setsockopt(socket.IPPROTO_TCP,socket.TCP_KEEPINTVL,5)
+                sk.setsockopt(socket.IPPROTO_TCP,socket.TCP_KEEPCNT,3)
+            except (AttributeError,OSError):
+                pass
+        async def ws2tcp():
+            nonlocal bytes_up
+            try:
+                async for data in websocket:
+                    if isinstance(data,bytes):
+                        writer.write(data); bytes_up+=len(data)
+                        buf=writer.transport.get_write_buffer_size()
+                        if buf<4096: await writer.drain()
+                        elif buf>65536: await writer.drain()
+            except Exception as e: log.debug(f"[#{cid}] ws→tcp: {e}")
+            finally:
+                try: await writer.drain(); writer.close()
+                except: pass
+        async def tcp2ws():
+            nonlocal bytes_dn
+            try:
+                while True:
+                    data=await reader.read(READ_CHUNK)
+                    if not data: break
+                    await websocket.send(data); bytes_dn+=len(data)
+            except Exception as e: log.debug(f"[#{cid}] tcp→ws: {e}")
+            finally:
+                try: await websocket.close()
+                except: pass
+        await asyncio.gather(ws2tcp(),tcp2ws())
+    except ConnectionRefusedError: log.error(f"[#{cid}] Game server chưa chạy!")
+    except Exception as e: log.error(f"[#{cid}] Lỗi: {e}")
+    finally:
+        stats["active"]-=1; stats["bytes_up"]+=bytes_up; stats["bytes_down"]+=bytes_dn
+        log.info(f"[#{cid}] Ngắt | active={stats['active']} | ↑{stats['bytes_up']//1024}KB ↓{stats['bytes_down']//1024}KB")
+async def main():
+    log.info("NRO ws_bridge v4 | ping=None | TCP_NODELAY | SO_KEEPALIVE | drain<4KB | 128KB chunk")
+    # Thử với write_limit/read_limit (websockets>=10), fallback nếu không hỗ trợ
+    try:
+        server = await websockets.serve(handle_client,"0.0.0.0",LISTEN_PORT,
+            ping_interval=None,ping_timeout=None,
+            max_size=10*1024*1024,compression=None,
+            write_limit=2*1024*1024,read_limit=2*1024*1024)
+        log.info("✅ Listening ws://0.0.0.0:{} (write/read_limit=2MB)".format(LISTEN_PORT))
+    except TypeError:
+        server = await websockets.serve(handle_client,"0.0.0.0",LISTEN_PORT,
+            ping_interval=None,ping_timeout=None,
+            max_size=10*1024*1024,compression=None)
+        log.info("✅ Listening ws://0.0.0.0:{} (compat mode)".format(LISTEN_PORT))
+    async with server:
+        await asyncio.Future()
+if __name__=="__main__":
+    asyncio.run(main())
+PYEOF
+chmod +x ~/bin/ws_bridge.py
+echo "ws_bridge v4 deployed ✅"
+
+echo "=== 2. Viết lại Sender.java (blocking poll + burst drain + BufferedOutputStream) ==="
+SENDER_FILE="$SRC/nro/models/network/Sender.java"
+cat > "$SENDER_FILE" << 'JAVAEOF'
+package nro.models.network;
+
+import java.net.Socket;
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+import lombok.NonNull;
+import nro.models.interfaces.IMessageSendCollect;
+import nro.models.interfaces.ISession;
+
+public final class Sender implements Runnable {
+
+    @NonNull
+    private ISession session;
+    @NonNull
+    private BlockingDeque<Message> messages;
+    private DataOutputStream dos;
+    private IMessageSendCollect sendCollect;
+
+    public Sender(@NonNull ISession session, @NonNull Socket socket) {
+        if (session == null) throw new NullPointerException("session is marked non-null but is null");
+        if (socket == null) throw new NullPointerException("socket is marked non-null but is null");
+        try {
+            this.session = session;
+            this.messages = new LinkedBlockingDeque<Message>();
+            this.setSocket(socket);
+        } catch (Exception exception) {}
+    }
+
+    public Sender setSocket(@NonNull Socket socket) {
+        if (socket == null) throw new NullPointerException("socket is marked non-null but is null");
+        try {
+            // BufferedOutputStream 64KB: gom nhiều writeByte/writeShort/write()
+            // thành 1 syscall khi flush() → giảm overhead cho packet nhỏ
+            this.dos = new DataOutputStream(
+                new BufferedOutputStream(socket.getOutputStream(), 65536)
+            );
+        } catch (IOException iOException) {}
+        return this;
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (this.session.isConnected()) {
+                // Blocking wait 100ms — không spin, không sleep() lãng phí CPU
+                Message message = this.messages.poll(100L, TimeUnit.MILLISECONDS);
+                if (message == null) continue;
+
+                // Gửi packet đầu tiên ngay lập tức
+                this.doSendMessage(message);
+                message.cleanup();
+
+                // Burst drain: gửi tất cả packets đang chờ không có delay
+                // (quan trọng khi chuyển map: nhiều packets gửi liên tiếp)
+                Message next;
+                while ((next = this.messages.poll()) != null) {
+                    this.doSendMessage(next);
+                    next.cleanup();
+                }
+            }
+        } catch (Exception exception) {}
+    }
+
+    public synchronized void doSendMessage(Message message) throws Exception {
+        this.sendCollect.doSendMessage(this.session, this.dos, message);
+    }
+
+    public void sendMessage(Message msg) {
+        try {
+            if (this.session.isConnected()) this.messages.add(msg);
+        } catch (Exception exception) {}
+    }
+
+    public void setSend(IMessageSendCollect sendCollect) {
+        this.sendCollect = sendCollect;
+    }
+
+    public int getNumMessages() {
+        return this.messages.size();
+    }
+
+    public void close() {
+        this.messages.clear();
+        if (this.dos != null) {
+            try { this.dos.close(); } catch (IOException iOException) {}
+        }
+    }
+
+    public void dispose() {
+        this.session = null;
+        this.messages = null;
+        this.sendCollect = null;
+        this.dos = null;
+    }
+}
+JAVAEOF
+echo "Sender.java đã viết lại ✅"
+
+echo "=== 3. Compile Sender.java ==="
+cd ~/nro/SRC
+javac -cp "NgocRongOnline.jar:lib/*" -d $OUT \
+  src/nro/models/network/Sender.java 2>&1
+if [ $? -eq 0 ]; then
+  jar uf NgocRongOnline.jar -C $OUT nro/
+  echo "Compile OK → JAR updated ✅"
+else
+  echo "Compile FAILED ❌"
+  exit 1
+fi
+
+echo "=== 4. Restart ws_bridge v4 + game server ==="
+pkill -f ws_bridge 2>/dev/null; sleep 1
+nohup python3 ~/bin/ws_bridge.py >> ~/logs/ws_bridge.log 2>&1 &
+sleep 2
+pgrep -f ws_bridge > /dev/null && echo "ws_bridge v4 running ✅" || echo "ws_bridge FAIL ❌"
+
+pkill -9 -f NgocRongOnline 2>/dev/null; sleep 3
+nohup java -Xms512m -Xmx1g \
+  -XX:+UseG1GC -XX:MaxGCPauseMillis=30 \
+  -XX:G1HeapRegionSize=4m -XX:+ParallelRefProcEnabled \
+  -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC \
+  -Djava.net.preferIPv4Stack=true \
+  -jar NgocRongOnline.jar >> ~/logs/server.log 2>&1 &
+sleep 10
+pgrep -f NgocRongOnline > /dev/null && echo "Game server restarted ✅" || echo "Game server FAIL ❌"
+echo "=== Phase 18 DONE ==="
+REMOTE
+
+  if [ $? -eq 0 ]; then
+    touch "/tmp/nro_phase18_done"
+    log "[$NAME] ✅ Phase 18 xong! ws_bridge v4 + Blocking Sender + BufferedOutputStream."
+  else
+    log "[$NAME] ❌ Phase 18 thất bại — xem log Codespace"
+  fi
+}
+
 # Thử upgrade tunnel sang server châu Á nếu hiện tại là US
 try_upgrade_tunnel() {
   local CS=$(echo "$1" | cut -d'|' -f1)
@@ -2498,6 +2748,8 @@ while true; do
       run_new_content "$(get_active)"
       # Phase 17: Network optimization — TCP_NODELAY + ws_bridge v3 + Sender 1ms
       run_net_opt "$(get_active)"
+      # Phase 18: Blocking Sender + BufferedOutputStream + ws_bridge v4
+      run_phase18 "$(get_active)"
       # Sau loop thứ 3 (~60 phút): thử upgrade tunnel
       [ "$LOOP" -ge 3 ] && try_upgrade_tunnel "$(get_active)"
     else

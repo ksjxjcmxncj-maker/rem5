@@ -1,6 +1,7 @@
 package nro.models.network;
 
 import java.net.Socket;
+import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.concurrent.BlockingDeque;
@@ -39,7 +40,11 @@ public final class Sender implements Runnable {
             throw new NullPointerException("socket is marked non-null but is null");
         }
         try {
-            this.dos = new DataOutputStream(socket.getOutputStream());
+            // BufferedOutputStream 64KB: gộp nhiều writeByte/writeShort/write() thành
+            // 1 syscall duy nhất khi flush() → giảm đáng kể overhead cho packet nhỏ
+            this.dos = new DataOutputStream(
+                new BufferedOutputStream(socket.getOutputStream(), 65536)
+            );
         } catch (IOException iOException) {
         }
         return this;
@@ -49,15 +54,21 @@ public final class Sender implements Runnable {
     public void run() {
         try {
             while (this.session.isConnected()) {
-                while (!this.messages.isEmpty()) {
-                    Message message = this.messages.poll(5L, TimeUnit.SECONDS);
-                    if (message == null) {
-                        continue;
-                    }
-                    this.doSendMessage(message);
-                    message.cleanup();
+                // Blocking wait tối đa 100ms — không spin, không sleep() lãng phí CPU
+                Message message = this.messages.poll(100L, TimeUnit.MILLISECONDS);
+                if (message == null) continue;
+
+                // Gửi packet đầu tiên ngay lập tức
+                this.doSendMessage(message);
+                message.cleanup();
+
+                // Drain burst: nếu có nhiều packets đang chờ (vd chuyển map),
+                // gửi tất cả liên tiếp không có delay giữa — giảm lag spike khi burst
+                Message next;
+                while ((next = this.messages.poll()) != null) {
+                    this.doSendMessage(next);
+                    next.cleanup();
                 }
-                TimeUnit.MILLISECONDS.sleep(1L);  // giảm từ 10ms → 1ms để giảm delay giữa packets
             }
         } catch (Exception exception) {
         }
