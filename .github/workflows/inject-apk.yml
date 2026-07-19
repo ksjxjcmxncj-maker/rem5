@@ -52,16 +52,17 @@ jobs:
           ANDROID_JAR="$ANDROID_HOME/platforms/android-34/android.jar"
           mkdir -p /tmp/bridge_classes/com/nro/bridge
 
-          # Patch URL vào source
+          # Patch URL vào source — tên file phải khớp tên public class
+          mkdir -p /tmp/bridge_src/com/nro/bridge
           sed 's|__WS_URL__|${{ github.event.inputs.ws_url }}|g' \
             android-bridge-inject/src/BridgeService.java \
-            > /tmp/BridgeService_patched.java
+            > /tmp/bridge_src/com/nro/bridge/BridgeService.java
 
           # Compile
           javac -source 8 -target 8 \
             -bootclasspath "$ANDROID_JAR" \
             -d /tmp/bridge_classes \
-            /tmp/BridgeService_patched.java
+            /tmp/bridge_src/com/nro/bridge/BridgeService.java
           echo "✅ Compile OK:"
           ls /tmp/bridge_classes/com/nro/bridge/
 
