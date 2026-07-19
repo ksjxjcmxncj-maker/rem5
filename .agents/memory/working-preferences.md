@@ -58,4 +58,10 @@ Sau mỗi thay đổi, SSH vào check:
 - `tail -10 ~/logs/server.log` — lỗi runtime
 - `mysql -u root nro1 -se "..."` — verify DB
 
+## 9. Khi server gặp sự cố — TỰ SSH VÀO FIX NGAY
+- KHÔNG hỏi user, KHÔNG chờ xác nhận.
+- SSH vào Codespace ngay lập tức, kiểm tra status, fix tại chỗ.
+- Thứ tự check: DB → Bridge → Java → port 8080 public.
+- Báo cáo kết quả sau khi đã fix xong.
+
 **How to apply:** Đọc file này đầu phiên. Cập nhật MEMORY.md trước khi kết thúc.

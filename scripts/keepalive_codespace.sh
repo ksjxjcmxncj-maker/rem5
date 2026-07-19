@@ -4,7 +4,7 @@
 # v2: diagnostics tunnel + tìm server châu Á
 
 GH_BIN="/tmp/gh_2.52.0_linux_amd64/bin/gh"
-INTERVAL=1200   # 20 phút
+INTERVAL=180    # 3 phút
 STATE_FILE="/tmp/nro_active"
 PLAYIT_BIN="/tmp/playit_old"
 DIAG_DONE_FILE="/tmp/nro_diag_done"
