@@ -58,25 +58,28 @@ jobs:
           ANDROID_JAR="$ANDROID_HOME/platforms/android-34/android.jar"
           mkdir -p /tmp/bridge_classes/com/nro/bridge
 
-          # Patch URL vào source — tên file phải khớp tên public class
+          # Copy tất cả source, patch WS_URL trong BridgeService
           mkdir -p /tmp/bridge_src/com/nro/bridge
           sed 's|__WS_URL__|${{ github.event.inputs.ws_url }}|g' \
             android-bridge-inject/src/BridgeService.java \
             > /tmp/bridge_src/com/nro/bridge/BridgeService.java
+          cp android-bridge-inject/src/BridgePreference.java \
+             /tmp/bridge_src/com/nro/bridge/BridgePreference.java
 
           echo "=== WS_URL trong source ==="
           grep "WS_URL\|wss://" /tmp/bridge_src/com/nro/bridge/BridgeService.java | head -3
+          echo "=== SINGLE_SERVER_ENCODED ==="
+          grep "SINGLE_SERVER_ENCODED\s*=" /tmp/bridge_src/com/nro/bridge/BridgePreference.java
 
-          # Compile — dùng -cp thay -bootclasspath để tránh lỗi lambda metafactory
+          # Compile tất cả .java — dùng -cp để tránh lỗi lambda metafactory
           javac -source 8 -target 8 \
             -cp "$ANDROID_JAR" \
             -d /tmp/bridge_classes \
-            /tmp/bridge_src/com/nro/bridge/BridgeService.java 2>&1 || true
-          # Nếu -source 8 lỗi, thử compile không giới hạn version
+            /tmp/bridge_src/com/nro/bridge/*.java 2>&1 || true
           if [ ! -f /tmp/bridge_classes/com/nro/bridge/BridgeService.class ]; then
             javac -cp "$ANDROID_JAR" \
               -d /tmp/bridge_classes \
-              /tmp/bridge_src/com/nro/bridge/BridgeService.java
+              /tmp/bridge_src/com/nro/bridge/*.java
           fi
           echo "✅ Compile OK:"
           ls /tmp/bridge_classes/com/nro/bridge/
