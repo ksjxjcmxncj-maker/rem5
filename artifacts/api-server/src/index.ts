@@ -114,5 +114,5 @@ server.on("upgrade", (req, socket, head) => {
 });
 
 server.listen(port, () => {
-  logger.info({ port, gameWsUrl: GAME_WS_URL }, "Server listening — WS relay active");
+  logger.info({ port, gameWsUrl: getWsUrl() }, "Server listening — WS relay active");
 });
