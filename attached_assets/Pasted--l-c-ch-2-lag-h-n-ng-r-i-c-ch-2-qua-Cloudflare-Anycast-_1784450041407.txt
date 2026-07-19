@@ -1,0 +1,64 @@
+Ý là cách 2 đỡ lag hơn à?
+
+Đúng rồi — cách 2 qua Cloudflare Anycast sẽ ít lag hơn rất nhiều so với frp LA. Dùng token này tạo named tunnel ổn định (URL cố định, không đổi sau mỗi lần restart):
+
+Token không hợp lệ (đã hết hạn hoặc sai). Nhưng không cần token ngay — quick tunnel đang chạy vẫn dùng được và nhanh hơn frp LA nhiều.
+
+Test cách 2 ngay bây giờ:
+
+Cài v2.3.0: https://github.com/akah3674-glitch/rem5/releases/download/v2.3.0/NROGame-bridge.apk
+Mở game → nhập 127.0.0.1 / 15000 → OK
+Route cách 2: Điện thoại VN → Cloudflare Singapore → Codespace Pune (thay vì đi vòng qua Mỹ)
+
+Để tạo token mới (sau khi test xong):
+
+Vào https://dash.cloudflare.com/profile/api-tokens
+Create Token → chọn template "Edit Cloudflare Workers" hoặc custom với quyền: Account > Cloudflare Tunnel > Edit
+Copy token mới gửi lại
+Quan trọng nhất lúc này là test v2.3.0 xem BridgeService có start không.
+
+Đỡ lag hơn . Lưu nhanh vào memory cách này rồi nâng cấp: chuyển map vẫn chậm lag, gây dam lên quái 1 lúc mới nhận sát thương
+
+Lưu memory và kiểm tra ws_bridge.py để tối ưu song song:
+
+Lag còn lại chủ yếu do Codespace ở CentralIndia — Vietnam→India ~100-150ms. Đọc ws_bridge.py để tối ưu và tạo Codespace mới ở SoutheastAsia (Singapore):
+
+ws_bridge.py đã tối ưu (TCP_NODELAY, buffer 256KB, no compression). Lag còn lại do Codespace ở CentralIndia (~100-150ms tới VN).
+
+Hai việc cần làm song song:
+
+APK fetch URL động từ Replit API — không cần build lại APK mỗi khi Codespace restart
+Tạo Codespace SoutheastAsia (Singapore) — giảm RTT từ ~150ms xuống ~30-50ms
+Triển khai toàn bộ cùng lúc — dynamic URL endpoint + BridgeService fetch động + keepalive update + build v2.4.0:
+
+Tiếp tục — update index.ts dùng URL động, update BridgeService fetch từ API, update keepalive Codespace, tất cả song song:
+
+Tiếp tục — update BridgeService fetch URL động + keepalive Codespace + commit + build song song:
+
+API server ở path /api. URL endpoint sẽ là https://[replit-domain]/api/ws-url. Implement tất cả cùng lúc:
+
+Commit + push + trigger build + restart API server + POST URL hiện tại — tất cả song song:
+
+Fix nhanh — GAME_WS_URL còn sót trong logger:
+
+API server chạy rồi. Trigger v2.4.0 build + POST URL hiện tại lên API song song:
+
+✅ v2.4.0 ready!
+
+👉 https://github.com/akah3674-glitch/rem5/releases/download/v2.4.0/NROGame-bridge.apk
+
+Cài xong nhập 127.0.0.1 / 15000 như v2.3.0.
+
+Những gì đã nâng cấp:
+
+Trước	Sau v2.4.0
+URL tunnel	Baked cứng trong APK	Fetch động từ Replit API khi khởi động
+Codespace restart	APK cần build lại	Tự động cập nhật, không cần làm gì
+Lag	frp qua Mỹ	Cloudflare Anycast (SG edge)
+Cơ chế: Khi Codespace restart → cloudflared lấy URL mới → keepalive script POST lên api/ws-url → lần sau BridgeService start sẽ fetch URL mới tự động.
+
+Lag còn lại (chuyển map, delay đánh) là do Codespace ở CentralIndia (~150ms từ VN). Muốn giảm thêm cần tạo Codespace mới ở SoutheastAsia (Singapore) và chuyển Java server sang đó — bảo tôi khi bạn muốn làm việc đó.
+
+Vẫn còn một số lỗi nghiêm trọng khi mà tôi chuyển map game báo lỗi phát hiển thị các ký tự không xác định
+
+You've reached your daily free quota limit. It will reset at 12:00 AM UTC.

@@ -43,6 +43,8 @@ public class Session implements ISession {
         try {
             this.socket.setSendBufferSize(0x100000);
             this.socket.setReceiveBufferSize(0x100000);
+            // TCP_NODELAY: tắt Nagle algorithm → giảm latency packet nhỏ
+            this.socket.setTcpNoDelay(true);
         } catch (SocketException ignored) {
         }
 

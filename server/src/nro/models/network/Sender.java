@@ -57,7 +57,7 @@ public final class Sender implements Runnable {
                     this.doSendMessage(message);
                     message.cleanup();
                 }
-                TimeUnit.MILLISECONDS.sleep(10L);
+                TimeUnit.MILLISECONDS.sleep(1L);  // giảm từ 10ms → 1ms để giảm delay giữa packets
             }
         } catch (Exception exception) {
         }

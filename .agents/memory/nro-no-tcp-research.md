@@ -1,67 +1,39 @@
 ---
-name: NRO Bridge APK — hiện tại v1.8.0
-description: Auto-connect hoàn chỉnh. BridgePreference ghi NRlink2+svselect. Rms dùng filesDir (KHÔNG phải PlayerPrefs).
+name: NRO No-TCP Bridge
+description: APK WSS bridge working solution — arch, ports, tunnel, keepalive, lag notes
 ---
 
-## Kiến trúc (v1.8.0)
+## Kiến trúc hoạt động (v2.3.0) ✅
 
-```
-APK (BridgeProvider.onCreate) → ghi NRlink2+svselect → Unity đọc 1 server → auto-connect
-     ↓ đồng thời
-BridgeService (foreground) → TCP 127.0.0.1:14445 ← Unity game → WS relay → Replit → Codespace → Game Server
-```
+Phone → BridgeService TCP:15000 → WSS Cloudflare Anycast → ws_bridge.py Codespace:8080 → Java server:14445
 
-## Cơ chế Auto-Connect (v1.8.0)
+**Quan trọng:** BridgeService PHẢI dùng port 15000, KHÔNG dùng 14445 — Srcnrofree mod chiếm port 14445 → BridgeService không bind được → silent fail.
 
-`Rms.cs` lưu data vào **files** (KHÔNG phải PlayerPrefs/SharedPrefs):
-- Path: `context.getFilesDir()` = `/data/data/<pkg>/files/`
-- `saveRMSString(key, val)` → DataOutputStream.writeUTF(val) → file `key`
-- `saveRMSInt(key, x)` → 1 byte = x → file `key`
+## Files chính
+- `android-bridge-inject/src/BridgeService.java` — LOCAL_PORT = 15000
+- `android-bridge-inject/src/BridgePreference.java` — XOR encode "LocalHost:127.0.0.1:15000:0,0,0"
+- `android-bridge-inject/BridgeProvider.smali` — startForegroundService, gọi trước Unity Activity
+- `.github/workflows/inject-apk.yml` — CI build, dispatch với ws_url + release_tag
+- `~/bin/ws_bridge.py` trên Codespace — Python WSS bridge port 8080 → localhost:14445
+- `~/bin/keepalive_tunnels.sh` — keepalive tất cả service (frpc + cloudflared + ws_bridge)
 
-`BridgePreference.applyServerPreset(ctx)` ghi TRƯỚC khi Unity đọc:
-- `NRlink2` = DataOutputStream.writeUTF("7A-56-55-58-5A-71-59-4A-42-03-07-0B-01-17-06-17-06-17-07-03-07-0D-02-0D-03-03-06-15-06-15-06")
-  (= XOR-encode("LocalHost:127.0.0.1:14445:0,0,0", "69"))
-- `svselect` = 1 byte = 0
+## Tunnel options
+- **Cloudflare quick tunnel** (primary, ít lag): `cloudflared tunnel --url http://localhost:8080` → `*.trycloudflare.com`; URL thay đổi sau mỗi restart Codespace → cần named tunnel để ổn định
+- **frp backup** (laggy, LA server): token=`freefrp.net`, server=23.95.31.196:7000, remote port 27000; port 21445/25000/26000 bị chiếm
 
-Game ServerListScreen.cs: nếu `nameServer.Length == 1` → auto-select, không hiện UI chọn server.
+## Lag so sánh
+- frp via LA: ~200-300ms thêm ❌
+- Cloudflare Anycast (SG edge): ~50-80ms ✅ — user xác nhận đỡ lag hơn
+- Vẫn còn lag: chuyển map chậm, sát thương delay → do Codespace ở CentralIndia; nên dùng SoutheastAsia (Singapore)
 
-**Why XOR key "69":** ModFunc.DecodeByteArrayString dùng XOR với UTF-8 bytes của "69" = [0x36, 0x39].
+## Codespace hiện tại
+- Name: `cautious-space-halibut-p7rwgqwxrg5gfrrqg`
+- Region: **CentralIndia** (không tối ưu cho VN user — nên migrate sang SoutheastAsia)
 
-## Server list format (GetServerList parse)
+## Cloudflare named tunnel (TODO)
+- Token `cfat_GYQf1C56FQe6JWBEgCBq2n9oGQVifjtGYVveRVA173cba810` — INVALID (hết hạn)
+- Cần token mới tại dash.cloudflare.com → API Tokens → Cloudflare Tunnel: Edit
 
-`"Name:IP:Port:lang,Name2:IP2:Port2:lang2,...,defaultLang,priority"`  
-→ Split ",", last 2 items = defaultLang + priority  
-→ Còn lại = server entries
-
-Single server: `"LocalHost:127.0.0.1:14445:0,0,0"` → 1 server + lang=0 + priority=0
-
-## Key files
-
-- `android-bridge-inject/src/BridgePreference.java` — ghi NRlink2+svselect
-- `android-bridge-inject/src/BridgeService.java` — TCP→WS relay, port 14445
-- `android-bridge-inject/BridgeProvider.smali` — gọi BridgePreference + start BridgeService
-- `android-bridge-inject/patch_server.py` — patch text config + safe binary IL2CPP/Mono (v1.7.0+)
-- `.github/workflows/inject-apk.yml` — full build pipeline
-
-## WS URL (Replit relay → Codespace)
-
-`wss://e79372d3-fe48-4f9f-baa2-8dd65d05bf38-00-2shrgxg66t9cc.sisko.replit.dev/api/ws`
-
-Thay `GAME_WS_URL` trên Replit nếu Codespace URL đổi → không cần rebuild APK.
-
-## Lỗi v1.4.0 (đã fix v1.5.0+)
-
-patch_server.py mở binary Unity bằng text mode → corrupt data.unity3d + global-metadata.dat → crash loop → lag.
-Fix: chỉ patch text extensions, dùng rb/wb cho binary.
-
-## Lịch sử releases
-
-- v1.0-v1.3: bridge inject, Custom Server thủ công
-- v1.4.0: BROKEN — corrupt Unity binary
-- v1.5.0: fix binary corruption
-- v1.6.0-v1.7.0: thử patch IL2CPP/Mono (không tìm thấy string)
-- v1.8.0: auto-connect hoàn chỉnh qua filesDir injection ✅
-
-## Test
-
-Cài v1.8.0 → mở game → KHÔNG cần nhập IP → tự kết nối 127.0.0.1:14445 → relay qua Replit → Codespace → game server.
+## APK build
+- Trigger: `gh api POST /repos/akah3674-glitch/rem5/actions/workflows/inject-apk.yml/dispatches -f ref=main -f inputs[ws_url]=wss://... -f inputs[release_tag]=vX.X.X`
+- Latest: v2.3.0

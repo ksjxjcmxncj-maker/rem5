@@ -2141,6 +2141,148 @@ REMOTE
   log "[$NAME] ✅ Phase 16 xong! Cải trang + vật phẩm mới đã nhập."
 }
 
+# Phase 17: Network optimization — TCP_NODELAY + ping fix + ws_bridge tối ưu
+run_net_opt() {
+  local CS=$(echo "$1" | cut -d'|' -f1)
+  local TOKEN_VAR=$(echo "$1" | cut -d'|' -f2)
+  local NAME=$(echo "$1" | cut -d'|' -f3)
+
+  [ -f "/tmp/nro_net_opt_done" ] && return 0
+  log "[$NAME] ⚡ Phase 17: Network optimization — TCP_NODELAY + ws_bridge v3..."
+  auth_as "$TOKEN_VAR"
+
+  $GH_BIN codespace ssh -c "$CS" -- bash -s 2>/dev/null << 'REMOTE'
+set -e
+JAR=~/nro/SRC/NgocRongOnline.jar
+SRC=~/nro/SRC/src
+OUT=/tmp/nro_netopt_out
+mkdir -p $OUT
+
+echo "=== 1. Cập nhật ws_bridge.py (ping_interval=None + TCP_NODELAY + uvloop) ==="
+cat > ~/bin/ws_bridge.py << 'PYEOF'
+#!/usr/bin/env python3
+"""NRO WebSocket Bridge v3 — TCP_NODELAY, ping disabled, uvloop"""
+import asyncio, sys, socket, logging
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
+log = logging.getLogger(__name__)
+GAME_HOST = "127.0.0.1"
+GAME_PORT = 14445
+LISTEN_PORT = 8080
+SOCKET_BUF = 524288
+try:
+    import websockets
+except ImportError:
+    import subprocess; subprocess.run([sys.executable,"-m","pip","install","websockets","-q"]); import websockets
+try:
+    import uvloop; asyncio.set_event_loop_policy(uvloop.EventLoopPolicy()); log.info("uvloop ON")
+except ImportError:
+    pass
+stats = {"total":0,"active":0}
+async def handle_client(websocket, path=None):
+    stats["total"]+=1; stats["active"]+=1
+    cid=stats["total"]
+    log.info(f"[#{cid}] Kết nối: {websocket.remote_address} (active={stats['active']})")
+    try:
+        reader,writer = await asyncio.open_connection(GAME_HOST,GAME_PORT)
+        sk=writer.get_extra_info('socket')
+        if sk:
+            sk.setsockopt(socket.IPPROTO_TCP,socket.TCP_NODELAY,1)
+            sk.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,SOCKET_BUF)
+            sk.setsockopt(socket.SOL_SOCKET,socket.SO_SNDBUF,SOCKET_BUF)
+        async def ws2tcp():
+            try:
+                async for data in websocket:
+                    if isinstance(data,bytes):
+                        writer.write(data)
+                        if writer.transport.get_write_buffer_size()>65536:
+                            await writer.drain()
+            except Exception as e: log.debug(f"[#{cid}] ws→tcp: {e}")
+            finally:
+                try: await writer.drain(); writer.close()
+                except: pass
+        async def tcp2ws():
+            try:
+                while True:
+                    data=await reader.read(65536)
+                    if not data: break
+                    await websocket.send(data)
+            except Exception as e: log.debug(f"[#{cid}] tcp→ws: {e}")
+            finally:
+                try: await websocket.close()
+                except: pass
+        await asyncio.gather(ws2tcp(),tcp2ws())
+    except ConnectionRefusedError: log.error(f"[#{cid}] Game server {GAME_HOST}:{GAME_PORT} chưa chạy!")
+    except Exception as e: log.error(f"[#{cid}] Lỗi: {e}")
+    finally: stats["active"]-=1; log.info(f"[#{cid}] Ngắt | active={stats['active']}")
+async def main():
+    log.info("NRO ws_bridge v3 | ping_interval=None | TCP_NODELAY=1 | buf=512KB")
+    async with websockets.serve(handle_client,"0.0.0.0",LISTEN_PORT,
+        ping_interval=None,ping_timeout=None,
+        max_size=10*1024*1024,compression=None):
+        log.info(f"✅ Listening ws://0.0.0.0:{LISTEN_PORT}")
+        await asyncio.Future()
+if __name__=="__main__":
+    asyncio.run(main())
+PYEOF
+chmod +x ~/bin/ws_bridge.py
+echo "ws_bridge.py updated ✅"
+
+echo "=== 2. Patch Session.java — TCP_NODELAY ==="
+SESSION_FILE="$SRC/nro/models/network/Session.java"
+if grep -q "setTcpNoDelay" "$SESSION_FILE"; then
+  echo "TCP_NODELAY đã có trong Session.java ✅"
+else
+  # Thêm TCP_NODELAY sau setReceiveBufferSize
+  sed -i 's/this\.socket\.setReceiveBufferSize(0x100000);/this.socket.setReceiveBufferSize(0x100000);\n            this.socket.setTcpNoDelay(true);/' "$SESSION_FILE"
+  echo "TCP_NODELAY đã patch Session.java ✅"
+fi
+
+echo "=== 3. Patch Sender.java — sleep 10ms → 1ms ==="
+SENDER_FILE="$SRC/nro/models/network/Sender.java"
+if grep -q "sleep(10L)" "$SENDER_FILE"; then
+  sed -i 's/TimeUnit\.MILLISECONDS\.sleep(10L)/TimeUnit.MILLISECONDS.sleep(1L)/' "$SENDER_FILE"
+  echo "Sender.java patched: sleep 10ms → 1ms ✅"
+else
+  echo "Sender.java sleep đã là 1ms hoặc khác ✅"
+fi
+
+echo "=== 4. Compile Session.java + Sender.java ==="
+cd ~/nro/SRC
+javac -cp "NgocRongOnline.jar:lib/*" -d $OUT \
+  src/nro/models/network/Session.java \
+  src/nro/models/network/Sender.java 2>&1
+if [ $? -eq 0 ]; then
+  jar uf NgocRongOnline.jar -C $OUT nro/
+  echo "Compile OK → JAR updated ✅"
+else
+  echo "Compile FAILED — giữ nguyên JAR"
+  exit 1
+fi
+
+echo "=== 5. Restart ws_bridge + game server ==="
+pkill -f ws_bridge 2>/dev/null; sleep 1
+nohup python3 ~/bin/ws_bridge.py >> ~/logs/ws_bridge.log 2>&1 &
+sleep 2
+pgrep -f ws_bridge > /dev/null && echo "ws_bridge v3 đang chạy ✅" || echo "ws_bridge FAIL ❌"
+
+pkill -9 -f NgocRongOnline 2>/dev/null; sleep 3
+nohup java -Xms512m -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=30 \
+  -XX:G1HeapRegionSize=4m -XX:+ParallelRefProcEnabled \
+  -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC \
+  -jar NgocRongOnline.jar >> ~/logs/server.log 2>&1 &
+sleep 10
+pgrep -f NgocRongOnline > /dev/null && echo "Game server restarted ✅" || echo "Game server FAIL ❌"
+echo "=== Phase 17 DONE ==="
+REMOTE
+
+  if [ $? -eq 0 ]; then
+    touch "/tmp/nro_net_opt_done"
+    log "[$NAME] ✅ Phase 17 xong! TCP_NODELAY + ws_bridge v3 + Sender 1ms."
+  else
+    log "[$NAME] ❌ Phase 17 thất bại — xem log Codespace"
+  fi
+}
+
 # Thử upgrade tunnel sang server châu Á nếu hiện tại là US
 try_upgrade_tunnel() {
   local CS=$(echo "$1" | cut -d'|' -f1)
@@ -2354,6 +2496,8 @@ while true; do
       run_fix_map_spawn "$(get_active)"
       # Phase 16: Cải trang + vật phẩm mới từ Teamobi2026
       run_new_content "$(get_active)"
+      # Phase 17: Network optimization — TCP_NODELAY + ws_bridge v3 + Sender 1ms
+      run_net_opt "$(get_active)"
       # Sau loop thứ 3 (~60 phút): thử upgrade tunnel
       [ "$LOOP" -ge 3 ] && try_upgrade_tunnel "$(get_active)"
     else
