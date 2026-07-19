@@ -1,0 +1,489 @@
+name: Decompile & Phân loại APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_result:
+        description: 'Commit kết quả vào repo? (true/false)'
+        required: false
+        default: 'true'
+
+jobs:
+  decompile:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout (LFS cho client.apk)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          token: ${{ github.token }}
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Cài apktool
+        run: |
+          wget -q https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar \
+               -O /usr/local/bin/apktool.jar
+          printf '#!/bin/bash\nexec java -jar /usr/local/bin/apktool.jar "$@"\n' \
+               > /usr/local/bin/apktool
+          chmod +x /usr/local/bin/apktool
+          apktool --version
+
+      # ─────────────────────────────────────────────────────────
+      # 1. DECOMPILE
+      # ─────────────────────────────────────────────────────────
+      - name: Decompile client.apk
+        run: |
+          apktool d client.apk -o /tmp/apk_full -f
+          echo "✅ Smali files: $(find /tmp/apk_full/smali -name '*.smali' 2>/dev/null | wc -l)"
+          echo "✅ Assets: $(find /tmp/apk_full/assets -type f 2>/dev/null | wc -l) files"
+          ls /tmp/apk_full/
+
+      # ─────────────────────────────────────────────────────────
+      # 2. TẠO CẤU TRÚC apk-src/
+      # ─────────────────────────────────────────────────────────
+      - name: Tạo cấu trúc thư mục apk-src/
+        run: |
+          mkdir -p apk-src/{manifest,smali-bridge,smali-game-index,assets-key,res,lib-info,patch-scripts}
+
+      # ─────────────────────────────────────────────────────────
+      # 3. MANIFEST
+      # ─────────────────────────────────────────────────────────
+      - name: Lưu AndroidManifest.xml
+        run: |
+          cp /tmp/apk_full/AndroidManifest.xml apk-src/manifest/
+          echo "Package: $(grep -o 'package="[^"]*"' apk-src/manifest/AndroidManifest.xml | head -1)"
+          echo "Version: $(grep -o 'versionName="[^"]*"' apk-src/manifest/AndroidManifest.xml | head -1)"
+
+          # Trích xuất thông tin quan trọng
+          python3 - << 'PYEOF'
+          import re
+          with open("apk-src/manifest/AndroidManifest.xml") as f:
+              content = f.read()
+
+          pkg = re.search(r'package="([^"]+)"', content)
+          ver = re.search(r'versionName="([^"]+)"', content)
+          perms = re.findall(r'uses-permission[^/]*/>', content)
+          activities = re.findall(r'<activity[^>]+android:name="([^"]+)"', content)
+          services = re.findall(r'<service[^>]+android:name="([^"]+)"', content)
+          providers = re.findall(r'<provider[^>]+android:name="([^"]+)"', content)
+
+          info = f"""# AndroidManifest — Thông tin nhanh
+
+          ## Package
+          - **Package**: `{pkg.group(1) if pkg else 'N/A'}`
+          - **Version**: `{ver.group(1) if ver else 'N/A'}`
+
+          ## Permissions ({len(perms)})
+          {chr(10).join(f'- `{p.strip()}`' for p in perms)}
+
+          ## Activities ({len(activities)})
+          {chr(10).join(f'- `{a}`' for a in activities)}
+
+          ## Services ({len(services)})
+          {chr(10).join(f'- `{s}`' for s in services)}
+
+          ## Providers ({len(providers)})
+          {chr(10).join(f'- `{p}`' for p in providers)}
+          """
+          with open("apk-src/manifest/MANIFEST_INFO.md", "w") as f:
+              f.write(info)
+          print("✅ Manifest info saved")
+          PYEOF
+
+      # ─────────────────────────────────────────────────────────
+      # 4. SMALI BRIDGE (code của chúng ta)
+      # ─────────────────────────────────────────────────────────
+      - name: Lưu smali bridge (com/nro/bridge)
+        run: |
+          if [ -d /tmp/apk_full/smali/com/nro/bridge ]; then
+            cp -r /tmp/apk_full/smali/com/nro/bridge/ apk-src/smali-bridge/
+            echo "✅ Bridge smali: $(ls apk-src/smali-bridge/ | wc -l) files"
+            ls apk-src/smali-bridge/
+          else
+            echo "⚠️ Bridge smali chưa có (APK gốc chưa inject)"
+          fi
+          # Luôn copy source bridge hiện tại từ android-bridge-inject/
+          cp -r android-bridge-inject/src/ apk-src/smali-bridge/java-src/
+          cp android-bridge-inject/BridgeProvider.smali apk-src/smali-bridge/
+          cp android-bridge-inject/patch_manifest.py apk-src/smali-bridge/
+          cp android-bridge-inject/patch_server.py apk-src/smali-bridge/
+
+      # ─────────────────────────────────────────────────────────
+      # 5. SMALI GAME INDEX (không lưu toàn bộ — quá lớn)
+      # ─────────────────────────────────────────────────────────
+      - name: Tạo index smali game
+        run: |
+          python3 - << 'PYEOF'
+          import os, re
+
+          smali_base = "/tmp/apk_full/smali"
+          out_file = "apk-src/smali-game-index/INDEX.md"
+          key_classes = {}
+
+          # Các pattern quan trọng cần tìm
+          patterns = {
+              "server_ip":     re.compile(r'127\.0\.0\.1|14\.225\.203|NRlink|ipString|GetServerList|ServerListScreen', re.I),
+              "player_prefs":  re.compile(r'PlayerPrefs|SharedPreferences|getFilesDir|saveRMS', re.I),
+              "websocket":     re.compile(r'WebSocket|wss://|ws://', re.I),
+              "socket_tcp":    re.compile(r'java/net/Socket|ServerSocket|14445|connect.*socket', re.I),
+              "unity_main":    re.compile(r'UnityPlayer|UnityMain|com\.unity3d', re.I),
+              "login":         re.compile(r'Login|logout|authenticate|username|password', re.I),
+              "game_cmd":      re.compile(r'sendMessage|receiveMessage|GameCmd|Cmd_message', re.I),
+          }
+
+          # Đọc tất cả smali và phân loại
+          stats = {k: [] for k in patterns}
+          total = 0
+          packages = {}
+
+          for root, dirs, files in os.walk(smali_base):
+              for fname in files:
+                  if not fname.endswith('.smali'):
+                      continue
+                  total += 1
+                  fpath = os.path.join(root, fname)
+                  rel = os.path.relpath(fpath, smali_base)
+                  pkg = '/'.join(rel.split('/')[:3])
+                  packages[pkg] = packages.get(pkg, 0) + 1
+
+                  try:
+                      with open(fpath, 'r', errors='ignore') as f:
+                          content = f.read()
+                  except:
+                      continue
+
+                  for key, pat in patterns.items():
+                      if pat.search(content):
+                          stats[key].append(rel)
+
+          # Ghi index
+          lines = [f"# Smali Game Index\n\nTổng: **{total} files**\n"]
+          lines.append("## Packages chính\n")
+          top_pkgs = sorted(packages.items(), key=lambda x: -x[1])[:30]
+          for pkg, count in top_pkgs:
+              lines.append(f"- `{pkg}/` — {count} files")
+
+          lines.append("\n## Phân loại theo chức năng\n")
+          for key, files in stats.items():
+              if files:
+                  lines.append(f"\n### {key} ({len(files)} files)")
+                  for f in files[:20]:
+                      lines.append(f"  - `{f}`")
+                  if len(files) > 20:
+                      lines.append(f"  - ... và {len(files)-20} files khác")
+
+          with open(out_file, 'w') as f:
+              f.write('\n'.join(lines))
+
+          print(f"✅ Index: {total} smali, {len(packages)} packages")
+          for k, v in stats.items():
+              print(f"  {k}: {len(v)} files")
+          PYEOF
+
+      # ─────────────────────────────────────────────────────────
+      # 6. ASSETS KEY — DLL + metadata info
+      # ─────────────────────────────────────────────────────────
+      - name: Phân tích assets quan trọng
+        run: |
+          python3 - << 'PYEOF'
+          import os, struct
+
+          assets_base = "/tmp/apk_full/assets"
+          out_dir = "apk-src/assets-key"
+
+          # Tìm và phân loại files quan trọng
+          important = {
+              "dll": [],
+              "metadata": [],
+              "config": [],
+              "data": [],
+              "audio": [],
+              "other_large": []
+          }
+
+          all_files = []
+          for root, dirs, files in os.walk(assets_base):
+              for fname in files:
+                  fpath = os.path.join(root, fname)
+                  rel = os.path.relpath(fpath, assets_base)
+                  size = os.path.getsize(fpath)
+                  ext = os.path.splitext(fname)[1].lower()
+                  all_files.append((rel, size, ext, fpath))
+
+          all_files.sort(key=lambda x: -x[1])
+
+          for rel, size, ext, fpath in all_files:
+              info = (rel, size)
+              if ext == '.dll':
+                  important["dll"].append(info)
+              elif 'metadata' in rel.lower() or fname == 'global-metadata.dat':
+                  important["metadata"].append(info)
+              elif ext in ('.json', '.xml', '.txt', '.cfg', '.ini', '.yaml', '.properties'):
+                  important["config"].append(info)
+              elif ext in ('.unity3d', '.assets', '.resource', '.resS'):
+                  important["data"].append(info)
+              elif ext in ('.mp3', '.ogg', '.wav', '.bank'):
+                  important["audio"].append(info)
+              elif size > 100_000:
+                  important["other_large"].append(info)
+
+          # Strings quan trọng từ config files
+          server_strings = []
+          for rel, size, ext, fpath in all_files:
+              if ext in ('.json', '.xml', '.txt', '.cfg', '.ini', '.properties') and size < 200_000:
+                  try:
+                      with open(fpath, 'r', errors='ignore') as f:
+                          content = f.read()
+                      if any(k in content for k in ['14.225', '127.0.0', 'server', 'ip', 'port', 'host']):
+                          server_strings.append(f"### `{rel}` ({size} bytes)\n```\n{content[:500]}\n```")
+                  except:
+                      pass
+
+          # Viết index
+          lines = ["# Assets — Phân loại\n"]
+          lines.append(f"Tổng: **{len(all_files)} files**  |  Size: **{sum(x[1] for x in all_files)//1024//1024} MB**\n")
+
+          for cat, items in important.items():
+              if items:
+                  lines.append(f"\n## {cat.upper()} ({len(items)} files)")
+                  for rel, size in items[:50]:
+                      lines.append(f"- `{rel}` — {size//1024}KB")
+
+          if server_strings:
+              lines.append(f"\n## Config files có server/IP strings ({len(server_strings)})")
+              lines.extend(server_strings[:10])
+
+          with open(f"{out_dir}/ASSETS_INDEX.md", 'w') as f:
+              f.write('\n'.join(lines))
+
+          # Lưu riêng top 20 file lớn nhất
+          with open(f"{out_dir}/TOP_FILES.md", 'w') as f:
+              f.write("# Top files lớn nhất\n\n| File | Size |\n|------|------|\n")
+              for rel, size, ext, _ in all_files[:20]:
+                  f.write(f"| `{rel}` | {size//1024}KB |\n")
+
+          print(f"✅ Assets index: {len(all_files)} files")
+          PYEOF
+
+      # ─────────────────────────────────────────────────────────
+      # 7. RES (resources — strings, layouts, drawables list)
+      # ─────────────────────────────────────────────────────────
+      - name: Lưu resources
+        run: |
+          if [ -d /tmp/apk_full/res ]; then
+            # Chỉ lưu values/ (strings, colors, styles) — nhỏ gọn
+            mkdir -p apk-src/res/
+            cp -r /tmp/apk_full/res/values/ apk-src/res/values/ 2>/dev/null || true
+            # Index các loại drawable/layout
+            find /tmp/apk_full/res -type d | sed "s|/tmp/apk_full/res/||" | sort > apk-src/res/RES_DIRS.txt
+            echo "✅ Res values: $(find apk-src/res/values/ -type f 2>/dev/null | wc -l) files"
+          fi
+
+      # ─────────────────────────────────────────────────────────
+      # 8. LIB INFO (native libraries — chỉ lưu metadata)
+      # ─────────────────────────────────────────────────────────
+      - name: Phân tích native libs
+        run: |
+          python3 - << 'PYEOF'
+          import os, subprocess
+
+          lib_base = "/tmp/apk_full/lib"
+          out = "apk-src/lib-info/LIBS.md"
+
+          lines = ["# Native Libraries\n"]
+          if not os.path.exists(lib_base):
+              lines.append("Không có native lib.")
+          else:
+              for arch in sorted(os.listdir(lib_base)):
+                  arch_dir = os.path.join(lib_base, arch)
+                  if not os.path.isdir(arch_dir):
+                      continue
+                  lines.append(f"\n## {arch}")
+                  libs = sorted(os.listdir(arch_dir))
+                  for lib in libs:
+                      size = os.path.getsize(os.path.join(arch_dir, lib))
+                      lines.append(f"- `{lib}` — {size//1024}KB")
+
+          with open(out, 'w') as f:
+              f.write('\n'.join(lines))
+          print("✅ Lib info saved")
+          PYEOF
+
+      # ─────────────────────────────────────────────────────────
+      # 9. PATCH SCRIPTS — công cụ rebuild
+      # ─────────────────────────────────────────────────────────
+      - name: Lưu patch scripts
+        run: |
+          cp android-bridge-inject/patch_server.py apk-src/patch-scripts/
+          cp android-bridge-inject/patch_manifest.py apk-src/patch-scripts/
+
+          cat > apk-src/patch-scripts/REBUILD_GUIDE.md << 'MD'
+          # Hướng dẫn Rebuild APK
+
+          ## Cấu trúc apk-src/
+          ```
+          apk-src/
+          ├── manifest/           # AndroidManifest.xml + info
+          ├── smali-bridge/       # Bridge code (com/nro/bridge)
+          │   ├── java-src/       # Java source gốc
+          │   ├── BridgeProvider.smali
+          │   ├── patch_server.py
+          │   └── patch_manifest.py
+          ├── smali-game-index/   # INDEX.md — phân loại smali game
+          ├── assets-key/         # ASSETS_INDEX.md, TOP_FILES.md
+          ├── res/                # values/ (strings, styles)
+          ├── lib-info/           # LIBS.md — danh sách native lib
+          └── patch-scripts/      # Scripts patch + rebuild
+          ```
+
+          ## Rebuild nhanh (GitHub Actions)
+
+          ```
+          gh workflow run inject-apk.yml \
+            --field ws_url="wss://YOUR-ENDPOINT" \
+            --field release_tag="vX.Y.Z"
+          ```
+
+          ## Patch thủ công
+
+          ```bash
+          # 1. Decompile
+          apktool d client.apk -o /tmp/game_src -f
+
+          # 2. Inject bridge smali
+          mkdir -p /tmp/game_src/smali/com/nro/bridge
+          cp apk-src/smali-bridge/BridgeProvider.smali /tmp/game_src/smali/com/nro/bridge/
+
+          # 3. Patch WS URL vào BridgeService.java
+          sed 's|__WS_URL__|wss://YOUR-URL|g' apk-src/smali-bridge/java-src/BridgeService.java > /tmp/BridgeService_patched.java
+
+          # 4. Patch server IP
+          python3 apk-src/patch-scripts/patch_server.py /tmp/game_src/smali /tmp/game_src/assets
+
+          # 5. Patch manifest
+          python3 apk-src/patch-scripts/patch_manifest.py /tmp/game_src/AndroidManifest.xml
+
+          # 6. Rebuild + sign
+          apktool b /tmp/game_src -o /tmp/rebuilt.apk
+          ```
+
+          ## Danh sách thay đổi đã apply
+          - v1.0-1.3: Bridge inject, Custom Server thủ công
+          - v1.4.0: BROKEN — corrupt Unity binary
+          - v1.5.0: fix binary corruption
+          - v1.6-1.7: thử patch IL2CPP/Mono
+          - v1.8.0: auto-connect qua filesDir injection
+          - v1.9.0: WS connect thẳng Codespace (bỏ Replit relay)
+          MD
+
+      # ─────────────────────────────────────────────────────────
+      # 10. README TỔNG QUAN
+      # ─────────────────────────────────────────────────────────
+      - name: Tạo README tổng quan
+        run: |
+          APK_SIZE=$(du -sh client.apk | cut -f1)
+          APK_MD5=$(md5sum client.apk | cut -d' ' -f1)
+          SMALI_COUNT=$(find /tmp/apk_full/smali -name '*.smali' 2>/dev/null | wc -l)
+          ASSET_COUNT=$(find /tmp/apk_full/assets -type f 2>/dev/null | wc -l)
+          PKG=$(grep -o 'package="[^"]*"' /tmp/apk_full/AndroidManifest.xml | head -1 | sed 's/package="//;s/"//')
+          VER=$(grep -o 'versionName="[^"]*"' /tmp/apk_full/AndroidManifest.xml | head -1 | sed 's/versionName="//;s/"//')
+
+          cat > apk-src/README.md << EOF
+          # APK Source — Phân loại chi tiết
+
+          | Thông tin | Giá trị |
+          |-----------|---------|
+          | **Package** | \`$PKG\` |
+          | **Version** | \`$VER\` |
+          | **APK size** | $APK_SIZE |
+          | **MD5** | \`$APK_MD5\` |
+          | **Smali files** | $SMALI_COUNT |
+          | **Asset files** | $ASSET_COUNT |
+          | **Decompile date** | $(date -u '+%Y-%m-%d %H:%M UTC') |
+
+          ## Cấu trúc thư mục
+
+          | Thư mục | Nội dung |
+          |---------|----------|
+          | \`manifest/\` | AndroidManifest.xml, permissions, components |
+          | \`smali-bridge/\` | Bridge code (Java source + smali đã inject) |
+          | \`smali-game-index/\` | Index phân loại smali game theo chức năng |
+          | \`assets-key/\` | Index assets: DLL, metadata, config, audio |
+          | \`res/\` | Resources: strings, styles, colors |
+          | \`lib-info/\` | Danh sách native libraries (SO files) |
+          | \`patch-scripts/\` | Scripts patch server, manifest + rebuild guide |
+
+          ## Khi cần nâng cấp
+
+          1. Xem **\`smali-game-index/INDEX.md\`** → tìm class cần sửa
+          2. Xem **\`assets-key/ASSETS_INDEX.md\`** → tìm asset cần patch
+          3. Sửa trong **\`smali-bridge/java-src/\`** nếu cần đổi bridge logic
+          4. Chạy workflow **\`inject-apk.yml\`** để build APK mới
+          5. Xem **\`patch-scripts/REBUILD_GUIDE.md\`** cho rebuild thủ công
+
+          ## Bridge Architecture
+
+          \`\`\`
+          Android APK
+            └── BridgeProvider (ContentProvider — chạy trước Unity)
+                ├── BridgePreference.applyServerPreset()
+                │     └── Ghi NRlink2 + svselect → filesDir
+                │           → Game tự connect 127.0.0.1:14445
+                └── BridgeService (Foreground Service)
+                      └── TCP 14445 ←→ WebSocket → Codespace → Game Server
+          \`\`\`
+          EOF
+
+      # ─────────────────────────────────────────────────────────
+      # 11. COMMIT (nếu được yêu cầu)
+      # ─────────────────────────────────────────────────────────
+      - name: Commit apk-src/ vào repo
+        if: ${{ github.event.inputs.commit_result == 'true' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apk-src/
+          git diff --cached --stat
+          git commit -m "apk-src: decompile + phân loại $(date -u '+%Y-%m-%d')" || echo "Nothing to commit"
+          git push origin main
+          echo "✅ Đã push apk-src/ lên repo"
+
+      - name: Upload toàn bộ smali (artifact — không commit)
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-smali-full
+          path: /tmp/apk_full/smali/
+          retention-days: 7
+
+      - name: Upload assets (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-assets-full
+          path: /tmp/apk_full/assets/
+          retention-days: 7
+
+      - name: Tóm tắt
+        run: |
+          echo "╔══════════════════════════════════════════╗"
+          echo "║         APK DECOMPILE XONG ✅            ║"
+          echo "╠══════════════════════════════════════════╣"
+          echo "║  apk-src/manifest/    → AndroidManifest ║"
+          echo "║  apk-src/smali-bridge/→ Bridge code     ║"
+          echo "║  apk-src/smali-game-index/ → INDEX.md  ║"
+          echo "║  apk-src/assets-key/  → DLL/metadata   ║"
+          echo "║  apk-src/res/         → Resources      ║"
+          echo "║  apk-src/lib-info/    → Native libs    ║"
+          echo "║  apk-src/patch-scripts/ → Rebuild guide║"
+          echo "╠══════════════════════════════════════════╣"
+          echo "║  Artifacts 7 ngày:                      ║"
+          echo "║  - apk-smali-full (toàn bộ smali)      ║"
+          echo "║  - apk-assets-full (toàn bộ assets)    ║"
+          echo "╚══════════════════════════════════════════╝"
