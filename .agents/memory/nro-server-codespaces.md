@@ -90,10 +90,39 @@ tail -5 ~/logs/frp.log   # phải thấy "start proxy success"
 - Phase 13: icon skill 27/28 = 26247/26253/26241/31142 (khóa trong keepalive)
 - Xem chi tiết tại: `docs/NRO_UPGRADE_PLAN_TEAMOBI2026.md`
 
-## Keepalive frpc paths — ĐÃ THỐNG NHẤT (2026-07-19)
-- **start_server()**: dùng `/tmp/frp/frpc` ✅ (tự download nếu mất)
-- **upgrade_tunnel()**: đã sửa sang `/tmp/frp/frpc` ✅ (trước đây dùng old path gây lỗi)
-- **⚠️ Không được dùng `/tmp/frp_0.61.0_linux_amd64/frpc`** — path cũ, /tmp bị xóa sau restart
+## Tunnel Setup — ĐÃ THỐNG NHẤT (2026-07-19)
+### playit.gg (MAIN — game port)
+- Binary: `/tmp/playit_old` = v0.15.0 (chạy không args, đọc `~/.config/playit_gg/playit.toml`)
+- Secret: lưu trong `~/.config/playit_gg/playit.toml` key `secret_key`
+- Tunnel: `147.185.221.211:52286` → `127.0.0.1:14445` (RTT ~72ms vs frp 245ms)
+- Domain: `image-wick.gl.joinmc.link` (tunnel ID: 8d23638b-f6ac-43c5-b6e2-984c0a446c3d)
+- **⚠️ Chỉ dùng v0.15.0** — v0.15.26/v1.0.10 bị lỗi IPC socket trên Codespace
+- Keepalive tự download nếu mất: `https://github.com/playit-cloud/playit-agent/releases/download/v0.15.0/playit-linux-amd64`
+
+### frpc (BACKUP — register port)
+- Binary: `/tmp/frp/frpc` v0.61.0 (tự download nếu /tmp mất)
+- **⚠️ Không dùng `/tmp/frp_0.61.0_linux_amd64/frpc`** — path cũ
+- **⚠️ frpc v0.61.0 KHÔNG hỗ trợ `transport.useCompression`** — bỏ field đó
+- Game port 21445 giữ trong config nhưng playit là tunnel chính
+- Register port 28090: vẫn dùng frpc
+
+### LINK_IP_PORT trong DataGame.java
+- Hiện tại: `"NRO Private:147.185.221.211:52286:0"` (playit.gg)
+- Codespace location: Pune, India (Azure) — Codespace network = 11MB/s ✅
+
+## Icon cache — DataGame.java (2026-07-19)
+- Đã thêm `ICON_CACHE = new ConcurrentHashMap<>()` vào DataGame.java
+- `sendIcon()` kiểm tra cache trước khi đọc disk → giảm disk I/O lag
+- icon_id trong skill_template = file path: `data/icon/x{zoom}/{id}.png` (trên server)
+- icon 26247/26253/26241/31142 KHÔNG tồn tại trong SRC Team icon folder (max ID ~19008)
+- Cần dùng icon ID thực tế tồn tại trong `~/nro/SRC/data/icon/x2/`
+
+## Câu hỏi network — Ghi nhớ
+- Codespace: NAT Azure → không nhận inbound TCP trực tiếp → phải dùng tunnel
+- GitHub Codespace port forwarding: HTTPS only, không phải raw TCP
+- Replit: HTTP/HTTPS only, không expose raw TCP port
+- GCP e2-micro US Free: xa VN hơn → lag hơn (không nên dùng làm relay)
+- **Oracle Cloud Singapore Free Tier**: tốt nhất nếu cần VPS relay riêng (4 OCPU Ampere A1, 24GB RAM)
 
 ## GitHub push — Lưu ý quan trọng
 - Commit `ab2a28cdb` chứa token lộ trong .replit — NOT ancestor of main (đã rebase)
