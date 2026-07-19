@@ -1,0 +1,68 @@
+Bỏ Termux đi nghiên cứu chạy mỗi trên cloud thôi. Nghiên cứu bỏ tcp đi dùng cái khác được không
+
+Đây là câu hỏi kiến trúc quan trọng. Để trả lời đúng, cần phân tích rõ ràng:
+
+Phân tích thẳng vào vấn đề:
+
+Đây là sự thật thẳng thắn về kiến trúc:
+
+Vấn đề cốt lõi:
+
+APK client ──[raw TCP]──► relay ──► Codespace game server
+APK chỉ biết nói TCP. Không sửa APK thì không bỏ được TCP ở phía client.
+
+3 hướng thực tế:
+
+Hướng	Mô tả	Kết quả
+A — Sửa APK	Decompile APK → đổi TCP socket → WebSocket	Client kết nối thẳng vào GitHub CDN, không cần relay, ping tốt nhất
+B — Oracle Cloud Free Singapore	VPS Singapore (free mãi mãi) làm relay	Ping VN→SG ~15ms thay vì VN→LA ~180ms, không cần sửa APK
+C — Giữ nguyên	Tiếp tục frp/playit	Lag như hiện tại
+Hướng A (sửa APK) khả thi không?
+
+Bạn có file APK gốc (client game) không?
+Nếu có → decompile bằng jadx, tìm dòng new Socket(host, port), đổi thành WebSocket, recompile, sign APK
+Server side đã có WebSocket bridge sẵn rồi
+Kết quả: bỏ hoàn toàn relay, chạy thuần cloud
+Bạn muốn đi theo hướng nào?
+Chọn hướng giải quyết
+A — Sửa APK client (bỏ TCP hoàn toàn, không relay, cần có file APK)
+Bạn có file APK gốc của game client không?
+Yes
+DE
+debby52
+debby52
+Coi như là cải cách , phá cách tự sáng tạo không theo lối mòn cũ nữa
+
+Hiểu rồi — phá hoàn toàn lối cũ. Đây là kiến trúc mới chưa ai nghĩ tới cho NRO:
+
+Ý tưởng cốt lõi: Dùng Xray-core (VLESS/VMess over WebSocket) — protocol được thiết kế để đi xuyên qua bất kỳ CDN/HTTPS nào miễn phí. Cloudflare có PoP tại Hà Nội + TPHCM, ping VN→Cloudflare chỉ 5-10ms.
+
+Game APK → [v2rayNG app] → Cloudflare VN PoP → GitHub Codespace → game server
+              (Android)      (5-10ms)             (WebSocket HTTPS)
+Không frp, không playit, không Termux — chỉ cần cài v2rayNG (app Android bình thường trên Play Store) thay Termux.
+
+Triển khai server side trước:
+
+Ý tưởng là chạy cloud Codespace hoặc dùng cloud replit dùng mạng của chính các nền tảng cloud này để chạy cho server cải cách luôn cả file apk nếu cần để có thể chạy được bạn hiểu ý không
+
+Hiểu rồi — ý tưởng hoàn toàn đúng hướng. Sửa cả 2 đầu:
+
+APK (WebSocket) ──► GitHub CDN / Replit CDN ──► Game Server (WebSocket)
+                    Dùng mạng của nền tảng          Không relay ngoài
+Không cần relay bên thứ 3 nào cả. Mạng của GitHub/Replit có PoP toàn cầu, tự lo routing.
+
+Để làm được cần APK gốc để decompile. Có 2 cách lấy:
+
+Cần file APK gốc của game client để sửa. Bạn lấy từ đâu?
+File APK client hiện tại ở đâu?
+Tôi upload lên Replit bây giờ
+Additional comments
+https://drive.google.com/file/d/1haV3a9ZCalmGn_WT9Y58JHRt-A9LPniH/view?usp=drivesdk
+Dùng cloud nào làm server chính?
+GitHub Codespace (đang chạy)
+DE
+debby52
+debby52
+Tải APK từ Drive + chuẩn bị tool decompile song song:
+
+APK 84MB OK. Cài jadx + decompile + tìm socket code song song

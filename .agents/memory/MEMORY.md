@@ -5,3 +5,4 @@
 - [NRO SRC-Team Analysis](nro-srcteam-analysis.md) — 417 Java files + 12744-line SQL; docs tại docs/NRO_UPGRADE*.md, scripts/nro_push_upgrade.sh
 - [NRO Teamobi2026 Upgrade](nro-teamobi2026-upgrade.md) — Phase 16 mới nhất: cai_trang 351 bộ + items INSERT IGNORE; Phase 15: fix Map.java spawn offset
 - [NRO Teamobi DB Deep Dive](nro-teamobi-db-deepdive.md) — flag_bag/intrinsic/npc_template đầy đủ; ItemMap+options pattern; 3 Drive files chưa phân tích được
+- [NRO No-TCP Research](nro-no-tcp-research.md) — APK Unity IL2CPP; Bridge APK source tại android-bridge/; Xray setup script; 3 hướng triển khai
