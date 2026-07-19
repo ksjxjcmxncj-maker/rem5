@@ -7,10 +7,16 @@ on:
         description: 'WebSocket URL (wss://...app.github.dev hoặc wss://...replit.dev/ws)'
         required: true
         default: 'wss://CODESPACE-8080.app.github.dev'
+      release_tag:
+        description: 'Release tag (vd: v1.2.0). Để trống = chỉ upload artifact, không tạo release.'
+        required: false
+        default: ''
 
 jobs:
   inject:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout (bao gồm Git LFS cho client.apk)
         uses: actions/checkout@v4
@@ -58,6 +64,9 @@ jobs:
             android-bridge-inject/src/BridgeService.java \
             > /tmp/bridge_src/com/nro/bridge/BridgeService.java
 
+          echo "=== WS_URL trong source ==="
+          grep "WS_URL\|wss://" /tmp/bridge_src/com/nro/bridge/BridgeService.java | head -3
+
           # Compile — dùng -cp thay -bootclasspath để tránh lỗi lambda metafactory
           javac -source 8 -target 8 \
             -cp "$ANDROID_JAR" \
@@ -95,7 +104,8 @@ jobs:
         run: |
           python3 android-bridge-inject/patch_manifest.py \
             /tmp/game_src/AndroidManifest.xml
-          grep -A2 "nro.bridge" /tmp/game_src/AndroidManifest.xml
+          echo "=== Permissions thêm vào ==="
+          grep -E "FOREGROUND|nro.bridge" /tmp/game_src/AndroidManifest.xml || true
 
       # ── Rebuild APK (apktool build smali → classes.dex) ───
       - name: Rebuild APK
@@ -144,10 +154,47 @@ jobs:
           echo "║  WS: ${{ github.event.inputs.ws_url }} ║"
           echo "╚════════════════════════════════════════╝"
 
-      # ── Upload ────────────────────────────────────────────
+      # ── Upload artifact ────────────────────────────────────
       - name: Upload NROGame-bridge.apk
         uses: actions/upload-artifact@v4
         with:
           name: NROGame-with-bridge
           path: /tmp/NROGame-bridge.apk
           retention-days: 30
+
+      # ── Tạo GitHub Release (nếu có release_tag) ───────────
+      - name: Tạo GitHub Release
+        if: ${{ github.event.inputs.release_tag != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.event.inputs.release_tag }}"
+          WS="${{ github.event.inputs.ws_url }}"
+          BODY="## NROGame Bridge ${TAG}
+
+          ### Cách cài:
+          1. Tải APK về → cài lên Android (bật **Cho phép nguồn không xác định**)
+          2. Mở game → Chọn máy chủ → **Tùy chỉnh**
+          3. Nhập **IP: 127.0.0.1** | **Port: 14445**
+          4. Chơi bình thường — bridge tự chạy ngầm
+
+          ### Server URL đã nhúng:
+          \`${WS}\`
+
+          ### Fix trong bản này:
+          - Thêm permission FOREGROUND_SERVICE_DATA_SYNC (fix crash Android 14)
+          - Bridge service ổn định hơn
+          "
+
+          # Xoá release cũ nếu đã tồn tại cùng tag
+          gh release delete "${TAG}" --yes 2>/dev/null || true
+          git push origin --delete "refs/tags/${TAG}" 2>/dev/null || true
+
+          gh release create "${TAG}" \
+            /tmp/NROGame-bridge.apk#NROGame-bridge.apk \
+            --title "NROGame Bridge ${TAG}" \
+            --notes "${BODY}"
+
+          echo ""
+          echo "🎉 Release: https://github.com/${{ github.repository }}/releases/tag/${TAG}"
+          echo "📥 Direct: https://github.com/${{ github.repository }}/releases/download/${TAG}/NROGame-bridge.apk"
