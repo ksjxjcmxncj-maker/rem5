@@ -23,7 +23,7 @@ import javax.net.ssl.SSLSocketFactory;
 public class BridgeService extends Service {
 
     static final String TAG = "NROBridge";
-    static final int LOCAL_PORT = 14445;
+    static final int LOCAL_PORT = 15000;
     static final String CHANNEL_ID = "nro_bridge";
     static final int NOTIF_ID = 9001;
 

@@ -26,9 +26,9 @@ public class BridgePreference {
 
     private static final String TAG = "NROBridge";
 
-    /** XOR-encoded "LocalHost:127.0.0.1:14445:0,0,0" với key "69" */
+    /** XOR-encoded "LocalHost:127.0.0.1:15000:0,0,0" với key "69" */
     private static final String SINGLE_SERVER_ENCODED =
-        "7A-56-55-58-5A-71-59-4A-42-03-07-0B-01-17-06-17-06-17-07-03-07-0D-02-0D-03-03-06-15-06-15-06";
+        "7A-56-55-58-5A-71-59-4A-42-03-07-0B-01-17-06-17-06-17-07-03-07-0C-06-09-06-03-06-15-06-15-06";
 
     /**
      * Ghi file preference NGAY LẬP TỨC — luôn overwrite để đảm bảo auto-connect.
