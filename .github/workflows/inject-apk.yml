@@ -94,11 +94,14 @@ jobs:
       # ── Patch server IP/port → 127.0.0.1:14445 + auto-connect ──
       - name: Patch server IP (text configs + binary metadata)
         run: |
-          echo "=== Kiểm tra binary files TRƯỚC khi patch ==="
-          ls -lh /tmp/game_src/assets/bin/Data/data.unity3d \
-                 /tmp/game_src/assets/bin/Data/Managed/Metadata/global-metadata.dat 2>/dev/null || true
+          echo "=== Kiểm tra cấu trúc Managed/ ==="
+          ls -lh /tmp/game_src/assets/bin/Data/Managed/ 2>/dev/null || echo "(thư mục không tồn tại)"
+          ls -lh /tmp/game_src/assets/bin/Data/Managed/Metadata/ 2>/dev/null || true
+          echo "--- Assembly-CSharp.dll ---"
+          ls -lh /tmp/game_src/assets/bin/Data/Managed/Assembly-CSharp.dll 2>/dev/null || echo "KHÔNG tìm thấy Assembly-CSharp.dll"
+          ls -lh /tmp/game_src/assets/bin/Data/data.unity3d 2>/dev/null || true
 
-          # Ghi lại MD5 trước khi patch để so sánh sau
+          # MD5 trước khi patch
           md5sum /tmp/game_src/assets/bin/Data/data.unity3d 2>/dev/null || true
           META_MD5_BEFORE=$(md5sum /tmp/game_src/assets/bin/Data/Managed/Metadata/global-metadata.dat 2>/dev/null | cut -d' ' -f1 || echo "notfound")
 
@@ -209,12 +212,11 @@ jobs:
           3. Mở game → chọn **Custom / Tùy chỉnh** → nhập **IP: 127.0.0.1 | Port: 14445**
           4. Chơi bình thường — bridge tự chạy ngầm
 
-          ### Thay đổi v1.5.0 (hotfix):
-          - ✅ **Fix lag máy**: v1.4.0 vô tình corrupt \`data.unity3d\` và \`global-metadata.dat\`
-            → Unity crash loop → máy nóng/lag. Đã sửa hoàn toàn.
-          - ✅ Binary Unity files không bị đụng đến
-          - ✅ BridgeService hoạt động bình thường (relay TCP → WebSocket)
-          - ✅ Kiểm tra tự động trong CI: data.unity3d phải giữ nguyên MD5
+          ### Thay đổi ${TAG}:
+          - ✅ **Auto-connect**: game tự chọn server, không cần nhập IP tay
+          - ✅ Hỗ trợ cả Mono (Assembly-CSharp.dll) và IL2CPP (global-metadata.dat)
+          - ✅ Fix lag máy từ v1.4.0 (không bao giờ corrupt Unity binary)
+          - ✅ BridgeService relay TCP → WebSocket như bình thường
 
           ### Server URL đã nhúng:
           \`${WS}\`
