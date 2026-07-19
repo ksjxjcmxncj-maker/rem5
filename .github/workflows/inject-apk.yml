@@ -75,8 +75,9 @@ jobs:
       # ── .class → classes2.dex (dùng d8) ──────────────────
       - name: Tạo classes2.dex từ BridgeService
         run: |
+          mkdir -p /tmp/bridge_dex
           d8 /tmp/bridge_classes/com/nro/bridge/*.class \
-             --output /tmp/bridge_dex/ \
+             --output /tmp/bridge_dex \
              --min-api 26
           mv /tmp/bridge_dex/classes.dex /tmp/classes2.dex
           echo "✅ classes2.dex: $(du -sh /tmp/classes2.dex | cut -f1)"
