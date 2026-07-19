@@ -15,8 +15,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_NRO_TOKEN }}
         run: |
-          CODESPACE="improved-fishstick-966vx76qqgx7cqjp"
-          WS_URL="https://improved-fishstick-966vx76qqgx7cqjp-8080.app.github.dev"
+          CODESPACE="cautious-space-halibut-p7rwgqwxrg5gfrrqg"
+          WS_URL="https://cautious-space-halibut-p7rwgqwxrg5gfrrqg-8080.app.github.dev"
           API_URL="https://e27e662b-4009-4268-89a1-11f93bb3b91a-00-epntj4xg8rby.sisko.replit.dev/api/ws-url"
 
           echo "=== $(date '+%Y-%m-%d %H:%M:%S UTC') ==="
