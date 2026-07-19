@@ -1,0 +1,390 @@
+name: Inject Bridge APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      ws_url:
+        description: 'WebSocket URL fallback (wss://...app.github.dev)'
+        required: true
+        default: 'wss://abu-organisms-agriculture-henry.trycloudflare.com'
+      api_url:
+        description: 'Replit API URL để fetch URL động (https://...replit.dev/api/ws-url)'
+        required: false
+        default: 'https://4402a81e-ea08-47ae-8c6d-4f1045c4a94e-00-11lnievgh87eo.pike.replit.dev/api/ws-url'
+      release_tag:
+        description: 'Release tag (vd: v1.2.0). Để trống = chỉ upload artifact, không tạo release.'
+        required: false
+        default: ''
+
+jobs:
+  inject:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout (bao gồm Git LFS cho client.apk)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      # ── Cài apktool ───────────────────────────────────────
+      - name: Cài apktool
+        run: |
+          wget -q https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar \
+               -O /usr/local/bin/apktool.jar
+          printf '#!/bin/bash\nexec java -jar /usr/local/bin/apktool.jar "$@"\n' \
+               > /usr/local/bin/apktool
+          chmod +x /usr/local/bin/apktool
+          apktool --version
+
+      # ── Cài Android SDK build-tools (d8, zipalign, apksigner) ─
+      - name: Cài Android SDK build-tools
+        run: |
+          yes | sdkmanager --install "build-tools;34.0.0" "platforms;android-34" 2>&1 | tail -3
+          echo "$ANDROID_HOME/build-tools/34.0.0" >> $GITHUB_PATH
+
+      # ── Decompile game APK (smali + manifest) ─────────────
+      - name: Decompile client.apk
+        run: |
+          apktool d client.apk -o /tmp/game_src -f
+          echo "✅ Decompile xong — smali files:"
+          find /tmp/game_src/smali -name "*.smali" | wc -l
+
+      # ── Patch WS_URL và compile BridgeService → .class ────
+      - name: Compile BridgeService.java
+        run: |
+          ANDROID_JAR="$ANDROID_HOME/platforms/android-34/android.jar"
+          mkdir -p /tmp/bridge_classes/com/nro/bridge
+
+          # Copy tất cả source, patch WS_URL + API_URL trong BridgeService
+          mkdir -p /tmp/bridge_src/com/nro/bridge
+          API="${{ github.event.inputs.api_url }}"
+          [ -z "$API" ] && API="https://bf80dd46-ab2b-404c-81a3-0de9f933c8d8-00-3098toun7gtsc.pike.replit.dev/api/ws-url"
+          sed -e 's|__WS_URL__|${{ github.event.inputs.ws_url }}|g' \
+              -e "s|__API_URL__|${API}|g" \
+            android-bridge-inject/src/BridgeService.java \
+            > /tmp/bridge_src/com/nro/bridge/BridgeService.java
+          cp android-bridge-inject/src/BridgePreference.java \
+             /tmp/bridge_src/com/nro/bridge/BridgePreference.java
+          cp android-bridge-inject/src/AutoFill.java \
+             /tmp/bridge_src/com/nro/bridge/AutoFill.java
+
+          echo "=== WS_URL trong source ==="
+          grep "WS_URL\|wss://" /tmp/bridge_src/com/nro/bridge/BridgeService.java | head -3
+          echo "=== SINGLE_SERVER_ENCODED ==="
+          grep "SINGLE_SERVER_ENCODED\s*=" /tmp/bridge_src/com/nro/bridge/BridgePreference.java
+
+          # Compile tất cả .java — dùng -cp để tránh lỗi lambda metafactory
+          javac -source 8 -target 8 \
+            -cp "$ANDROID_JAR" \
+            -d /tmp/bridge_classes \
+            /tmp/bridge_src/com/nro/bridge/*.java 2>&1 || true
+          if [ ! -f /tmp/bridge_classes/com/nro/bridge/BridgeService.class ]; then
+            javac -cp "$ANDROID_JAR" \
+              -d /tmp/bridge_classes \
+              /tmp/bridge_src/com/nro/bridge/*.java
+          fi
+          echo "✅ Compile OK:"
+          ls /tmp/bridge_classes/com/nro/bridge/
+
+      # ── .class → bridge.dex rồi baksmali → smali ────────
+      # KHÔNG dùng classes2.dex riêng (sẽ ghi đè DEX gốc của game!)
+      # Thay vào đó: chuyển về smali, inject vào smali/ trước apktool b
+      - name: DEX → smali (d8 + baksmali)
+        run: |
+          # 1. Compile tất cả .class → bridge.dex
+          mkdir -p /tmp/bridge_dex
+          d8 /tmp/bridge_classes/com/nro/bridge/*.class \
+             --output /tmp/bridge_dex \
+             --min-api 21
+          mv /tmp/bridge_dex/classes.dex /tmp/bridge.dex
+          echo "✅ bridge.dex: $(du -sh /tmp/bridge.dex | cut -f1)"
+
+          # 2. Tải baksmali.jar từ Maven Central (đáng tin cậy)
+          BAKSMALI_VER="3.0.3"
+          wget -q --tries=3 \
+            "https://repo1.maven.org/maven2/org/smali/baksmali/${BAKSMALI_VER}/baksmali-${BAKSMALI_VER}-fat.jar" \
+            -O /tmp/baksmali.jar
+          JAR_SIZE=$(stat -c%s /tmp/baksmali.jar 2>/dev/null || echo 0)
+          echo "baksmali.jar size: ${JAR_SIZE} bytes"
+          if [ "$JAR_SIZE" -lt 100000 ]; then
+            echo "⚠️ fat jar nhỏ, thử URL khác..."
+            wget -q --tries=3 \
+              "https://bitbucket.org/JesusFreke/smali/downloads/baksmali-${BAKSMALI_VER}.jar" \
+              -O /tmp/baksmali.jar || true
+          fi
+
+          # 3. Decompile bridge.dex → smali
+          mkdir -p /tmp/bridge_smali
+          java -jar /tmp/baksmali.jar d /tmp/bridge.dex -o /tmp/bridge_smali
+          echo "✅ Smali files từ bridge.dex:"
+          find /tmp/bridge_smali -name "*.smali" | sort
+
+      # ── Patch server IP/port → 127.0.0.1:14445 + auto-connect ──
+      - name: Patch server IP (text configs + binary metadata)
+        run: |
+          echo "=== Kiểm tra cấu trúc Managed/ ==="
+          ls -lh /tmp/game_src/assets/bin/Data/Managed/ 2>/dev/null || echo "(thư mục không tồn tại)"
+          ls -lh /tmp/game_src/assets/bin/Data/Managed/Metadata/ 2>/dev/null || true
+          echo "--- Assembly-CSharp.dll ---"
+          ls -lh /tmp/game_src/assets/bin/Data/Managed/Assembly-CSharp.dll 2>/dev/null || echo "KHÔNG tìm thấy Assembly-CSharp.dll"
+          ls -lh /tmp/game_src/assets/bin/Data/data.unity3d 2>/dev/null || true
+
+          # MD5 trước khi patch
+          md5sum /tmp/game_src/assets/bin/Data/data.unity3d 2>/dev/null || true
+          META_MD5_BEFORE=$(md5sum /tmp/game_src/assets/bin/Data/Managed/Metadata/global-metadata.dat 2>/dev/null | cut -d' ' -f1 || echo "notfound")
+
+          echo "=== Patch ==="
+          python3 android-bridge-inject/patch_server.py \
+            /tmp/game_src/smali \
+            /tmp/game_src/assets
+
+          echo "=== Xác nhận kích thước file không đổi ==="
+          SIZE_UNITY=$(wc -c < /tmp/game_src/assets/bin/Data/data.unity3d 2>/dev/null || echo 0)
+          SIZE_META=$(wc -c < /tmp/game_src/assets/bin/Data/Managed/Metadata/global-metadata.dat 2>/dev/null || echo 0)
+          echo "data.unity3d  : $SIZE_UNITY bytes"
+          echo "metadata      : $SIZE_META bytes"
+          echo "✅ Patch hoàn tất (data.unity3d có thể đã được patch server string)"
+
+      # ── Scan toàn bộ APK tìm server string ─────────────
+      - name: Scan APK tìm server IP/string (diagnostic)
+        run: |
+          echo "=== Tìm IP/server string trong mọi file ==="
+          apt-get install -q -y binutils 2>/dev/null | tail -1 || true
+
+          # 1. libil2cpp.so — string literals trong native code
+          echo "--- libil2cpp.so ---"
+          find /tmp/game_src/lib -name "libil2cpp.so" 2>/dev/null | while read f; do
+            echo "File: $f ($(du -sh $f | cut -f1))"
+            strings "$f" | grep -iE "14\.225|103\.90|LocalHost|Blue [0-9]|NRlink|svselect|server_ip|game.*server|:14445|:15000|Srcnro" | head -20
+          done || echo "(libil2cpp not found)"
+
+          # 2. .bytes files trong assets
+          echo ""
+          echo "--- .bytes files ---"
+          find /tmp/game_src/assets -name "*.bytes" 2>/dev/null | while read f; do
+            result=$(strings "$f" | grep -iE "LocalHost|Blue|14\.225|NRlink|server|IP" | head -5)
+            if [ -n "$result" ]; then
+              echo "FILE: $f"
+              echo "$result"
+            fi
+          done
+
+          # 3. Tất cả file trong assets/bin/Data/ (ngoài data.unity3d)
+          echo ""
+          echo "--- assets/bin/Data/ (trừ data.unity3d) ---"
+          find /tmp/game_src/assets/bin/Data -type f ! -name "data.unity3d" 2>/dev/null | while read f; do
+            result=$(strings "$f" | grep -iE "LocalHost|Blue [0-9]|14\.225|NRlink|svselect" | head -3)
+            if [ -n "$result" ]; then
+              echo "FILE: $f"
+              echo "$result"
+            fi
+          done
+
+          # 4. global-metadata.dat: tìm bất kỳ IP nào
+          echo ""
+          echo "--- global-metadata.dat: IP patterns ---"
+          META="/tmp/game_src/assets/bin/Data/Managed/Metadata/global-metadata.dat"
+          if [ -f "$META" ]; then
+            strings "$META" | grep -E "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -20
+            echo "--- global-metadata.dat: server keywords ---"
+            strings "$META" | grep -iE "LocalHost|Blue|NRlink|svselect|server|Srcnro|IP.*VPS|Port" | head -20
+          fi
+
+          # 5. res/raw hoặc assets gốc
+          echo ""
+          echo "--- res/raw và assets root ---"
+          find /tmp/game_src/res/raw /tmp/game_src/assets -maxdepth 2 -type f 2>/dev/null | while read f; do
+            result=$(strings "$f" | grep -iE "LocalHost|Blue|NRlink|14\.225|server" | head -3)
+            if [ -n "$result" ]; then
+              echo "FILE: $f"
+              echo "$result"
+            fi
+          done
+
+          echo ""
+          echo "=== Done scan ==="
+
+      # ── Dump DragonBoy11 smali để xem dialog code ────────
+      - name: Dump smali DragonBoy11 (diagnostic + commit)
+        run: |
+          echo "=== Packages trong smali ==="
+          find /tmp/game_src/smali -mindepth 1 -maxdepth 3 -type d | sort
+
+          echo ""
+          echo "=== Full content: com/DefaultCompany/DragonBoy11/ ==="
+          mkdir -p apk-src/smali-dragonboy11
+          find /tmp/game_src/smali/com/DefaultCompany/DragonBoy11 -name "*.smali" 2>/dev/null \
+            | while read f; do
+                echo "====== FILE: $(basename $f) ======"
+                cat "$f"
+                echo ""
+                cp "$f" "apk-src/smali-dragonboy11/$(basename $f)"
+              done || echo "(DragonBoy11 package not found)"
+
+          echo ""
+          echo "=== Files co EditText/AlertDialog ==="
+          grep -rl "EditText;\|AlertDialog;\|android/app/Dialog;" /tmp/game_src/smali/ 2>/dev/null \
+            | grep -v "/com/nro/bridge/" \
+            | while read f; do
+                echo "====== DIALOG FILE: $f ======"
+                cat "$f"
+                echo ""
+                cp "$f" "apk-src/smali-dragonboy11/DIALOG_$(basename $f)" 2>/dev/null || true
+              done || echo "(no EditText/AlertDialog found)"
+
+          echo ""
+          echo "=== const-string co IP/Port/server keywords ==="
+          grep -rn "const-string" /tmp/game_src/smali/ 2>/dev/null \
+            | grep -iE "14445|15000|server|IP|Port|Srcnro|socket|connect|host|address" \
+            | grep -v "/com/nro/bridge/" | head -40
+
+          echo ""
+          echo "=== SharedPreferences usage ==="
+          grep -rn "SharedPreferences\|getSharedPreferences\|putString.*[Ii][Pp]\|putInt.*[Pp]ort" \
+            /tmp/game_src/smali/ 2>/dev/null | grep -v "/com/nro/bridge/" | head -20
+
+          echo "=== Files saved ==="
+          ls apk-src/smali-dragonboy11/ 2>/dev/null
+
+      - name: Commit smali DragonBoy11 vao repo
+        run: |
+          git config user.email "bot@nro"
+          git config user.name "NRO Bot"
+          git add apk-src/smali-dragonboy11/ 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "dump: DragonBoy11 smali + dialog candidates"
+          git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:main 2>/dev/null || true
+
+      # ── Patch dialog "Nhập IP và PORT" ────────────────────
+      - name: Patch IP/Port dialog (auto-skip)
+        run: |
+          python3 android-bridge-inject/patch_dialog.py /tmp/game_src/smali
+          echo "✅ Dialog patch step hoàn tất"
+
+
+      # ── Inject TẤT CẢ bridge smali vào game smali ────────
+      # BridgeProvider + BridgeService + AutoFill + BridgePreference
+      # Tất cả đều vào smali/com/nro/bridge/ → apktool b build vào classes.dex
+      # KHÔNG thêm classes2.dex riêng → không ghi đè DEX gốc của game
+      - name: Inject bridge smali (Provider + Service + AutoFill + Preference)
+        run: |
+          mkdir -p /tmp/game_src/smali/com/nro/bridge
+
+          # Copy tất cả smali từ baksmali output (BridgeService, AutoFill, BridgePreference + inner classes)
+          find /tmp/bridge_smali -name "*.smali" | while read f; do
+            dest="/tmp/game_src/smali/com/nro/bridge/$(basename "$f")"
+            cp "$f" "$dest"
+            echo "  + $(basename "$f")"
+          done
+
+          # Copy BridgeProvider.smali (viết tay, không trong DEX vừa build)
+          cp android-bridge-inject/BridgeProvider.smali \
+             /tmp/game_src/smali/com/nro/bridge/BridgeProvider.smali
+
+          echo ""
+          echo "✅ Tất cả bridge smali đã inject:"
+          ls /tmp/game_src/smali/com/nro/bridge/
+
+      # ── Patch AndroidManifest.xml ─────────────────────────
+      - name: Patch AndroidManifest.xml
+        run: |
+          python3 android-bridge-inject/patch_manifest.py \
+            /tmp/game_src/AndroidManifest.xml
+          echo "=== Permissions thêm vào ==="
+          grep -E "FOREGROUND|nro.bridge" /tmp/game_src/AndroidManifest.xml || true
+
+      # ── Rebuild APK (apktool build smali → classes.dex) ───
+      - name: Rebuild APK
+        run: |
+          apktool b /tmp/game_src \
+            -o /tmp/NROGame-rebuilt.apk \
+            --use-aapt2
+          echo "✅ Rebuilt: $(du -sh /tmp/NROGame-rebuilt.apk | cut -f1)"
+
+      # ── Sign APK ──────────────────────────────────────────
+      - name: Tạo keystore + Sign
+        run: |
+          keytool -genkeypair -v \
+            -keystore /tmp/nro.keystore \
+            -alias nro \
+            -keyalg RSA -keysize 2048 \
+            -validity 10000 \
+            -storepass nropass \
+            -keypass nropass \
+            -dname "CN=NRO,O=NRO,C=VN" 2>/dev/null
+
+          # Kiểm tra số DEX trong APK (debug)
+          echo "=== DEX files trong rebuilt APK ==="
+          unzip -l /tmp/NROGame-rebuilt.apk | grep "\.dex" || true
+
+          zipalign -f -v 4 \
+            /tmp/NROGame-rebuilt.apk \
+            /tmp/NROGame-aligned.apk
+
+          apksigner sign \
+            --ks /tmp/nro.keystore \
+            --ks-key-alias nro \
+            --ks-pass pass:nropass \
+            --key-pass pass:nropass \
+            --out /tmp/NROGame-bridge.apk \
+            /tmp/NROGame-aligned.apk
+
+          apksigner verify --verbose /tmp/NROGame-bridge.apk 2>&1 | head -5
+          echo ""
+          echo "╔════════════════════════════════════════╗"
+          echo "║  ✅ APK THÀNH CÔNG                    ║"
+          echo "║  📦 Size: $(du -sh /tmp/NROGame-bridge.apk | cut -f1)                        ║"
+          echo "║  WS: ${{ github.event.inputs.ws_url }} ║"
+          echo "╚════════════════════════════════════════╝"
+
+      # ── Upload artifact ────────────────────────────────────
+      - name: Upload NROGame-bridge.apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: NROGame-with-bridge
+          path: /tmp/NROGame-bridge.apk
+          retention-days: 30
+
+      # ── Tạo GitHub Release (nếu có release_tag) ───────────
+      - name: Tạo GitHub Release
+        if: ${{ github.event.inputs.release_tag != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.event.inputs.release_tag }}"
+          WS="${{ github.event.inputs.ws_url }}"
+          BODY="## NROGame Bridge ${TAG}
+
+          ### Cách cài:
+          1. Gỡ APK cũ trước — **bắt buộc** (khác signature)
+          2. Tải file **NROGame-bridge.apk** về → cài lên Android (bật **Cho phép nguồn không xác định**)
+          3. Mở game → **vào thẳng luôn**, không cần nhập IP hay Port
+
+          ### Thay đổi ${TAG}:
+          - ✅ **Auto-connect**: bridge tự ghi server config trước Unity, game kết nối ngay không cần dialog
+          - ✅ Fix ws_bridge restart ngắt kết nối giữa chừng khi đang chơi
+          - ✅ ws_bridge v4: SO_KEEPALIVE + immediate drain + 128KB chunk
+          - ✅ Sender blocking poll (không spin CPU) + BufferedOutputStream 64KB
+
+          ### Server URL đã nhúng:
+          \`${WS}\`
+          "
+
+          # Xoá release cũ nếu đã tồn tại cùng tag
+          gh release delete "${TAG}" --yes 2>/dev/null || true
+          git push origin --delete "refs/tags/${TAG}" 2>/dev/null || true
+
+          gh release create "${TAG}" \
+            /tmp/NROGame-bridge.apk#NROGame-bridge.apk \
+            --title "NROGame Bridge ${TAG}" \
+            --notes "${BODY}"
+
+          echo ""
+          echo "🎉 Release: https://github.com/${{ github.repository }}/releases/tag/${TAG}"
+          echo "📥 Direct: https://github.com/${{ github.repository }}/releases/download/${TAG}/NROGame-bridge.apk"
