@@ -1,0 +1,55 @@
+Bảo không dùng tcp sao vẫn còn vậy?
+
+TCP vẫn còn nhưng chỉ trong nội bộ Codespace, không phải xuyên internet:
+
+APK
+ │  wss:// (WebSocket qua internet) ✅
+ ▼
+Replit relay
+ │  wss:// (WebSocket qua internet) ✅
+ ▼
+ws_bridge (trên Codespace)
+ │  TCP 127.0.0.1:14445 (cùng máy, không qua internet) ← còn lại
+ ▼
+Game Server (Java, cùng máy)
+TCP duy nhất còn lại là localhost → localhost trong Codespace — không đi qua internet, không bị firewall, không thể bỏ được vì game server Java chỉ nhận TCP.
+
+Cái đã bỏ là TCP xuyên internet (playit.gg, frpc tunnel) — trước đây APK phải kết nối raw TCP qua internet tới server. Giờ toàn bộ đường đi từ APK đến Codespace là WebSocket.
+
+Vẫn không vào được, không tải dữ liệu và load được
+
+Cần xem log game server trong thời gian thực khi bạn kết nối. Đồng thời kiểm tra thêm về cách game load data:
+
+Nhìn vào log server: có player memeiue login thành công lúc 9:10 và 9:18 (qua frpc cũ). Nhưng từ khi build APK v1.3.0, không có connection nào qua Replit relay — tức bridge trong APK có thể không khởi được, hoặc user đang chọn server khác (DragonBoy = frpc tunnel, không phải 127.0.0.1).
+
+Khi test APK v1.3.0, bạn đang chọn server nào?
+Bạn chọn server nào trong game?
+DragonBoy (chọn sẵn trong danh sách)
+Sau khi nhấn Chơi mới / Đổi tài khoản, game làm gì?
+Màn hình đen, không có gì
+APK bạn đang dùng là bản nào?
+v1.3.0 (tải từ GitHub release mới nhất)
+64
+6469issy
+6469issy
+Vấn đề rõ rồi. "DragonBoy" không đi qua bridge của chúng ta — nó kết nối thẳng ra ngoài internet theo cách cũ (frpc/IP gốc), không qua WebSocket relay. BridgeService chỉ intercept khi game kết nối tới 127.0.0.1:14445.
+
+Cách fix — làm theo đúng thứ tự:
+
+Mở game → nhấn "Cấu hình" (hoặc nút chọn server)
+Tìm tùy chọn "Tùy chỉnh" hoặc "Custom Server"
+Nhập:
+IP: 127.0.0.1
+Port: 14445
+Xác nhận → quay lại menu chính
+Màn hình sẽ hiện "Máy chủ: 127.0.0.1" hoặc tên server local
+Nhấn "Chơi mới"
+Lý do "DragonBoy" bị màn đen: server đó kết nối thẳng qua frpc tunnel (23.95.31.196:21445) — không ổn định và không liên quan đến bridge mà chúng ta xây. Bridge chỉ hoạt động khi game kết nối vào 127.0.0.1:14445.
+
+Sửa file apk cho kết nối thẳng đi, cho ip và port vào đấy luôn bỏ cái giao diện nhập đi cho , kết nối vào
+
+Cần patch smali để hardcode 127.0.0.1:14445 và auto-connect bỏ qua màn hình chọn server. Tôi sẽ viết script patch + cập nhật workflow:
+
+Cập nhật workflow để chạy patch_server.py sau khi decompile, rồi push và trigger build v1.4.0:
+
+You've reached your daily free quota limit. It will reset at 12:00 AM UTC.
