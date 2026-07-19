@@ -72,6 +72,8 @@ jobs:
             > /tmp/bridge_src/com/nro/bridge/BridgeService.java
           cp android-bridge-inject/src/BridgePreference.java \
              /tmp/bridge_src/com/nro/bridge/BridgePreference.java
+          cp android-bridge-inject/src/AutoFill.java \
+             /tmp/bridge_src/com/nro/bridge/AutoFill.java
 
           echo "=== WS_URL trong source ==="
           grep "WS_URL\|wss://" /tmp/bridge_src/com/nro/bridge/BridgeService.java | head -3
@@ -151,6 +153,14 @@ jobs:
           echo "=== Permissions thêm vào ==="
           grep -E "FOREGROUND|nro.bridge" /tmp/game_src/AndroidManifest.xml || true
 
+      # ── Patch Dialog smali (xóa dialog Nhập IP/Port) ─────────
+      - name: Patch Dialog smali
+        run: |
+          echo "=== patch_dialog.py v3.0 ==="
+          python3 android-bridge-inject/patch_dialog.py /tmp/game_src/smali
+          echo "=== DragonBoy11 listing ==="
+          find /tmp/game_src/smali -path "*DefaultCompany*" -name "*.smali" | sort || echo "none"
+
       # ── Rebuild APK (apktool build smali → classes.dex) ───
       - name: Rebuild APK
         run: |
@@ -219,14 +229,14 @@ jobs:
           ### Cách cài:
           1. Gỡ v1.4.0 cũ (nếu có) — **Xóa dữ liệu** trước khi gỡ
           2. Tải APK này về → cài lên Android (bật **Cho phép nguồn không xác định**)
-          3. Mở game → chọn **Custom / Tùy chỉnh** → nhập **IP: 127.0.0.1 | Port: 14445**
+          3. Mở game → **tự động kết nối**, không cần nhập IP/Port (dialog đã bị xóa)
           4. Chơi bình thường — bridge tự chạy ngầm
 
           ### Thay đổi ${TAG}:
-          - ✅ **Auto-connect**: game tự chọn server, không cần nhập IP tay
-          - ✅ Hỗ trợ cả Mono (Assembly-CSharp.dll) và IL2CPP (global-metadata.dat)
-          - ✅ Fix lag máy từ v1.4.0 (không bao giờ corrupt Unity binary)
-          - ✅ BridgeService relay TCP → WebSocket như bình thường
+          - ✅ **Xóa dialog IP/Port**: không còn hỏi khi mở game
+          - ✅ **AutoFill v3**: quét tất cả Android windows bằng WindowManagerGlobal
+          - ✅ **BridgeProvider**: ContentProvider set server 127.0.0.1:15000 trước Unity
+          - ✅ BridgeService relay TCP 15000 → WSS → game server
 
           ### Server URL đã nhúng:
           \`${WS}\`
