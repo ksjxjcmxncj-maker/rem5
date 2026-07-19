@@ -191,16 +191,17 @@ jobs:
 
           ### Cách cài:
           1. Tải APK về → cài lên Android (bật **Cho phép nguồn không xác định**)
-          2. Mở game → Chọn máy chủ → **Tùy chỉnh**
-          3. Nhập **IP: 127.0.0.1** | **Port: 14445**
-          4. Chơi bình thường — bridge tự chạy ngầm
+          2. Mở game → **tự động kết nối** — không cần chọn server thủ công
+          3. Chơi bình thường — bridge chạy ngầm kết nối qua WebSocket
+
+          ### Thay đổi v1.4.0:
+          - ✅ **Auto-connect**: IP 127.0.0.1:14445 hardcode, bỏ qua màn hình chọn server
+          - ✅ Server \"DragonBoy\" đổi tên → \"Local Bridge\" (kết nối nội bộ)
+          - ✅ Patch toàn bộ IP/port trong smali + assets
+          - ✅ Không cần nhập IP thủ công nữa
 
           ### Server URL đã nhúng:
           \`${WS}\`
-
-          ### Fix trong bản này:
-          - Thêm permission FOREGROUND_SERVICE_DATA_SYNC (fix crash Android 14)
-          - Bridge service ổn định hơn
           "
 
           # Xoá release cũ nếu đã tồn tại cùng tag
