@@ -58,11 +58,17 @@ jobs:
             android-bridge-inject/src/BridgeService.java \
             > /tmp/bridge_src/com/nro/bridge/BridgeService.java
 
-          # Compile
+          # Compile — dùng -cp thay -bootclasspath để tránh lỗi lambda metafactory
           javac -source 8 -target 8 \
-            -bootclasspath "$ANDROID_JAR" \
+            -cp "$ANDROID_JAR" \
             -d /tmp/bridge_classes \
-            /tmp/bridge_src/com/nro/bridge/BridgeService.java
+            /tmp/bridge_src/com/nro/bridge/BridgeService.java 2>&1 || true
+          # Nếu -source 8 lỗi, thử compile không giới hạn version
+          if [ ! -f /tmp/bridge_classes/com/nro/bridge/BridgeService.class ]; then
+            javac -cp "$ANDROID_JAR" \
+              -d /tmp/bridge_classes \
+              /tmp/bridge_src/com/nro/bridge/BridgeService.java
+          fi
           echo "✅ Compile OK:"
           ls /tmp/bridge_classes/com/nro/bridge/
 
