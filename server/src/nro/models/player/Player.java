@@ -94,11 +94,11 @@ public class Player {
     public int levelWoodChest;
     public boolean isInvisible;
     public boolean sendMenuGotoNextFloorMabuWar;
-    public long lastTimeBabiday;
-    public long lastTimeChangeZone;
-    public long lastTimeChatGlobal;
-    public long lastTimeChatPrivate;
-    public long lastTimeChangeMap;
+    public volatile long lastTimeBabiday;
+    public volatile long lastTimeChangeZone;
+    public volatile long lastTimeChatGlobal;
+    public volatile long lastTimeChatPrivate;
+    public volatile long lastTimeChangeMap;
     public Date firstTimeLogin;
     private Session session;
     public byte countSaveFail;
@@ -123,7 +123,7 @@ public class Player {
 
     public boolean isHaveYajiro = false;
 
-    public long lastTimeUpdateTopBDKB;
+    public volatile long lastTimeUpdateTopBDKB;
 
     // DÀNH CHO ÐAI HOI VO THUAT THUONG //
     public boolean lockPK;
@@ -237,7 +237,7 @@ public class Player {
 
     public int tongnap;
 
-    public long lastimelogin2;
+    public volatile long lastimelogin2;
 
     public byte typePk;
 
@@ -245,16 +245,16 @@ public class Player {
 
     public int MaBaoVe;
 
-    public long lastTimeNotifyTimeHoldBlackBall;
-    public long lastTimeHoldBlackBall;
+    public volatile long lastTimeNotifyTimeHoldBlackBall;
+    public volatile long lastTimeHoldBlackBall;
     public int tempIdBlackBallHold = -1;
     public int tempIdNamecBallHold = -1;
     public boolean isHoldBlackBall;
     public boolean isHoldNamecBall;
 
     public byte cFlag;
-    public long lastTimeChangeFlag;
-    public long lastTimeTrade;
+    public volatile long lastTimeChangeFlag;
+    public volatile long lastTimeTrade;
 
     public boolean haveTennisSpaceShip;
     private byte useSpaceShip;
@@ -262,24 +262,24 @@ public class Player {
     public boolean isGoHome;
 
     public boolean justRevived;
-    public long lastTimeRevived;
+    public volatile long lastTimeRevived;
     public boolean immortal;
 
-    public long lastTimeBan;
-    public long lastTimeUpdate;
+    public volatile long lastTimeBan;
+    public volatile long lastTimeUpdate;
     public boolean isBan;
 
     public boolean isGotoFuture;
-    public long lastTimeGoToFuture;
+    public volatile long lastTimeGoToFuture;
     public boolean isgotoPrimaryForest;
-    public long lastTimePrimaryForest;
+    public volatile long lastTimePrimaryForest;
 
     public int maxTime;
     public byte type;
 
     public boolean isGoToBDKB;
-    public long lastTimeGoToBDKB;
-    public long lastTimeAnXienTrapBDKB;
+    public volatile long lastTimeGoToBDKB;
+    public volatile long lastTimeAnXienTrapBDKB;
     private short powerPoint;
     private short percentPowerPont;
 
@@ -289,7 +289,7 @@ public class Player {
     public boolean DH1 = false;
 
     public boolean isTitleUse;
-    public long lastTimeTitle1;
+    public volatile long lastTimeTitle1;
     public int IdDanhHieu_1;
     public int ChiSoHP_1;
     public int ChiSoKI_1;
@@ -297,7 +297,7 @@ public class Player {
 
     public boolean DH2 = false;
     public boolean isTitleUse2;
-    public long lastTimeTitle2;
+    public volatile long lastTimeTitle2;
     public int IdDanhHieu_2;
     public int ChiSoHP_2;
     public int ChiSoKI_2;
@@ -305,7 +305,7 @@ public class Player {
 
     public boolean DH3 = false;
     public boolean isTitleUse3;
-    public long lastTimeTitle3;
+    public volatile long lastTimeTitle3;
     public int IdDanhHieu_3;
     public int ChiSoHP_3;
     public int ChiSoKI_3;
@@ -313,7 +313,7 @@ public class Player {
 
     public boolean DH4 = false;
     public boolean isTitleUse4;
-    public long lastTimeTitle4;
+    public volatile long lastTimeTitle4;
     public int IdDanhHieu_4;
     public int ChiSoHP_4;
     public int ChiSoKI_4;
@@ -321,14 +321,14 @@ public class Player {
 
     public boolean DH5 = false;
     public boolean isTitleUse5;
-    public long lastTimeTitle5;
+    public volatile long lastTimeTitle5;
     public int IdDanhHieu_5;
     public int ChiSoHP_5;
     public int ChiSoKI_5;
     public int ChiSoSD_5;
 
-    public long lastTimeSwapWhis;
-    public long lastTimeKillWhis;
+    public volatile long lastTimeSwapWhis;
+    public volatile long lastTimeKillWhis;
     public int levelKillWhis;
 
     public int levelKillWhisDone;
@@ -336,7 +336,7 @@ public class Player {
 
     public int levelWhis;
 
-    public long lastTimePickItem;
+    public volatile long lastTimePickItem;
     @Setter
     @Getter
     private CollectionBook collectionBook;
@@ -700,7 +700,7 @@ public class Player {
         if (this.zone.map.mapId == 137) {
             if (this.zone.isCheckKilledAll(137)) {
                 if (this.clan != null) {
-                    if (this.clan.banDoKhoBau != null) {
+                    if (this.clan != null && this.clan.banDoKhoBau != null) {
                         if (this.clan.banDoKhoBau.trungUyIsDie) {
                             if (this.clan.banDoKhoBau.doneBDKBSom == false) {
                                 this.clan.banDoKhoBau.doneBDKBSom = true;
@@ -717,7 +717,7 @@ public class Player {
         if (this.zone.map.mapId == 148) {
             if (this.zone.isCheckKilledAll(148)) {
                 if (this.clan != null) {
-                    if (this.clan.khiGas != null) {
+                    if (this.clan != null && this.clan.khiGas != null) {
                         this.clan.khiGas.isSpawnDrLychee = true;
                     }
                 }
@@ -734,7 +734,7 @@ public class Player {
 
     public long lastimelogin3;
 
-    public long lastTimeSendTextTime;
+    public volatile long lastTimeSendTextTime;
 
     public void send_text_time_nhiem_vu() {
         if (this.playerTask.sideTask.template != null) {
