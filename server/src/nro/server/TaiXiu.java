@@ -1,6 +1,7 @@
 package nro.server;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import nro.models.player.Player;
 import nro.server.io.Message;
@@ -21,8 +22,10 @@ public class TaiXiu implements Runnable {
 
     public boolean baotri = false;
     public long lastTimeEnd;
-    public List<Player> PlayersTai = new ArrayList<>();
-    public List<Player> PlayersXiu = new ArrayList<>();
+    
+    // FIX: dùng Collections.synchronizedList() cho PlayersTai và PlayersXiu
+    public List<Player> PlayersTai = Collections.synchronizedList(new ArrayList<>());
+    public List<Player> PlayersXiu = Collections.synchronizedList(new ArrayList<>());
     public List<Integer> tongHistory = new ArrayList<>();
     private static final int MAX_HISTORY_SIZE = 15;
     public List<String> tongHistoryString = new ArrayList<>();
@@ -134,122 +137,143 @@ public class TaiXiu implements Runnable {
                         ketquaTai = true;
                     }
                     if (ketquaTai == true) {
-                        if (!TaiXiu.gI().PlayersTai.isEmpty()) {
-                            for (int i = 0; i < PlayersTai.size(); i++) {
-                                Player pl = this.PlayersTai.get(i);
-                                if (pl != null && Client.gI().getPlayer(pl.name) != null) {
-                                    long goldC = (long) pl.goldTai + pl.goldTai * 80L / 100L; // FIX: int→long overflow
-                                    Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
-                                            + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(TÀI)\n\n|1|Bạn đã chiến thắng!!");
-                                    Service.getInstance().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.format(goldC) + " Hồng ngọc");
-                                    pl.inventory.addRuby(goldC); // FIX
-                                    pl.taixiu.win += (long) pl.goldTai * 80L / 100L; // FIX: overflow
-                                    Service.getInstance().sendMoney(pl);
-                                    InventoryService.gI().sendItemBags(pl);
-                                    Message m;
-                                    try {
-                                        m = new Message(-126);
-                                        m.writer().writeByte(1);
-                                        m.writer().writeByte(1);
-                                        m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
-                                        //   m.writer().writeUTF("99999");
-                                        m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
-                                        pl.sendMessage(m);
-                                        m.cleanup();
-                                    } catch (Exception e) {
+                        synchronized(TaiXiu.gI().PlayersTai) { // FIX: Thêm synchronized block
+                            if (!TaiXiu.gI().PlayersTai.isEmpty()) {
+                                for (int i = 0; i < PlayersTai.size(); i++) {
+                                    Player pl = this.PlayersTai.get(i);
+                                    if (pl != null && Client.gI().getPlayer(pl.name) != null) {
+                                        long goldC = (long) pl.goldTai + (long) pl.goldTai * 80L / 100L; // FIX: overflow
+                                        Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
+                                                + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(TÀI)\n\n|1|Bạn đã chiến thắng!!");
+                                        Service.getInstance().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.format(goldC) + " Hồng ngọc");
+                                        pl.inventory.addRuby(goldC); 
+                                        pl.taixiu.win += (long) pl.goldTai * 80L / 100L; // FIX: overflow
+                                        Service.getInstance().sendMoney(pl);
+                                        InventoryService.gI().sendItemBags(pl);
+                                        Message m;
+                                        try {
+                                            m = new Message(-126);
+                                            m.writer().writeByte(1);
+                                            m.writer().writeByte(1);
+                                            m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
+                                            //   m.writer().writeUTF("99999");
+                                            m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
+                                            pl.sendMessage(m);
+                                            m.cleanup();
+                                        } catch (Exception e) {
+                                            e.printStackTrace(); // FIX: Không để empty catch
+                                        }
                                     }
                                 }
                             }
                         }
-                        for (int i = 0; i < PlayersXiu.size(); i++) {
-                            Player pl = this.PlayersXiu.get(i);
-                            if (pl != null && Client.gI().getPlayer(pl.name) != null) {
-                                Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
-                                        + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(TÀI)\n\n|7|Trắng tay gòi, chơi lại đi!!!");
-
-                            }
-                            Message m;
-                            try {
-                                m = new Message(-126);
-                                m.writer().writeByte(1);
-                                m.writer().writeByte(1);
-                                m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
-                                //  m.writer().writeUTF("99999");
-                                m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
-                                pl.sendMessage(m);
-                                m.cleanup();
-                            } catch (Exception e) {
-                            }
-                        }
-                    } else if (ketquaXiu == true) {
-                        if (!TaiXiu.gI().PlayersXiu.isEmpty()) {
+                        
+                        synchronized(TaiXiu.gI().PlayersXiu) { // FIX: Thêm synchronized block
                             for (int i = 0; i < PlayersXiu.size(); i++) {
                                 Player pl = this.PlayersXiu.get(i);
                                 if (pl != null && Client.gI().getPlayer(pl.name) != null) {
-                                    long goldC = (long) pl.goldXiu + pl.goldXiu * 80L / 100L; // FIX: int→long overflow
                                     Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
-                                            + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(XỈU)\n\n|1|Bạn đã chiến thắng!!");
-                                    Service.getInstance().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.format(goldC) + " Hồng ngọc");
-                                    pl.inventory.addRuby(goldC); // FIX
-                                    pl.taixiu.win += (long) pl.goldXiu * 80L / 100L; // FIX: overflow
-                                    Service.getInstance().sendMoney(pl);
-                                    InventoryService.gI().sendItemBags(pl);
-                                    Message m;
-                                    try {
-                                        m = new Message(-126);
-                                        m.writer().writeByte(1);
-                                        m.writer().writeByte(1);
-                                        m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
-                                        // m.writer().writeUTF("99999");
-                                        m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
-                                        pl.sendMessage(m);
-                                        m.cleanup();
-                                    } catch (Exception e) {
+                                            + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(TÀI)\n\n|7|Trắng tay gòi, chơi lại đi!!!");
+    
+                                }
+                                Message m;
+                                try {
+                                    m = new Message(-126);
+                                    m.writer().writeByte(1);
+                                    m.writer().writeByte(1);
+                                    m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
+                                    //  m.writer().writeUTF("99999");
+                                    m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
+                                    pl.sendMessage(m);
+                                    m.cleanup();
+                                } catch (Exception e) {
+                                    e.printStackTrace(); // FIX: Không để empty catch
+                                }
+                            }
+                        }
+                    } else if (ketquaXiu == true) {
+                        synchronized(TaiXiu.gI().PlayersXiu) { // FIX: Thêm synchronized block
+                            if (!TaiXiu.gI().PlayersXiu.isEmpty()) {
+                                for (int i = 0; i < PlayersXiu.size(); i++) {
+                                    Player pl = this.PlayersXiu.get(i);
+                                    if (pl != null && Client.gI().getPlayer(pl.name) != null) {
+                                        long goldC = (long) pl.goldXiu + (long) pl.goldXiu * 80L / 100L; // FIX: overflow
+                                        Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
+                                                + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(XỈU)\n\n|1|Bạn đã chiến thắng!!");
+                                        Service.getInstance().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.format(goldC) + " Hồng ngọc");
+                                        pl.inventory.addRuby(goldC); 
+                                        pl.taixiu.win += (long) pl.goldXiu * 80L / 100L; // FIX: overflow
+                                        Service.getInstance().sendMoney(pl);
+                                        InventoryService.gI().sendItemBags(pl);
+                                        Message m;
+                                        try {
+                                            m = new Message(-126);
+                                            m.writer().writeByte(1);
+                                            m.writer().writeByte(1);
+                                            m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
+                                            // m.writer().writeUTF("99999");
+                                            m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
+                                            pl.sendMessage(m);
+                                            m.cleanup();
+                                        } catch (Exception e) {
+                                            e.printStackTrace(); // FIX: Không để empty catch
+                                        }
                                     }
                                 }
                             }
                         }
-                        for (int i = 0; i < PlayersTai.size(); i++) {
-                            Player pl = this.PlayersTai.get(i);
-                            if (pl != null && Client.gI().getPlayer(pl.name) != null) {
-                                Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
-                                        + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(XỈU)\n\n|7|Trắng tay gòi, chơi lại đi!!!");
+                        
+                        synchronized(TaiXiu.gI().PlayersTai) { // FIX: Thêm synchronized block
+                            for (int i = 0; i < PlayersTai.size(); i++) {
+                                Player pl = this.PlayersTai.get(i);
+                                if (pl != null && Client.gI().getPlayer(pl.name) != null) {
+                                    Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
+                                            + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(XỈU)\n\n|7|Trắng tay gòi, chơi lại đi!!!");
+                                }
+                                Message m;
+                                try {
+                                    m = new Message(-126);
+                                    m.writer().writeByte(1);
+                                    m.writer().writeByte(1);
+                                    m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
+                                    //m.writer().writeUTF("99999"); // 
+                                    m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
+                                    pl.sendMessage(m);
+                                    m.cleanup();
+                                } catch (Exception e) {
+                                    e.printStackTrace(); // FIX: Không để empty catch
+                                }
+    
                             }
-                            Message m;
-                            try {
-                                m = new Message(-126);
-                                m.writer().writeByte(1);
-                                m.writer().writeByte(1);
-                                m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
-                                //m.writer().writeUTF("99999"); // 
-                                m.writer().writeUTF("00" + TaiXiu.gI().x + TaiXiu.gI().y + TaiXiu.gI().z);
-                                pl.sendMessage(m);
-                                m.cleanup();
-                            } catch (Exception e) {
+                        }
+                    }
+                    
+                    synchronized(TaiXiu.gI().PlayersTai) {
+                        for (int i = 0; i < TaiXiu.gI().PlayersTai.size(); i++) {
+                            Player pl = TaiXiu.gI().PlayersTai.get(i);
+                            if (pl != null) {
+                                pl.goldTai = 0;
                             }
-
                         }
+                        TaiXiu.gI().PlayersTai.clear(); // Clear bên trong synchronized
                     }
-                    for (int i = 0; i < TaiXiu.gI().PlayersTai.size(); i++) {
-                        Player pl = TaiXiu.gI().PlayersTai.get(i);
-                        if (pl != null) {
-                            pl.goldTai = 0;
+                    
+                    synchronized(TaiXiu.gI().PlayersXiu) {
+                        for (int i = 0; i < TaiXiu.gI().PlayersXiu.size(); i++) {
+                            Player pl = TaiXiu.gI().PlayersXiu.get(i);
+                            if (pl != null) {
+                                pl.goldXiu = 0;
+                            }
                         }
+                        TaiXiu.gI().PlayersXiu.clear(); // Clear bên trong synchronized
                     }
-                    for (int i = 0; i < TaiXiu.gI().PlayersXiu.size(); i++) {
-                        Player pl = TaiXiu.gI().PlayersXiu.get(i);
-                        if (pl != null) {
-                            pl.goldXiu = 0;
-                        }
-                    }
+                    
                     ketquaXiu = false;
                     ketquaTai = false;
                     TaiXiu.gI().goldTai = 0;
                     TaiXiu.gI().goldXiu = 0;
                     trim();
                     chuyenthanhstring();
-                    TaiXiu.gI().PlayersTai.clear();
-                    TaiXiu.gI().PlayersXiu.clear();
                     TaiXiu.gI().lastTimeEnd = System.currentTimeMillis() + 60000;
                 }
                 Thread.sleep(100);
@@ -258,4 +282,3 @@ public class TaiXiu implements Runnable {
         }
     }
 }
-
