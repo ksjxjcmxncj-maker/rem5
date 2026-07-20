@@ -8,30 +8,22 @@ echo "========================================="
 echo "  NRO Server Setup (Codespace Network)"
 echo "========================================="
 
-# ── 1. Phụ thuộc (Alpine apk) ────────────────
-echo "[1] Kiểm tra & cài phụ thuộc..."
-NEED_JAVA=0; NEED_MYSQL=0; NEED_WS=0
-command -v java   >/dev/null 2>&1 || NEED_JAVA=1
-command -v mysqld >/dev/null 2>&1 || NEED_MYSQL=1
-python3 -c "import websockets" 2>/dev/null || NEED_WS=1
-
-if [ "$NEED_JAVA" -eq 1 ] || [ "$NEED_MYSQL" -eq 1 ]; then
-  sudo apk update -q 2>/dev/null || true
-  [ "$NEED_JAVA"  -eq 1 ] && sudo apk add -q openjdk17-jre mariadb mariadb-client 2>/dev/null && echo "  Java+MariaDB installed"
-fi
-[ "$NEED_WS" -eq 1 ] && { sudo apk add -q py3-websockets 2>/dev/null || pip3 install websockets -q 2>/dev/null; }
+# ── 1. Phụ thuộc ─────────────────────────────
+echo "[1] Kiểm tra phụ thuộc..."
+command -v java    >/dev/null 2>&1 || { sudo apk update -q; sudo apk add -q openjdk17-jre mariadb mariadb-client; }
+python3 -c "import websockets" 2>/dev/null || sudo apk add -q py3-websockets 2>/dev/null || true
 echo "  java: $(java -version 2>&1 | head -1)"
 
-# ── 2. MariaDB ───────────────────────────────
+# ── 2. MariaDB (Alpine: sudo mariadb + mysqld_safe) ──────
 echo "[2] MariaDB..."
-if ! mysqladmin -u root ping 2>/dev/null; then
+if ! sudo mysqladmin ping 2>/dev/null; then
   sudo mysql_install_db --user=mysql --datadir=/var/lib/mysql --skip-test-db >/dev/null 2>&1 || true
   sudo mysqld_safe --user=mysql --datadir=/var/lib/mysql >/dev/null 2>&1 &
   sleep 6
 fi
-mysqladmin -u root ping 2>/dev/null && echo "  ✅ MariaDB OK" || echo "  ❌ MariaDB FAIL"
+sudo mysqladmin ping 2>/dev/null && echo "  ✅ MariaDB OK" || echo "  ❌ MariaDB FAIL"
 
-# ── 3. Sync files ────────────────────────────
+# ── 3. Sync files ─────────────────────────────
 echo "[3] Sync files..."
 REPO_DIR=/workspaces/rem5
 cd "$REPO_DIR" && git pull --quiet 2>/dev/null || true
@@ -41,18 +33,18 @@ cp -rf "$REPO_DIR/server/resources"         ~/nro/SRC/resources         || true
 cp -f  "$REPO_DIR/server/Config.properties" ~/nro/SRC/Config.properties || true
 echo "  SrcTeam.jar: $(ls -lh ~/nro/SRC/SrcTeam.jar 2>/dev/null | awk '{print $5}')"
 
-# ── 4. Database ──────────────────────────────
+# ── 4. Database ───────────────────────────────
 echo "[4] Database nro1..."
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS nro1 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null || true
-TABLES=$(mysql -u root nro1 -se "SHOW TABLES;" 2>/dev/null | wc -l)
+sudo mariadb -e "CREATE DATABASE IF NOT EXISTS nro1 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null || true
+TABLES=$(sudo mariadb nro1 -se "SHOW TABLES;" 2>/dev/null | wc -l)
 if [ "$TABLES" -lt 5 ]; then
-  mysql -u root nro1 < "$REPO_DIR/database/srcteam_nro.sql" 2>/dev/null \
+  sudo mariadb nro1 < "$REPO_DIR/database/srcteam_nro.sql" 2>/dev/null \
     && echo "  ✅ DB imported" || echo "  ⚠️ DB import lỗi"
 else
   echo "  ✅ DB sẵn sàng ($TABLES tables)"
 fi
 
-# ── 5. Patch config với Codespace URL ────────
+# ── 5. Patch config ───────────────────────────
 echo "[5] Config..."
 CS_NAME="${CODESPACE_NAME:-localhost}"
 WS_HOST="${CS_NAME}-8080.app.github.dev"
@@ -64,10 +56,10 @@ sed -i "s|database.host=.*|database.host=localhost|" "$CFG"
 sed -i "s|database.name=.*|database.name=nro1|"     "$CFG"
 sed -i "s|database.user=.*|database.user=root|"     "$CFG"
 sed -i "s|database.pass=.*|database.pass=|"          "$CFG"
-sed -i "s|server.sv1=.*|server.sv1=NRO:${WS_HOST}:443:0,0,0|" "$SPROP"
-sed -i "s|server.db.name=.*|server.db.name=nro1|"              "$SPROP"
-sed -i "s|server.db.ip=.*|server.db.ip=localhost|"             "$SPROP"
-sed -i "s|server.db.pw=.*|server.db.pw=|"                       "$SPROP"
+sed -i "s|server.sv1=.*|server.sv1=NRO:${WS_HOST}:443:0,0,0|" "$SPROP" 2>/dev/null || true
+sed -i "s|server.db.name=.*|server.db.name=nro1|"              "$SPROP" 2>/dev/null || true
+sed -i "s|server.db.ip=.*|server.db.ip=localhost|"             "$SPROP" 2>/dev/null || true
+sed -i "s|server.db.pw=.*|server.db.pw=|"                       "$SPROP" 2>/dev/null || true
 echo "  sv1: $(grep 'server.sv1' "$CFG")"
 
 # ── 6. WebSocket bridge ──────────────────────
@@ -127,12 +119,12 @@ pgrep -f ws_bridge.py > /dev/null \
   && echo "  ✅ ws_bridge running (port 8080)" \
   || { echo "  ❌ ws_bridge failed"; cat "$LOG/ws_bridge.log"; }
 
-# ── 7. Set port 8080 public ──────────────────
+# ── 7. Port 8080 public ──────────────────────
 echo "[7] Port 8080 public..."
 gh codespace ports visibility 8080:public -c "$CODESPACE_NAME" 2>/dev/null \
   && echo "  ✅ Done" || echo "  ⚠️ Sẽ retry sau"
 
-# ── 8. Java servers ──────────────────────────
+# ── 8. Java servers ───────────────────────────
 echo "[8] Java servers..."
 pkill -f "SrcTeam.jar" 2>/dev/null
 pkill -f "Login.jar"   2>/dev/null
@@ -155,7 +147,7 @@ pgrep -f SrcTeam.jar > /dev/null \
   && echo "  ✅ Game server RUNNING" \
   || { echo "  ❌ Game server FAILED"; tail -20 "$LOG/server.log"; }
 
-# ── 9. Done ──────────────────────────────────
+# ── 9. Done ───────────────────────────────────
 WS_URL="wss://${CS_NAME}-8080.app.github.dev"
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
