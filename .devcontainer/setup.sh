@@ -28,8 +28,8 @@ cp -rf $REPO/server/src                ~/nro/SRC/src                 2>/dev/null
 echo "  JAR: $(ls -lh ~/nro/SRC/SrcTeam.jar 2>/dev/null | awk '{print $5}')"
 
 # ── 3. Import database ────────────────────────
-echo "[3] Setup database 'nro'..."
-sudo mysql -e "CREATE DATABASE IF NOT EXISTS \`nro\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null || true
+echo "[3] Setup database 'nro1'..."
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS `nro1` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null || true
 TABLES=$(sudo mysql nro1 -se "SHOW TABLES;" 2>/dev/null | wc -l)
 if [ "$TABLES" -lt 5 ]; then
   echo "  Import srcteam_nro.sql..."
