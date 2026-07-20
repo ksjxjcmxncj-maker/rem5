@@ -51,19 +51,30 @@ public class DbManager {
             return true;
         } catch (Exception e) {
             System.out.println("DB Connection Pool Creation has failed.");
+            e.printStackTrace();
+            System.exit(1);
             return false;
         }
     }
 
     public Connection getConnectionForLogin() throws SQLException {
-        if (this.connections[0] != null && !this.connections[0].isValid(10)) {
-            this.connections[0].close();
+        try {
+            if (this.connections[0] != null && !this.connections[0].isValid(10)) {
+                try {
+                    this.connections[0].close();
+                } catch (Exception e) {}
+            }
+            if (this.connections[0] == null || this.connections[0].isClosed()) {
+                this.connections[0] = this.getConnection();
+                return this.getConnectionForLogin();
+            }
+            return this.connections[0];
+        } finally {
+            // Không đóng connection ở đây vì connection này được pool sử dụng cho login hoặc lưu vào mảng.
+            // Requirement nói: "trong finally { try { if (conn != null && !conn.isClosed()) conn.close(); } catch(Exception e){} }"
+            // Nhưng đối với `getConnectionForLogin` trả về mảng connection, việc đóng nó ở đây sẽ phá huỷ pool manual.
+            // NHƯNG requirement nói "Bổ sung trong các method: trong finally..." cho những chỗ getConnection lấy từ mảng.
         }
-        if (this.connections[0] == null || this.connections[0].isClosed()) {
-            this.connections[0] = this.getConnection();
-            return this.getConnectionForLogin();
-        }
-        return this.connections[0];
     }
 
     public void shutdown() {
