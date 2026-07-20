@@ -123,6 +123,7 @@ public class UseItem {
                     if (player != null && player.inventory != null) {
                         if (index != -1) {
                             if (index >= 0 && index < player.inventory.itemsBag.size()) {
+                                if (index < 0 || index >= player.inventory.itemsBag.size()) return;
                                 Item item = player.inventory.itemsBag.get(index);
                                 if (item.isNotNullItem()) {
                                     if (item.template.type == 21) {
@@ -139,6 +140,7 @@ public class UseItem {
                                         msg.writer().writeByte(type);
                                         msg.writer().writeByte(where);
                                         msg.writer().writeByte(index);
+                                        if (index < 0 || index >= player.inventory.itemsBag.size()) return;
                                         msg.writer().writeUTF("Bạn có muốn dùng " + player.inventory.itemsBag.get(index).template.name + "?");
                                         player.sendMessage(msg);
                                         msg.cleanup();
@@ -147,6 +149,7 @@ public class UseItem {
                                         msg.writer().writeByte(type);
                                         msg.writer().writeByte(where);
                                         msg.writer().writeByte(index);
+                                        if (index < 0 || index >= player.inventory.itemsBag.size()) return;
                                         msg.writer().writeUTF("Bạn chắc chắn học " + player.inventory.itemsBag.get(index).template.name + "?");
                                         player.sendMessage(msg);
                                     } else if (player.isVersionAbove(220) && item.template.type == 23 || item.template.type == 24 || item.template.type == 11 || item.template.type == 35) {
@@ -206,6 +209,7 @@ public class UseItem {
                     break;
                 case ACCEPT_USE_ITEM:
                     if (index >= 0 && index < player.inventory.itemsBag.size()) {
+                        if (index < 0 || index >= player.inventory.itemsBag.size()) return;
                         Item item = player.inventory.itemsBag.get(index);
                         if (item.isNotNullItem()) {
                             useItem(player, item, index);
@@ -1770,6 +1774,7 @@ public class UseItem {
         if (index < 0 || index >= pl.mapCapsule.size()) {
             return;
         }
+        if (index < 0 || index >= pl.mapCapsule.size()) return;
         Zone zoneChose = pl.mapCapsule.get(index);
         if (index != 0 || zoneChose.map.mapId == 21 || zoneChose.map.mapId == 22 || zoneChose.map.mapId == 23) {
             if (!(pl.zone != null && pl.zone instanceof ZSnakeRoad)) {
@@ -1781,6 +1786,7 @@ public class UseItem {
             zoneId = pl.mapBeforeCapsule != null ? pl.mapBeforeCapsule.zoneId : -1;
             pl.mapBeforeCapsule = null;
         }
+        if (index < 0 || index >= pl.mapCapsule.size()) return;
         ChangeMapService.gI().changeMapBySpaceShip(pl, pl.mapCapsule.get(index).map.mapId, zoneId, -1);
     }
 
