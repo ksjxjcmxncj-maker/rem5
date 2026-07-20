@@ -286,13 +286,16 @@ public class ServerManager {
         new Thread(() -> {
             while (isRunning) {
                 long start = System.currentTimeMillis();
-                for (DoanhTrai dt : DoanhTrai.DOANH_TRAIS) {
+                java.util.List<DoanhTrai> dtSnapshot = new java.util.ArrayList<>(DoanhTrai.DOANH_TRAIS);
+                for (DoanhTrai dt : dtSnapshot) {
                     dt.update();
                 }
-                for (BanDoKhoBau bdkb : BanDoKhoBau.BAN_DO_KHO_BAUS) {
+                java.util.List<BanDoKhoBau> bdkbSnapshot = new java.util.ArrayList<>(BanDoKhoBau.BAN_DO_KHO_BAUS);
+                for (BanDoKhoBau bdkb : bdkbSnapshot) {
                     bdkb.update();
                 }
-                for (KhiGas khiGas : KhiGas.KHI_GAS) {
+                java.util.List<KhiGas> kgSnapshot = new java.util.ArrayList<>(KhiGas.KHI_GAS);
+                for (KhiGas khiGas : kgSnapshot) {
                     khiGas.update();
                 }
                 long timeUpdate = System.currentTimeMillis() - start;
@@ -421,11 +424,12 @@ public class ServerManager {
 
         try (Connection conn = DriverManager.getConnection(url, username, password)) {
             String sql = "UPDATE player SET checkNhanQua = ?";
-            PreparedStatement statement = conn.prepareStatement(sql);
-            statement.setString(1, "[1,1]");
+            try (PreparedStatement statement = conn.prepareStatement(sql)) {
+                statement.setString(1, "[1,1]");
 
-            int rowsUpdated = statement.executeUpdate();
-            Log.success("SUCCESSFULLY UPDATE NHẬN QUÀ HẰNG NGÀY: " + rowsUpdated + ".....................");
+                int rowsUpdated = statement.executeUpdate();
+                Log.success("SUCCESSFULLY UPDATE NHẬN QUÀ HẰNG NGÀY: " + rowsUpdated + ".....................");
+            }
         } catch (SQLException e) {
             System.err.println("Lỗi: " + e.getMessage());
         }
