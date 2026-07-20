@@ -11,6 +11,7 @@ import nro.server.io.Message;
 import nro.utils.Log;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,7 +44,7 @@ public class PartManager {
     public void load() {
         try {
             Gson g = new Gson();
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM part");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM part");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 short id = rs.getShort("id");
@@ -58,6 +59,7 @@ public class PartManager {
             Log.success("Load part thành công (" + parts.size() + ")");
             rs.close();
             ps.close();
+            _con.close(); // FIX: đóng connection
             setData();
         } catch (SQLException ex) {
             ex.printStackTrace();

@@ -104,9 +104,9 @@ public class InventoryService {
             case 9:
                 if (player.inventory.gold + item.quantity <= player.inventory.getGoldLimit()) {
                     if (player.playerIntrinsic.intrinsic.id == 23) {
-                        player.inventory.gold += player.nPoint.calPercent(item.quantity, player.playerIntrinsic.intrinsic.param1);
+                        player.inventory.addGold(player.nPoint.calPercent(item.quantity, player.playerIntrinsic.intrinsic.param1)); // FIX
                     } else {
-                        player.inventory.gold += item.quantity;
+                        player.inventory.addGold(item.quantity); // FIX
                     }
                     Service.getInstance().sendMoney(player);
                     return true;

@@ -3,6 +3,7 @@ package nro.manager;
 import nro.jdbc.DBService;
 import nro.models.item.MinipetTemplate;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,7 +26,7 @@ public class MiniPetManager implements IManager<MinipetTemplate> {
 
     public void load() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM mini_pet");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM mini_pet");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id_temp");

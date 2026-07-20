@@ -504,7 +504,7 @@ public class ShopService {
                 int itemExchange = is.itemExchange;
                 if (gold != 0) {
                     if (player.inventory.gold >= gold) {
-                        player.inventory.gold -= gold;
+                        player.inventory.subGold(gold); // FIX: dùng method an toàn
                     } else {
                         Service.getInstance().sendThongBaoOK(player, "Bạn không đủ vàng, còn thiếu "
                                 + (Util.numberToMoney(gold - player.inventory.gold) + " vàng"));
@@ -988,7 +988,7 @@ public class ShopService {
                     }
                     InventoryService.gI().sendItemBags(pl);
                 }
-                pl.inventory.gold += goldReceive;
+                pl.inventory.addGold(goldReceive); // FIX: dùng method an toàn
                 pl.playerTask.achivements.get(ConstAchive.TRUM_NHAT_VE_CHAI).count++;
                 PlayerService.gI().sendInfoHpMpMoney(pl);
                 Service.getInstance().sendThongBao(pl, "Đã bán " + item.template.name

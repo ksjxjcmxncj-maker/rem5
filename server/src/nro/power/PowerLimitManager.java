@@ -5,6 +5,7 @@
 package nro.power;
 
 import nro.jdbc.DBService;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class PowerLimitManager {
 
     public void load() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `power_limit`");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM `power_limit`");
             ResultSet rs = ps.executeQuery();
             try {
                 while (rs.next()) {
@@ -56,7 +57,8 @@ public class PowerLimitManager {
                 }
             } finally {
                 rs.close();
-                ps.close();
+            ps.close();
+            _con.close(); // FIX: đóng connection
             }
         } catch (Exception ex) {
             ex.printStackTrace();

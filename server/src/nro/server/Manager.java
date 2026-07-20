@@ -862,7 +862,8 @@ public class Manager {
 
     public static void loadEventCount() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("select * from event where server =" + SERVER);
+            Connection _con = PreparedStatement ps = DBService.gI().getConnectionForGame().getConnection(); PreparedStatement ps = _con.prepareStatement("select * from event where server = ?")); // FIX: SQL injection
+            ps.setInt(1, SERVER); // FIX: bind SERVER
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 EVENT_COUNT_QUY_LAO_KAME = rs.getInt("kame");
@@ -881,7 +882,7 @@ public class Manager {
 
     public void updateEventCount() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("UPDATE event SET kame = ?, bill = ?, karin = ?, thuongde = ?, thanvutru = ? WHERE `server` = ?");
+            Connection _con = PreparedStatement ps = DBService.gI().getConnectionForGame().getConnection(); PreparedStatement ps = _con.prepareStatement("UPDATE event SET kame = ?, bill = ?, karin = ?, thuongde = ?, thanvutru = ? WHERE `server` = ?");
             ps.setInt(1, EVENT_COUNT_QUY_LAO_KAME);
             ps.setInt(3, EVENT_COUNT_THAN_HUY_DIET);
             ps.setInt(2, EVENT_COUNT_THAN_MEO);
@@ -899,7 +900,7 @@ public class Manager {
     public void loadAttributeServer() {
         try {
             AttributeManager am = new AttributeManager();
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `attribute_server`");
+            Connection _con = PreparedStatement ps = DBService.gI().getConnectionForGame().getConnection(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM `attribute_server`");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id");
@@ -927,7 +928,7 @@ public class Manager {
         try {
             AttributeManager am = ServerManager.gI().getAttributeManager();
             List<Attribute> attributes = am.getAttributes();
-            PreparedStatement ps = DBService.gI().getConnectionForAutoSave().prepareStatement("UPDATE `attribute_server` SET `attribute_template_id` = ?, `value` = ?, `time` = ? WHERE `id` = ?;");
+            Connection _con = PreparedStatement ps = DBService.gI().getConnectionForAutoSave().getConnection(); PreparedStatement ps = _con.prepareStatement("UPDATE `attribute_server` SET `attribute_template_id` = ?, `value` = ?, `time` = ? WHERE `id` = ?;");
             synchronized (attributes) {
                 for (Attribute at : attributes) {
                     try {

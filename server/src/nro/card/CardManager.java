@@ -94,8 +94,9 @@ public class CardManager {
         cardTemplates.add(cardTemplate);
     }
 
+    // BUG WAS: remove() gọi add() → fix
     public void remove(CardTemplate cardTemplate) {
-        cardTemplates.add(cardTemplate);
+        cardTemplates.remove(cardTemplate); // FIX: lỗi gọi add() thay vì remove()
     }
 
     public CardTemplate find(int id) {

@@ -355,10 +355,10 @@ public class Trade {
                     }
                 }
                 if (tradeStatus == SUCCESS) {
-                    player1.inventory.gold += goldTrade2;
-                    player2.inventory.gold += goldTrade1;
-                    player1.inventory.gold -= goldTrade1;
-                    player2.inventory.gold -= goldTrade2;
+                    player1.inventory.addGold(goldTrade2); // FIX
+                    player2.inventory.addGold(goldTrade1); // FIX
+                    player1.inventory.subGold(goldTrade1); // FIX
+                    player2.inventory.subGold(goldTrade2); // FIX
                     player1.inventory.itemsBag = itemsBag1;
                     player2.inventory.itemsBag = itemsBag2;
 

@@ -3,6 +3,7 @@ package nro.manager;
 import nro.jdbc.DBService;
 import nro.models.player.PetFollow;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -21,7 +22,7 @@ public class PetFollowManager extends AbsManager<PetFollow> {
 
     public void load() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM pet_follow");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM pet_follow");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id_temp");

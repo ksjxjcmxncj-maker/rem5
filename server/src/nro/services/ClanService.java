@@ -509,7 +509,7 @@ public class ClanService {
             if (flagBag != null) {
                 if (flagBag.gold > 0) {
                     if (player.inventory.gold >= flagBag.gold) {
-                        player.inventory.gold -= flagBag.gold;
+                        player.inventory.subGold(flagBag.gold); // FIX
                     } else {
                         Service.getInstance().sendThongBao(player, "Bạn không đủ vàng, còn thiếu "
                                 + Util.numberToMoney(flagBag.gold - player.inventory.gold) + " vàng");
@@ -743,7 +743,7 @@ public class ClanService {
             if (flagBag != null) {
                 if (flagBag.gold > 0) {
                     if (player.inventory.gold >= flagBag.gold) {
-                        player.inventory.gold -= flagBag.gold;
+                        player.inventory.subGold(flagBag.gold); // FIX
                     } else {
                         Service.getInstance().sendThongBao(player, "Bạn không đủ vàng, còn thiếu "
                                 + Util.numberToMoney(flagBag.gold - player.inventory.gold) + " vàng");

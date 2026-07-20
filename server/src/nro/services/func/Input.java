@@ -291,7 +291,7 @@ public static final int TAI_taixiu = 323508;
                         long goldNhanDuoc = soLuong * 500000000;
                         long soGoldAll = goldNhanDuoc + player.inventory.gold;
                         if (soGoldAll <= player.inventory.getGoldLimit()) {
-                            player.inventory.gold += (soLuong * 500000000);
+                            player.inventory.addGold((soLuong * 500000000)); // FIX
                             InventoryService.gI().subQuantityItemsBag(player, thoiVang, (int) soLuong);
                             InventoryService.gI().sendItemBags(player);
                             Service.getInstance().sendMoney(player);

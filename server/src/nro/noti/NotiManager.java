@@ -8,6 +8,7 @@ import nro.services.Service;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,7 +37,7 @@ public class NotiManager {
     public void loadNoti() {
         try {
             notifications.clear();
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `notifications`");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM `notifications`");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Notification notification = new Notification();
@@ -47,6 +48,7 @@ public class NotiManager {
             }
             rs.close();
             ps.close();
+            _con.close(); // FIX: đóng connection
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -54,7 +56,7 @@ public class NotiManager {
 
     public void loadAlert() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `alert`");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM `alert`");
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 Alert a = new Alert();
@@ -63,6 +65,7 @@ public class NotiManager {
             }
             rs.close();
             ps.close();
+            _con.close(); // FIX: đóng connection
         } catch (SQLException ex) {
             ex.printStackTrace();
         }

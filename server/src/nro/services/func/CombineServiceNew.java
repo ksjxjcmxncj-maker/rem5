@@ -1413,7 +1413,7 @@ public class CombineServiceNew {
                         Service.getInstance().sendThongBao(player, "Không đủ Mảnh vỡ bông tai");
                         return;
                     }
-                    player.inventory.gold -= gold;
+                    player.inventory.subGold(gold); // FIX
                     player.inventory.subGem(gem); // FIX
                     InventoryService.gI().subQuantityItemsBag(player, manhvobt, countmvbt);
                     if (Util.isTrue(player.combineNew.ratioCombine, 45)) {
@@ -1561,7 +1561,7 @@ public class CombineServiceNew {
                             break;
                         }
                     }
-                    player.inventory.gold -= 10_000_000;
+                    player.inventory.subGold(10_000_000); // FIX
                     InventoryService.gI().subQuantityItemsBag(player, cuonSachCu, 10);
                     InventoryService.gI().sendItemBags(player);
                     Service.getInstance().sendMoney(player);
@@ -1600,7 +1600,7 @@ public class CombineServiceNew {
                 }
                 if (luotTay == 0) {
 
-                    player.inventory.gold -= goldPhanra;
+                    player.inventory.subGold(goldPhanra); // FIX
                     InventoryService.gI().subQuantityItemsBag(player, sachTuyetKy, 1);
                     InventoryService.gI().addItemBag(player, cuonSachCu, 999);
                     InventoryService.gI().sendItemBags(player);
@@ -1618,7 +1618,7 @@ public class CombineServiceNew {
 
     private void phanRaTL(Player player) {
         if (player.combineNew.itemsCombine.size() == 1) {
-            player.inventory.gold -= 0;
+            player.inventory.subGold(0); // FIX
             List<Integer> itemdov2 = new ArrayList<>(Arrays.asList(555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567));
             Item item = player.combineNew.itemsCombine.get(0);
             sendEffectSuccessCombine(player);
@@ -1779,7 +1779,7 @@ public class CombineServiceNew {
         Item itemvantanz = player.combineNew.itemsCombine.stream().filter(item -> item.isNotNullItem() && item.isvantanz() && item.quantity >= 1).findFirst().get();
         Item itemManh = player.combineNew.itemsCombine.stream().filter(item -> item.isNotNullItem() && item.isManhTS() && item.quantity >= 999).findFirst().get();
 
-        player.inventory.gold -= COST;
+        player.inventory.subGold(COST); // FIX
         sendEffectSuccessCombine(player);
         short[][] itemIds = {{1048, 1051, 1054, 1057, 1060}, {1049, 1052, 1055, 1058, 1061}, {1050, 1053, 1056, 1059, 1062}}; // thứ tự td - 0,nm - 1, xd - 2
 
@@ -1945,7 +1945,7 @@ public class CombineServiceNew {
                         trangBiCanChuyenHoa_2.itemOptions.add(new ItemOption(trangBiCanChuyenHoa.itemOptions.get(i).optionTemplate.id, trangBiCanChuyenHoa.itemOptions.get(i).param));
                     }
 
-                    player.inventory.gold -= 2_000_000_000;
+                    player.inventory.subGold(2_000_000_000); // FIX
                     Service.getInstance().sendMoney(player);
                     InventoryService.gI().addItemBag(player, trangBiCanChuyenHoa_2, 1);
                     InventoryService.gI().subQuantityItemsBag(player, trangBiGoc, 1);
@@ -2141,7 +2141,7 @@ public class CombineServiceNew {
             if (nr1s != null && doThan != null) {
                 if (InventoryService.gI().getCountEmptyBag(player) > 0
                         && player.inventory.gold >= COST_DOI_MANH_KICH_HOAT) {
-                    player.inventory.gold -= COST_DOI_MANH_KICH_HOAT;
+                    player.inventory.subGold(COST_DOI_MANH_KICH_HOAT); // FIX
                     int tiLe = buaBaoVe != null ? 100 : 50;
                     if (Util.isTrue(tiLe, 100)) {
                         sendEffectSuccessCombine(player);
@@ -2182,7 +2182,7 @@ public class CombineServiceNew {
             if (dhd != null) {
                 if (InventoryService.gI().getCountEmptyBag(player) > 0
                         && player.inventory.gold >= COST_DAP_DO_KICH_HOAT) {
-                    player.inventory.gold -= COST_DAP_DO_KICH_HOAT;
+                    player.inventory.subGold(COST_DAP_DO_KICH_HOAT); // FIX
                     int tiLe = dtl != null ? 100 : 40;
                     if (Util.isTrue(tiLe, 100)) {
                         sendEffectSuccessCombine(player);
@@ -2223,7 +2223,7 @@ public class CombineServiceNew {
             if (dtl != null) {
                 if (InventoryService.gI().getCountEmptyBag(player) > 0
                         && player.inventory.gold >= COST_DAP_DO_KICH_HOAT) {
-                    player.inventory.gold -= COST_DAP_DO_KICH_HOAT;
+                    player.inventory.subGold(COST_DAP_DO_KICH_HOAT); // FIX
                     int tiLe = dtl != null ? 100 : 40;
                     if (Util.isTrue(tiLe, 100)) {
                         sendEffectSuccessCombine(player);
@@ -2256,7 +2256,7 @@ public class CombineServiceNew {
             if (item.isNotNullItem() && item.template.id >= 555 && item.template.id <= 567) {
                 if (InventoryService.gI().getCountEmptyBag(player) > 0
                         && player.inventory.gold >= COST_DOI_VE_DOI_DO_HUY_DIET) {
-                    player.inventory.gold -= COST_DOI_VE_DOI_DO_HUY_DIET;
+                    player.inventory.subGold(COST_DOI_VE_DOI_DO_HUY_DIET); // FIX
                     Item ticket = ItemService.gI().createNewItem((short) (2001 + item.template.type));
                     ticket.itemOptions.add(new ItemOption(30, 0));
                     InventoryService.gI().subQuantityItemsBag(player, item, 1);
@@ -2354,7 +2354,7 @@ public class CombineServiceNew {
                     }
                 }
                 if (star < MAX_STAR_ITEM) {
-                    player.inventory.gold -= gold;
+                    player.inventory.subGold(gold); // FIX
                     player.inventory.subGem(gem);
                     if (Util.isTrue(player.combineNew.ratioCombine, 1700)) {
                         if (optionStar == null) {
@@ -2403,7 +2403,7 @@ public class CombineServiceNew {
                 }
                 if (star < MAX_STAR_ITEM) {
                     for (int i = 0; i < 10; i++) {
-                        player.inventory.gold -= gold;
+                        player.inventory.subGold(gold); // FIX
                         player.inventory.subGem(gem);
                         if (Util.isTrue(player.combineNew.ratioCombine, 1700)) {
                             if (optionStar == null) {
@@ -2458,7 +2458,7 @@ public class CombineServiceNew {
                 }
                 if (star < MAX_STAR_ITEM) {
                     for (int i = 0; i < 100; i++) {
-                        player.inventory.gold -= gold;
+                        player.inventory.subGold(gold); // FIX
                         player.inventory.subGem(gem);
                         if (Util.isTrue(player.combineNew.ratioCombine, 1700)) {
                             if (optionStar == null) {
@@ -2515,7 +2515,7 @@ public class CombineServiceNew {
                             sendEffectCombineDB(player, item.template.iconID);
                         }
                         InventoryService.gI().subQuantityItemsBag(player, item, 7);
-                        player.inventory.gold -= 500000000;
+                        player.inventory.subGold(500000000); // FIX
                         Service.getInstance().sendMoney(player);
                         InventoryService.gI().sendItemBags(player);
                         reOpenItemCombine(player);
@@ -2582,7 +2582,7 @@ public class CombineServiceNew {
                         InventoryService.gI().subQuantityItemsBag(player, doThan, 1);
                         InventoryService.gI().subQuantityItemsBag(player, mrObito, 1);
                         InventoryService.gI().sendItemBags(player);
-                        player.inventory.gold -= 2000000000L;
+                        player.inventory.subGold(2000000000L); // FIX
                         Service.getInstance().sendMoney(player);
                         sendEffectSuccessCombine(player);
                         return;
@@ -2590,7 +2590,7 @@ public class CombineServiceNew {
                         InventoryService.gI().subQuantityItemsBag(player, doThan, 1);
                         InventoryService.gI().subQuantityItemsBag(player, mrObito, 1);
                         InventoryService.gI().sendItemBags(player);
-                        player.inventory.gold -= 2000000000L;
+                        player.inventory.subGold(2000000000L); // FIX
                         Service.getInstance().sendMoney(player);
                         sendEffectFailCombine(player);
                         return;
@@ -2647,7 +2647,7 @@ public class CombineServiceNew {
                     }
                 }
                 if (level < MAX_LEVEL_ITEM) {
-                    player.inventory.gold -= gold;
+                    player.inventory.subGold(gold); // FIX
                     ItemOption option = null;
                     ItemOption option2 = null;
                     for (ItemOption io : trangBi.itemOptions) {

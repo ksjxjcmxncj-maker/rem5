@@ -243,7 +243,8 @@ public class SieuHangManager {
         int result = 0;
 
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT turn_per_day FROM `super` WHERE player_id = " + player.id);
+            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT turn_per_day FROM `super` WHERE player_id = ?"); // FIX: SQL injection
+            ps.setLong(1, player.id); // FIX: bind param
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -266,7 +267,8 @@ public class SieuHangManager {
         try {
             // Kết nối đến cơ sở dữ liệu
             connection = DBService.gI().getConnectionForGame();
-            PreparedStatement ps = connection.prepareStatement("SELECT COALESCE(rank, -1) AS `rank` FROM (SELECT 1 AS dummy) dummy_table LEFT JOIN super_top ON super_top.player_id = " + player_id);
+            PreparedStatement ps = connection.prepareStatement("SELECT COALESCE(rank, -1) AS `rank` FROM (SELECT 1 AS dummy) dummy_table LEFT JOIN super_top ON super_top.player_id = ?"); // FIX: SQL injection
+            ps.setLong(1, player_id);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -294,7 +296,8 @@ public class SieuHangManager {
         int result = 0;
 
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT is_get_reward_day FROM `super` WHERE player_id = " + player_id);
+            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT is_get_reward_day FROM `super` WHERE player_id = ?"); // FIX: SQL injection
+            ps.setLong(1, player_id); // FIX: bind param
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -314,7 +317,8 @@ public class SieuHangManager {
         Timestamp result = null;
 
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT modified_date FROM `super` WHERE player_id = " + player.id);
+            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT modified_date FROM `super` WHERE player_id = ?"); // FIX: SQL injection
+            ps.setLong(1, player.id); // FIX: bind param
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {

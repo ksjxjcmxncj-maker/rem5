@@ -5,6 +5,7 @@ import lombok.Getter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,7 +27,7 @@ public class EffectEventManager {
 
     public void load() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `map_template`");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM `map_template`");
             ResultSet rs = ps.executeQuery();
             try {
                 while (rs.next()) {
@@ -57,7 +58,8 @@ public class EffectEventManager {
                 }
             } finally {
                 rs.close();
-                ps.close();
+            ps.close();
+            _con.close(); // FIX: đóng connection
             }
         } catch (SQLException e) {
             e.printStackTrace();

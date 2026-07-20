@@ -6,6 +6,7 @@ package nro.power;
 
 import nro.jdbc.DBService;
 import nro.models.player.Player;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class CaptionManager {
 
     public void load() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `caption`");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM `caption`");
             ResultSet rs = ps.executeQuery();
             try {
                 while (rs.next()) {
@@ -53,7 +54,8 @@ public class CaptionManager {
                 }
             } finally {
                 rs.close();
-                ps.close();
+            ps.close();
+            _con.close(); // FIX: đóng connection
             }
         } catch (Exception ex) {
             ex.printStackTrace();

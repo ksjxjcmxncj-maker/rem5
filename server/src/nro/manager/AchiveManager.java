@@ -4,6 +4,7 @@ import lombok.Getter;
 import nro.jdbc.DBService;
 import nro.models.task.AchivementTemplate;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,7 +27,7 @@ public class AchiveManager implements IManager<AchivementTemplate> {
 
     public void load() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `achivements`");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM `achivements`");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id");
@@ -38,6 +39,7 @@ public class AchiveManager implements IManager<AchivementTemplate> {
             }
             rs.close();
             ps.close();
+            _con.close(); // FIX: đóng connection
         } catch (SQLException ex) {
             ex.printStackTrace();
         }

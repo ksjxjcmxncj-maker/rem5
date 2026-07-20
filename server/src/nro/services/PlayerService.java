@@ -234,7 +234,7 @@ public class PlayerService {
             if (MapService.gI().isMapBlackBallWar(player.zone.map.mapId)
                     || MapService.gI().isMapMabuWar(player.zone.map.mapId)) {
                 if (player.inventory.gold >= COST_GOLD_HOI_SINH) {
-                    player.inventory.gold -= COST_GOLD_HOI_SINH;
+                    player.inventory.subGold(COST_GOLD_HOI_SINH); // FIX
                     canHs = true;
                 } else {
                     Service.getInstance().sendThongBao(player, "Không đủ vàng để thực hiện, còn thiếu " + Util.numberToMoney(COST_GOLD_HOI_SINH

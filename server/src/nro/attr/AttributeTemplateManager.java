@@ -7,6 +7,7 @@ package nro.attr;
 
 import nro.jdbc.DBService;
 import nro.utils.Log;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,7 +30,7 @@ public class AttributeTemplateManager {
 
     public void load() {
         try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT * FROM `attribute_template`");
+            Connection _con = DBService.gI().getConnectionForGame(); PreparedStatement ps = _con.prepareStatement("SELECT * FROM `attribute_template`");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id");
@@ -42,6 +43,7 @@ public class AttributeTemplateManager {
             }
             rs.close();
             ps.close();
+            _con.close(); // FIX: đóng connection
         } catch (SQLException ex) {
             Log.error(AttributeTemplateManager.class, ex, "Load attribute template err");
         }
