@@ -123,6 +123,7 @@ public class SummonDragon {
                     if (isShenronAppear) {
                         if (isPlayerDisconnect) {
 
+                            if (mapShenronAppear == null) continue;
                             List<Player> players = mapShenronAppear.getPlayers();
                             synchronized (players) {
                                 for (Player plMap : players) {
@@ -142,6 +143,7 @@ public class SummonDragon {
                     } else if (isBlackShenronAppear) {
                         if (isPlayerDisconnect) {
 
+                            if (mapShenronAppear == null) continue;
                             List<Player> players = mapShenronAppear.getPlayers();
                             synchronized (players) {
                                 for (Player plMap : players) {
@@ -161,6 +163,7 @@ public class SummonDragon {
                     } else if (isIcecShenronAppear) {
                         if (isPlayerDisconnect) {
 
+                            if (mapShenronAppear == null) continue;
                             List<Player> players = mapShenronAppear.getPlayers();
                             synchronized (players) {
                                 for (Player plMap : players) {
@@ -223,7 +226,7 @@ public class SummonDragon {
     }
 
     public void summonShenron(Player pl) {
-        if (pl.zone.map.mapId == 0 || pl.zone.map.mapId == 7 || pl.zone.map.mapId == 14) {
+        if (pl.zone != null && pl.zone.map != null && (pl.zone.map.mapId == 0 || pl.zone.map.mapId == 7 || pl.zone.map.mapId == 14)) {
             if (checkShenronBall(pl, DRAGON_SHENRON)) {
                 if (isShenronAppear) {
                     Service.getInstance().sendThongBao(pl, "Không thể thực hiện");
@@ -263,7 +266,7 @@ public class SummonDragon {
     }
 
     public void summonBlackShenron(Player pl) {
-        if (pl.zone.map.mapId == 5) {
+        if (pl.zone != null && pl.zone.map != null && pl.zone.map.mapId == 5) {
             if (checkShenronBall(pl, DRAGON_BLACK_SHENRON)) {
                 if (isBlackShenronAppear) {
                     Service.getInstance().sendThongBao(pl, "Không thể thực hiện");
@@ -290,7 +293,7 @@ public class SummonDragon {
     }
 
     public void summonIceShenron(Player pl) {
-        if (pl.zone.map.mapId == 5) {
+        if (pl.zone != null && pl.zone.map != null && pl.zone.map.mapId == 5) {
             if (checkShenronBall(pl, DRAGON_ICE_SHENRON)) {
                 if (isIcecShenronAppear) {
                     Service.getInstance().sendThongBao(pl, "Không thể thực hiện");
