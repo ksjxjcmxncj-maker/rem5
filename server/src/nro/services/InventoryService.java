@@ -54,7 +54,7 @@ public class InventoryService {
 
     private boolean existItemInList(List<Item> list, int tempId) {
         for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).isNotNullItem() && list.get(i).template.id == tempId) {
+            if (list.get(i) != null && list.get(i).isNotNullItem() && list.get(i).template.id == tempId) {
                 return true;
             }
         }
@@ -215,7 +215,7 @@ public class InventoryService {
         //item tăng số lượng
         if (isItemIncremental(item)) {
             for (Item it : items) {
-                if (it.isNotNullItem() && it.template.id == item.template.id) {
+                if (it != null && it.isNotNullItem() && it.template.id == item.template.id) {
                     if (item.template.id != 457 && item.template.id != 590 && item.template.id != 1066 && item.template.id != 1067 && item.template.id != 1068 && item.template.id != 1069 && item.template.id != 1070
                             && item.template.id != 2013 && item.template.id != 1229 && item.template.id != 2014 && item.template.id != 2015
                             && it.quantity + item.quantity > maxQuantity && maxQuantity != 0) {
