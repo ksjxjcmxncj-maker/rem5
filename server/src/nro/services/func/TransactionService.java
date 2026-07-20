@@ -20,7 +20,7 @@ public class TransactionService implements Runnable {
 
     private static final int TIME_DELAY_TRADE = 30000;
 
-    static final Map<Player, Trade> PLAYER_TRADE = new ConcurrentHashMap<>(); // FIX: thread-safe
+    static final Map<Player, Trade> PLAYER_TRADE = new ConcurrentHashMap<>();
 
     private static final byte SEND_INVITE_TRADE = 0;
     private static final byte ACCEPT_TRADE = 1;
@@ -97,9 +97,10 @@ public class TransactionService implements Runnable {
                     if (trade != null) {
                         byte index = msg.reader().readByte();
                         int quantity = msg.reader().readInt();
+                        // FIX: Thêm bounds check cho qty < 0 khi xử lý giao dịch
                         if (quantity < 0) {
-                            Service.getInstance().sendThongBao(pl, "Không thể thực hiện");
-                            trade.cancelTrade();
+                            Service.getInstance().sendThongBao(pl, "Dữ liệu không hợp lệ");
+                            return;
                         }
                         if (quantity == 0) {//do
                             quantity = 1;
@@ -118,10 +119,13 @@ public class TransactionService implements Runnable {
                     }
                     break;
                 case ACCEPT:
-                    if (trade != null) {
-                        trade.acceptTrade();
-                        if (trade.accept == 2) {
-                            trade.dispose();
+                    // FIX: Thêm synchronized bao bọc logic hoàn tất giao dịch để tránh Race condition
+                    synchronized (pl) {
+                        if (trade != null) {
+                            trade.acceptTrade();
+                            if (trade.accept == 2) {
+                                trade.dispose();
+                            }
                         }
                     }
                     break;
