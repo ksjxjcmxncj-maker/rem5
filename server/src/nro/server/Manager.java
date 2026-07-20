@@ -70,7 +70,7 @@ import nro.models.boss.mapoffline.NPC_ToSuKaio;
  */
 public class Manager {
 
-    private static Manager i;
+    private static volatile Manager i;
 
     public static byte SERVER = 1;
     public static byte SECOND_WAIT_LOGIN = 20;
@@ -180,7 +180,7 @@ public class Manager {
     public static byte getNFrameImageByName(String name) {
         Object n = IMAGES_BY_NAME.get(name);
         if (n != null) {
-            return Byte.parseByte(String.valueOf(n));
+            if (n instanceof Number) return ((Number) n).byteValue(); return 0;
         } else {
             return 0;
         }
@@ -248,7 +248,8 @@ public class Manager {
         int[][] tileTyleTop = readTileIndexTileType(ConstMap.TILE_TOP);
         for (MapTemplate mapTemp : MAP_TEMPLATES) {
             int[][] tileMap = readTileMap(mapTemp.id);
-            int[] tileTop = tileTyleTop[mapTemp.tileId - 1];
+            if (mapTemp.tileId <= 0 || mapTemp.tileId > tileTyleTop.length) continue;
+                int[] tileTop = tileTyleTop[mapTemp.tileId - 1];
             nro.models.map.Map map = null;
             if (mapTemp.id == 126) {
                 map = new SantaCity(mapTemp.id,
