@@ -377,7 +377,7 @@ public class RewardService {
         }
         Attribute at = ServerManager.gI().getAttributeManager().find(ConstAttribute.VANG);
         if (at != null && !at.isExpired()) {
-            item.quantity += item.quantity * at.getValue() / 100;
+            item.quantity = (int) Math.min((long) item.quantity + (long) item.quantity * at.getValue() / 100, Integer.MAX_VALUE);
         }
     }
 
