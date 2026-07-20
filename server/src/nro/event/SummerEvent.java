@@ -133,7 +133,7 @@ public class SummerEvent extends Event {
                             rw.itemOptions.add(new ItemOption(77, Util.nextInt(5, 15)));
                             rw.itemOptions.add(new ItemOption(103, Util.nextInt(5, 15)));
 
-                            if (rw.template.id != ConstItem.MANH_AO || rw.template.id != ConstItem.MANH_QUAN || rw.template.id != ConstItem.MANH_GIAY) {
+                            if (rw.template.id != ConstItem.MANH_AO && rw.template.id != ConstItem.MANH_QUAN || rw.template.id != ConstItem.MANH_GIAY) {
                                 rw.itemOptions.add(new ItemOption(93, Util.nextInt(1, 30)));
                             }
 
