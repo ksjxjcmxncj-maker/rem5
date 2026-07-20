@@ -17,8 +17,6 @@ public class TruyVanSQL {
     static final String PASS = "";
 
     public static String getPlayerNameById(int playerId) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
         String playerName = null;
 
         try {
@@ -26,41 +24,22 @@ public class TruyVanSQL {
             Class.forName(JDBC_DRIVER);
 
             // Bước 2: Mở kết nối
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
-
-            // Bước 3: Tạo truy vấn SQL
             String sql = "SELECT name FROM player WHERE id = ?";
-            
-            stmt = conn.prepareStatement(sql);
-            
-            stmt.setInt(1, playerId);
+            try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                
+                stmt.setInt(1, playerId);
 
-            // Bước 4: Thực hiện truy vấn
-            ResultSet rs = stmt.executeQuery();
-
-            // Bước 5: Xử lý kết quả truy vấn
-            if (rs.next()) {
-                playerName = rs.getString("name");
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        playerName = rs.getString("name");
+                    }
+                }
             }
-            // Bước 6: Đóng tất cả các tài nguyên
-            rs.close();
-            stmt.close();
-            conn.close();
         } catch (SQLException se) {
             se.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            // Bước 7: Đảm bảo đóng tất cả các tài nguyên khi kết thúc
-            try {
-                if (stmt != null) stmt.close();
-            } catch (SQLException se2) {
-            }
-            try {
-                if (conn != null) conn.close();
-            } catch (SQLException se) {
-                se.printStackTrace();
-            }
         }
 
         return playerName;
