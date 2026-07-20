@@ -71,16 +71,13 @@ public class LoginController {
     }
 
     public void updateTimeLogout(int id) throws SQLException {
-        PreparedStatement ps = null;
-        try (Connection con = DBService.gI().getConnectionForGame();) {
-            ps = con.prepareStatement("update account set last_time_logout = ? where id = ?");
+        try (Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("update account set last_time_logout = ? where id = ?")) {
             ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
             ps.setInt(2, id);
             ps.executeUpdate();
         } catch (Exception e) {
             Log.error(LoginController.class, e);
-        } finally {
-            try { if (ps != null) ps.close(); } catch (Exception ignore) {}
         }
     }
 
