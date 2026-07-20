@@ -92,7 +92,7 @@ public class Controller {
 //                                break;
 //                            }
                             default: {
-                                if (player.getSession().isAdmin) {
+                                if (player.getSession().isAdmin && idPk > 0) {
                                     BossManager.gI().FindBoss(player, idPk);
                                 }
                                 break;
