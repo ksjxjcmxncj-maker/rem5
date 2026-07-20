@@ -43,6 +43,7 @@ public class MobService {
     }
 
     public void sendMobStillAliveAffterAttacked(Mob mob, int dameHit, boolean crit) {
+        if (mob == null || mob.zone == null) return; // FIX: Kiểm tra NPE cho mob.zone
         Message msg;
         try {
             msg = new Message(-9);
@@ -59,6 +60,7 @@ public class MobService {
     }
 
     public void sendMobDieAffterAttacked(Mob mob, Player plKill, int dameHit) {
+        if (mob == null || mob.zone == null) return; // FIX: Kiểm tra NPE cho mob.zone
         Message msg;
         try {
             msg = new Message(-12);
@@ -123,6 +125,7 @@ public class MobService {
 
     private List<ItemMap> mobReward(Mob mob, Player player, Message msg) {
         List<ItemMap> itemReward = new ArrayList<>();
+        if (mob == null || mob.zone == null) return itemReward; // FIX: Kiểm tra NPE cho mob.zone
         try {
             itemReward = RewardService.gI().getRewardItems(player, mob,
                     mob.location.x + Util.nextInt(-10, 10), mob.zone.map.yPhysicInTop(mob.location.x, mob.location.y));
@@ -141,6 +144,7 @@ public class MobService {
     }
 
     public int mobAttackPlayer(Mob mob, Player player) {
+        if (mob == null || mob.zone == null) return 0; // FIX: Kiểm tra NPE
         int dameMob = mob.point.getDameAttack();
         if (player.charms.tdDaTrau > System.currentTimeMillis()) {
             dameMob /= 2;
@@ -149,6 +153,7 @@ public class MobService {
     }
 
     public void sendMobAttackMe(Mob mob, Player player, int dame) {
+        if (mob == null || mob.zone == null) return; // FIX: Kiểm tra NPE
         if (!player.isPet) {
             Message msg;
             try {
@@ -164,6 +169,7 @@ public class MobService {
     }
 
     public void sendMobAttackPlayer(Mob mob, Player player) {
+        if (mob == null || mob.zone == null) return; // FIX: Kiểm tra NPE
         Message msg;
         try {
             msg = new Message(-10);
@@ -178,6 +184,7 @@ public class MobService {
     }
 
     public void hoiSinhMob(Mob mob) {
+        if (mob == null || mob.zone == null) return; // FIX: Kiểm tra NPE
         boolean isDie = mob.isDie();
         mob.point.hp = mob.point.maxHp;
         mob.setTiemNang();
@@ -202,6 +209,7 @@ public class MobService {
     }
 
     public void hoiSinhMobDoanhTrai(Mob mob) {
+        if (mob == null || mob.zone == null) return; // FIX: Kiểm tra NPE
         if (mob.tempId == ConstMob.BULON) {
             boolean haveTrungUyTrang = false;
             List<Player> bosses = mob.zone.getBosses();
@@ -273,6 +281,7 @@ public class MobService {
     }
 
     public void dropItemTask(Player player, Mob mob) {
+        if (mob == null || mob.zone == null) return; // FIX: Kiểm tra NPE
         ItemMap itemMap = null;
         switch (mob.tempId) {
             case ConstMob.KHUNG_LONG:
