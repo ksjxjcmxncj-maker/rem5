@@ -28,6 +28,7 @@ public class KhiGasHuyDietService {
     }
 
     public Zone getMapKhiGasHuyDiet(Player player, int mapId) {
+        if (player.zone == null) return null;
         if (MapService.gI().isMapKhiGas(player.zone.map.mapId) && !player.isAdmin()) {
             boolean canJoin = true;
             for (Mob mob : player.zone.mobs) {
@@ -48,6 +49,7 @@ public class KhiGasHuyDietService {
                 return null;
             }
         }
+        if (player.clan == null) return null;
         Zone zone = null;
         if (player.clan != null && player.clan.khiGas != null) {
             for (Zone z : player.clan.khiGas.zones) {
