@@ -36,14 +36,14 @@ echo "  ✅ Backup: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
 # ===== BƯỚC 1: Import bảng mới =====
 echo ""
 echo "[BƯỚC 1] Import bảng database mới từ Teamobi2026..."
-mysql -u "$DB_USER" "$DB_NAME" < ""$SCRIPT_DIR/../docs/teamobi2026_new_tables.sql"
+mysql -u "$DB_USER" "$DB_NAME" < "$SCRIPT_DIR/../docs/teamobi2026_new_tables.sql"
 echo "  ✅ 7 bảng mới: achievement_template, array_head_2_frames, bg_item_template,"
 echo "               clan_task_template, data_badges, task_badges_template, radar"
 
 # ===== BƯỚC 2: ALTER TABLE player =====
 echo ""
 echo "[BƯỚC 2] Thêm cột mới vào bảng player..."
-mysql -u "$DB_USER" "$DB_NAME" < ""$SCRIPT_DIR/../docs/teamobi2026_alter_player.sql"
+mysql -u "$DB_USER" "$DB_NAME" < "$SCRIPT_DIR/../docs/teamobi2026_alter_player.sql"
 echo "  ✅ 40 cột mới thêm vào player (IF NOT EXISTS)"
 
 # ===== BƯỚC 3: Copy Java files =====

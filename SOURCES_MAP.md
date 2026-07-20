@@ -195,5 +195,5 @@ sleep 15; tail -20 ~/logs/server.log
 - `damage` trong `skill_template` là kiểu **Short** → max **32767**, vượt quá server crash!
 - Password NRO là **plain text** (không hash MD5/SHA1)
 - **KHÔNG** đặt `server.ip` trong Config.properties → gây redirect sai
-- Kết nối game: `bore.pub:5798` (IP cố định `159.223.110.159`)
+- Kết nối game: `frp.freefrp.net:21445` (tunnel frpc)
 - Sau khi sửa JAR phải restart server mới có hiệu lực
