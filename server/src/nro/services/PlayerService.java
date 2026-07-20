@@ -230,6 +230,7 @@ public class PlayerService {
 
     public void hoiSinh(Player player) {
         if (player.isDie()) {
+            if (player.zone == null) return;
             boolean canHs = false;
             if (MapService.gI().isMapBlackBallWar(player.zone.map.mapId)
                     || MapService.gI().isMapMabuWar(player.zone.map.mapId)) {
