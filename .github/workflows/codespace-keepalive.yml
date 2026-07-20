@@ -7,7 +7,7 @@ on:
 jobs:
   keepalive:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - name: Install gh CLI
         run: |
@@ -15,30 +15,60 @@ jobs:
             | tar -xz -C /tmp/
           echo "/tmp/gh_2.52.0_linux_amd64/bin" >> "$GITHUB_PATH"
 
-      - name: Ping & Keep Server Alive
+      - name: Check & Fix Services
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          CS_LIST=$(gh codespace list --json name,state \
+          CS=$(gh codespace list --json name,state \
             -q '.[] | select(.state=="Available" or .state=="Starting") | .name' \
-            2>/dev/null | head -3)
-
-          if [ -z "$CS_LIST" ]; then
+            2>/dev/null | head -1)
+          if [ -z "$CS" ]; then
             echo "Không có Codespace nào đang chạy"
             exit 0
           fi
+          echo "Codespace: $CS"
+          gh codespace ssh -c "$CS" -- bash -s << 'REMOTE'
+LOG=~/logs; mkdir -p $LOG; FIXED=0
+chk() { pgrep -f "$1" > /dev/null 2>&1 && { echo "OK $2"; return 0; }; echo "DEAD $2"; return 1; }
 
-          for CS in $CS_LIST; do
-            echo "--- Ping: $CS ---"
-            RESULT=$(timeout 50 gh codespace ssh -c "$CS" -- \
-              'pgrep -f SrcTeam.jar > /dev/null && echo ALIVE || echo DEAD; cat /tmp/server_addr.txt 2>/dev/null' \
-              2>/dev/null)
-            echo "Result: $RESULT"
+chk mariadbd "MariaDB" || {
+  sudo mariadbd --user=mysql --datadir=/var/lib/mysql \
+    --socket=/run/mysqld/mysqld.sock --pid-file=/run/mysqld/mariadbd.pid 2>/dev/null &
+  sleep 6; FIXED=1; }
 
-            if echo "$RESULT" | grep -q "DEAD"; then
-              echo "Server DEAD — restart..."
-              timeout 90 gh codespace ssh -c "$CS" -- \
-                'nohup bash /workspaces/rem5/start.sh > /tmp/restart.log 2>&1 & sleep 20; pgrep -f SrcTeam.jar && echo OK' \
-                2>/dev/null || true
-            fi
-          done
+chk ws_bridge.py "ws_bridge" || {
+  nohup python3 ~/bin/ws_bridge.py >> $LOG/ws_bridge.log 2>&1 &
+  sleep 2; FIXED=1; }
+
+chk cloudflared "cloudflared" || {
+  > $LOG/cloudflared.log
+  nohup /usr/local/bin/cloudflared tunnel --url http://localhost:8080 \
+    --no-autoupdate >> $LOG/cloudflared.log 2>&1 &
+  sleep 25
+  CF=$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' $LOG/cloudflared.log 2>/dev/null | tail -1)
+  if [ -n "$CF" ]; then
+    WSS="${CF/https:/wss:}"; echo "$WSS" > /tmp/server_addr.txt; echo "CF: $CF"
+    source ~/.nro_config 2>/dev/null || true
+    [ -n "${REPLIT_API:-}" ] && curl -s -X POST "$REPLIT_API/api/ws-url" \
+      -H "Content-Type: application/json" -H "x-update-secret: ${SESSION_SECRET:-}" \
+      -d "{\"url\":\"$WSS\"}" || true
+  fi; FIXED=1; }
+
+[ -f ~/nro/SRC/server.ini ] || {
+  printf 'server.port=8888\ndb.driver=com.mysql.cj.jdbc.Driver\ndb.host=localhost\ndb.port=3306\ndb.name=nro1\ndb.user=root\ndb.password=\nadmin.mode=0\nwait.login=3\n' > ~/nro/SRC/server.ini
+  echo "server.ini restored"; }
+
+chk Login.jar "Login" || {
+  cd ~/nro/SRC; nohup java -Xms64m -Xmx256m -jar Login.jar >> $LOG/login.log 2>&1 &
+  sleep 5; FIXED=1; }
+
+chk SrcTeam.jar "SrcTeam" || {
+  cd ~/nro/SRC
+  nohup java -Xms256m -Xmx1g -Djava.awt.headless=true \
+    -XX:+UseG1GC -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=4m \
+    -XX:+ParallelRefProcEnabled -XX:+DisableExplicitGC -Djava.net.preferIPv4Stack=true \
+    -jar SrcTeam.jar >> $LOG/server.log 2>&1 &
+  sleep 12; FIXED=1; }
+
+echo "Fixed=$FIXED WSS=$(cat /tmp/server_addr.txt 2>/dev/null || echo N/A)"
+REMOTE
