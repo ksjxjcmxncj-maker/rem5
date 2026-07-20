@@ -105,6 +105,7 @@ public class ChangeMapService {
         }
     }
     public void exitMap(Player player) {
+        if (player == null || player.zone == null || player.zone.map == null) return;
         if (player != null && player.zone != null) {
             //xử thua pvp
             BlackBallWar.gI().dropBlackBall(player);
