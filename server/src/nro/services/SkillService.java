@@ -219,7 +219,9 @@ public class SkillService {
                     int timeBinh = SkillUtil.getTimeBinh(curSkill.point);//thời gian biến thành bình
 
                     //hút người
-                    for (Player playerMap : player.zone.getHumanoids()) {
+                    if (player.zone == null) return;
+                    List<Player> snapshotPlayers = new java.util.ArrayList<>(player.zone.getHumanoids());
+                    for (Player playerMap : snapshotPlayers) {
                         if (playerMap != null && playerMap != player) {
                             if (player.skillSpecial.dir == -1 && !playerMap.isDie() && Util.getDistance(player, playerMap) <= 500 && this.canAttackPlayer(player, playerMap)) {
                                 player.skillSpecial.playersTaget.add(playerMap);
@@ -231,7 +233,9 @@ public class SkillService {
 
 //                    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
                     //hút quái
-                    for (Mob mobMap : player.zone.mobs) {
+                    if (player.zone == null) return;
+                    List<nro.models.mob.Mob> snapshotMobs = new java.util.ArrayList<>(player.zone.mobs);
+                    for (nro.models.mob.Mob mobMap : snapshotMobs) {
                         if (player.skillSpecial.dir == -1 && !mobMap.isDie() && Util.getDistance(player, mobMap) <= 500) {
                             player.skillSpecial.mobsTaget.add(mobMap);
                         } else if (player.skillSpecial.dir == 1 && !mobMap.isDie() && Util.getDistance(player, mobMap) <= 500) {
@@ -261,7 +265,9 @@ public class SkillService {
                     Thread.sleep(3000);//nghỉ 3s
 
                     //biến quái - bình
-                    for (Mob mobMap : player.zone.mobs) {
+                    if (player.zone == null) return;
+                    List<nro.models.mob.Mob> snapshotMobs = new java.util.ArrayList<>(player.zone.mobs);
+                    for (nro.models.mob.Mob mobMap : snapshotMobs) {
                         if (!MapService.gI().isMapOfflineNe(player.zone.map.mapId)) {
                             if (player.skillSpecial.dir == -1 && !mobMap.isDie() && Util.getDistance(player, mobMap) <= 500) {
                                 player.skillSpecial.mobsTaget.add(mobMap);
@@ -277,7 +283,9 @@ public class SkillService {
                     }
 
                     //biến người - bình
-                    for (Player playerMap : player.zone.getHumanoids()) {
+                    if (player.zone == null) return;
+                    List<Player> snapshotPlayers = new java.util.ArrayList<>(player.zone.getHumanoids());
+                    for (Player playerMap : snapshotPlayers) {
                         if (!MapService.gI().isMapOfflineNe(player.zone.map.mapId)) {
                             if (playerMap != null && playerMap != player) {
                                 if (player.skillSpecial != null && !playerMap.isDie() && Util.getDistance(player, playerMap) <= 500 && this.canAttackPlayer(player, playerMap)) {
@@ -410,7 +418,9 @@ public class SkillService {
                     }
                 } else if (player.skillSpecial.stepSkillSpecial == 1 && !Util.canDoWithTime(player.skillSpecial.lastTimeSkillSpecial, SkillSpecial.TIME_END_24_25)) {
                     if (MapService.gI().isMapOfflineNe(player.zone.map.mapId)) {
-                        for (Player playerMap : player.zone.getHumanoids()) {
+                        if (player.zone == null) return;
+                        List<Player> snapshotPlayers = new java.util.ArrayList<>(player.zone.getHumanoids());
+                        for (Player playerMap : snapshotPlayers) {
                             if (playerMap != null && playerMap.idPlayerForNPC == player.id) {
                                 if (player.skillSpecial.dir == -1 && !playerMap.isDie()
                                         && playerMap.location.x <= player.location.x - 15
@@ -432,7 +442,9 @@ public class SkillService {
                         }
                         return;
                     }
-                    for (Player playerMap : player.zone.getHumanoids()) {
+                    if (player.zone == null) return;
+                    List<Player> snapshotPlayers = new java.util.ArrayList<>(player.zone.getHumanoids());
+                    for (Player playerMap : snapshotPlayers) {
                         if (player.skillSpecial.dir == -1 && !playerMap.isDie()
                                 && playerMap.location.x <= player.location.x - 15
                                 && Math.abs(playerMap.location.x - player.skillSpecial._xPlayer) <= player.skillSpecial._xObjTaget
@@ -453,7 +465,9 @@ public class SkillService {
                             continue;
                         }
                     }
-                    for (Mob mobMap : player.zone.mobs) {
+                    if (player.zone == null) return;
+                    List<nro.models.mob.Mob> snapshotMobs = new java.util.ArrayList<>(player.zone.mobs);
+                    for (nro.models.mob.Mob mobMap : snapshotMobs) {
                         if (player.skillSpecial.dir == -1 && !mobMap.isDie()
                                 && mobMap.location.x <= player.skillSpecial._xPlayer - 15
                                 && Math.abs(mobMap.location.x - player.skillSpecial._xPlayer) <= player.skillSpecial._xObjTaget
@@ -766,7 +780,9 @@ public class SkillService {
                     mobs = new ArrayList<>();
                     if (plTarget != null) {
                         playerAttackPlayer(player, plTarget, false);
-                        for (Mob mob : player.zone.mobs) {
+                        if (player.zone == null) return;
+                        List<nro.models.mob.Mob> snapshotMobs = new java.util.ArrayList<>(player.zone.mobs);
+                        for (nro.models.mob.Mob mob : snapshotMobs) {
                             if (!mob.isDie()
                                     && Util.getDistance(plTarget, mob) <= SkillUtil.getRangeQCKK(player.playerSkill.skillSelect.point)) {
                                 mobs.add(mob);
@@ -775,7 +791,9 @@ public class SkillService {
                     }
                     if (mobTarget != null) {
                         playerAttackMob(player, mobTarget, false, true);
-                        for (Mob mob : player.zone.mobs) {
+                        if (player.zone == null) return;
+                        List<nro.models.mob.Mob> snapshotMobs = new java.util.ArrayList<>(player.zone.mobs);
+                        for (nro.models.mob.Mob mob : snapshotMobs) {
                             if (!mob.equals(mobTarget) && !mob.isDie()
                                     && Util.getDistance(mob, mobTarget) <= SkillUtil.getRangeQCKK(player.playerSkill.skillSelect.point)) {
                                 mobs.add(mob);
@@ -889,7 +907,8 @@ public class SkillService {
                 mobs = new ArrayList<>();
                 players = new ArrayList<>();
                 if (!player.zone.map.isMapOffline || !MapService.gI().isMapOfflineNe(player.zone.map.mapId)) {
-                    List<Player> playersMap = player.zone.getHumanoids();
+                    if (player.zone == null) return;
+                    List<Player> playersMap = new java.util.ArrayList<>(player.zone.getHumanoids());
                     for (Player pl : playersMap) {
                         if (pl != null && !player.equals(pl)) {
                             int distance = Util.getDistance(player, pl);
@@ -907,7 +926,9 @@ public class SkillService {
                     }
                 }
                 if (!player.isBoss) {
-                    for (Mob mob : player.zone.mobs) {
+                    if (player.zone == null) return;
+                    List<nro.models.mob.Mob> snapshotMobs = new java.util.ArrayList<>(player.zone.mobs);
+                    for (nro.models.mob.Mob mob : snapshotMobs) {
                         if (Util.getDistance(player, mob) <= SkillUtil.getRangeStun(player.playerSkill.skillSelect.point)) {
                             mob.effectSkill.startStun(System.currentTimeMillis(), timeStun);
                             mobs.add(mob);
@@ -955,7 +976,8 @@ public class SkillService {
                 int tileHP = SkillUtil.getPercentHPHuytSao(player.playerSkill.skillSelect.point);
                 if (player.zone != null) {
                     if (!player.zone.map.isMapOffline || !MapService.gI().isMapOfflineNe(player.zone.map.mapId)) {
-                        List<Player> playersMap = player.zone.getHumanoids();
+                        if (player.zone == null) return;
+                        List<Player> playersMap = new java.util.ArrayList<>(player.zone.getHumanoids());
                         for (Player pl : playersMap) {
                             if (pl.effectSkill.useTroi) {
                                 EffectSkillService.gI().removeUseTroi(pl);
@@ -1004,16 +1026,20 @@ public class SkillService {
 //                        int percent = SkillUtil.getPercentHpMonkey(player.effectSkill.levelMonkey);
 //                        dame -= percent * (dame / 100);
 //                    }
-                    for (Mob mob : player.zone.mobs) {
+                    if (player.zone == null) return;
+                    List<nro.models.mob.Mob> snapshotMobs = new java.util.ArrayList<>(player.zone.mobs);
+                    for (nro.models.mob.Mob mob : snapshotMobs) {
                         if (Util.getDistance(player, mob) <= rangeBom) {
                             mob.injured(player, dame, true);
                         }
                     }
                     List<Player> playersMap = null;
                     if (player.isBoss) {
-                        playersMap = player.zone.getNotBosses();
+                        if (player.zone == null) return;
+                        playersMap = new java.util.ArrayList<>(player.zone.getNotBosses());
                     } else {
-                        playersMap = player.zone.getHumanoids();
+                        if (player.zone == null) return;
+                        playersMap = new java.util.ArrayList<>(player.zone.getHumanoids());
                     }
                     if (!player.zone.map.isMapOffline || !MapService.gI().isMapOfflineNe(player.zone.map.mapId)) {
                         for (Player pl : playersMap) {
@@ -1068,7 +1094,8 @@ public class SkillService {
                 int point = player.playerSkill.skillSelect.point;
                 if (canHsPlayer(player, plTarget)) {
                     players.add(plTarget);
-                    List<Player> playersMap = player.zone.getNotBosses();
+                    if (player.zone == null) return;
+                    List<Player> playersMap = new java.util.ArrayList<>(player.zone.getNotBosses());
                     for (Player pl : playersMap) {
                         if (!pl.equals(plTarget)) {
                             if (canHsPlayer(player, plTarget) && Util.getDistance(player, pl) <= 300) {
@@ -1514,7 +1541,9 @@ public class SkillService {
                         List<Player> players = new ArrayList<>();
                         Hit hit = new Hit();
                         int dameAttack = player.nPoint.getDameAttackSkillNotFocus();
-                        for (Mob mob : player.zone.mobs) {
+                        if (player.zone == null) return;
+                        List<nro.models.mob.Mob> snapshotMobs = new java.util.ArrayList<>(player.zone.mobs);
+                        for (nro.models.mob.Mob mob : snapshotMobs) {
                             if (player.location.y == mob.location.y) {
                                 if (dir == 1) {// phải
                                     if (mob.location.x >= xPlayer && Util.getDistanceByDir(player.location.x, mob.location.x, dir) <= skillRange) {
@@ -1529,7 +1558,11 @@ public class SkillService {
                             }
                         }
 
-                        for (Player p : player.zone.getPlayers()) {
+                        if (player.zone == null) return;
+
+                        List<Player> snapshotPlayers = new java.util.ArrayList<>(player.zone.getPlayers());
+
+                        for (Player p : snapshotPlayers) {
                             if (SkillService.i.canAttackPlayer(player, p)) {
                                 if (Math.abs(yPlayer - player.location.y) <= 100) {
                                     if (dir == 1) {// phải
