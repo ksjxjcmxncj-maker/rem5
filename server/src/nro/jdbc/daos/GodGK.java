@@ -114,12 +114,10 @@ public class GodGK {
     }
 
     public static Player loadPlayer(Session session) {
-        try {
-            Connection connection = DBService.gI().getConnectionForLogin();
-            PreparedStatement ps = connection.prepareStatement("select * from player where account_id = ? limit 1");
+        try (Connection connection = DBService.gI().getConnectionForLogin();
+             PreparedStatement ps = connection.prepareStatement("select * from player where account_id = ? limit 1")) {
             ps.setInt(1, session.userId);
-            ResultSet rs = ps.executeQuery();
-            try {
+            try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int plHp = 200000000;
                     int plMp = 200000000;
@@ -136,7 +134,7 @@ public class GodGK {
                     player.gender = rs.getByte("gender");
                     player.haveTennisSpaceShip = rs.getBoolean("have_tennis_space_ship");
 
-                    int clanId = rs.getInt("clan_id_sv" + Manager.SERVER);
+                    int clanId = rs.getInt(String.format("clan_id_sv%d", Manager.SERVER));
                     if (clanId != -1) {
                         Clan clan = ClanService.gI().getClanById(clanId);
                         if (clan != null) {
@@ -789,29 +787,27 @@ public class GodGK {
                     player.nPoint.hp = plHp;
                     player.nPoint.mp = plMp;
                     session.player = player;
-                    PreparedStatement ps2 = connection.prepareStatement("update account set last_time_login = ?, ip_address = ? where id = ?");
-                    ps2.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-                    ps2.setString(2, session.ipAddress);
-                    ps2.setInt(3, session.userId);
-                    ps2.executeUpdate();
-                    ps2.close();
 
-                    PreparedStatement ps3 = connection.prepareStatement("update player set lastimelogin = ? where account_id = ?");
-                    ps3.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-                    ps3.setInt(2, session.userId);
-                    ps3.executeUpdate();
-                    ps3.close();
+                    try (PreparedStatement ps2 = connection.prepareStatement("update account set last_time_login = ?, ip_address = ? where id = ?")) {
+                        ps2.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                        ps2.setString(2, session.ipAddress);
+                        ps2.setInt(3, session.userId);
+                        ps2.executeUpdate();
+                    }
 
-                    PreparedStatement ps4 = connection.prepareStatement("update player set tongnap = ? where account_id = ?");
-                    ps4.setInt(1, session.tongnap);
-                    ps4.setInt(2, session.userId);
-                    ps4.executeUpdate();
-                    ps4.close();
+                    try (PreparedStatement ps3 = connection.prepareStatement("update player set lastimelogin = ? where account_id = ?")) {
+                        ps3.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                        ps3.setInt(2, session.userId);
+                        ps3.executeUpdate();
+                    }
+
+                    try (PreparedStatement ps4 = connection.prepareStatement("update player set tongnap = ? where account_id = ?")) {
+                        ps4.setInt(1, session.tongnap);
+                        ps4.setInt(2, session.userId);
+                        ps4.executeUpdate();
+                    }
                     return player;
                 }
-            } finally {
-                rs.close();
-                ps.close();
             }
         } catch (Exception ex) {
             ex.printStackTrace();
