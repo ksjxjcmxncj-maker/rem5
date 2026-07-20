@@ -33,9 +33,11 @@ public class MapService {
     }
 
     public WayPoint getWaypointPlayerIn(Player player) {
-        for (WayPoint wp : player.zone.map.wayPoints) {
-            if (player.location.x >= wp.minX && player.location.x <= wp.maxX && player.location.y >= wp.minY && player.location.y <= wp.maxY) {
-                return wp;
+        if (player.zone != null && player.zone.map != null) {
+            for (WayPoint wp : player.zone.map.wayPoints) {
+                if (player.location.x >= wp.minX && player.location.x <= wp.maxX && player.location.y >= wp.minY && player.location.y <= wp.maxY) {
+                    return wp;
+                }
             }
         }
         return null;
@@ -256,7 +258,7 @@ public class MapService {
                 n.buffExpSatellite = false;
             }
             player.zone.removePlayer(player);
-            if (!player.zone.map.isMapOffline) {
+            if (player.zone != null && player.zone.map != null && !player.zone.map.isMapOffline) {
                 Message msg;
                 try {
                     msg = new Message(-6);
@@ -294,7 +296,8 @@ public class MapService {
     }
 
     public boolean isMapOffline(int mapId) {
-        for (Map map : Manager.MAPS) {
+        java.util.List<Map> snapshot = new java.util.ArrayList<>(Manager.MAPS);
+        for (Map map : snapshot) {
             if (map.mapId == mapId) {
                 return map.isMapOffline;
             }
