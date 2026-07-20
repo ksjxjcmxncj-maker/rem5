@@ -671,6 +671,7 @@ public abstract class Boss extends Player implements BossInterface {
     }
     public List<Player> getListPlayerAttack(int dis) {
         List<Player> Players = new ArrayList<>();
+        if (this.zone == null || this.zone.getHumanoids() == null) return null;
         for (int i = 0; i < this.zone.getHumanoids().size(); i++) {
             Player pl = this.zone.getHumanoids().get(i);
             if (pl != null && !pl.isDie() && !pl.effectSkill.isHoldMabu && Util.getDistance(this, pl) <= dis) {
