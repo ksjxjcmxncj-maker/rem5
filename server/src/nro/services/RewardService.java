@@ -291,7 +291,7 @@ public class RewardService {
                         }
                     } else if (MapService.gI().isMapCold(player.zone.map)) {
                         if (player.clan != null) {
-                            List<Player> plSameClan = player.zone.getPlayersSameClan(player.clan.id);
+                            List<Player> plSameClan = (player.clan == null ? new ArrayList<>() : player.zone.getPlayersSameClan(player.clan.id));
                             if (plSameClan.size() > 0) {
                                 if (Util.isTrue(1, 1999)) {
                                     ItemMap itemMap = new ItemMap(mob.zone, Util.nextInt(ConstItem.GIA_VI_TONG_HOP, ConstItem.PHU_GIA_TAO_MAU), 1, x, yEnd, player.id);
@@ -347,7 +347,7 @@ public class RewardService {
                     Event.getInstance().dropItem(player, mob, list, x, yEnd);
                 }
                 if (mapid == 153) {// map bang
-                    int numMenber = player.zone.getPlayersSameClan(player.clan.id).size();
+                    int numMenber = (player.clan == null ? new ArrayList<>() : player.zone.getPlayersSameClan(player.clan.id)).size();
                     if (numMenber >= 2) {
                         if (Util.isTrue(1, 500)) {
                             player.clanMember.memberPoint++;
