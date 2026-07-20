@@ -155,7 +155,7 @@ public class TaskService {
                         || doneTask(player, ConstTask.TASK_22_4)
                         || doneTask(player, ConstTask.TASK_23_3)
                         || doneTask(player, ConstTask.TASK_24_2)
-                        || doneTask(player, ConstTask.TASK_19_2));
+                        || if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_19_2))) { doneTask(player, ConstTask.TASK_19_2)); }
             case ConstNpc.TRUONG_LAO_GURU:
                 return player.gender == ConstPlayer.NAMEC && (doneTask(player, ConstTask.TASK_11_0)
                         || doneTask(player, ConstTask.TASK_12_0)
@@ -170,7 +170,7 @@ public class TaskService {
                         || doneTask(player, ConstTask.TASK_21_3)
                         || doneTask(player, ConstTask.TASK_22_4)
                         || doneTask(player, ConstTask.TASK_23_3)
-                        || doneTask(player, ConstTask.TASK_19_2));
+                        || if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_19_2))) { doneTask(player, ConstTask.TASK_19_2)); }
             case ConstNpc.VUA_VEGETA:
                 return player.gender == ConstPlayer.XAYDA && (doneTask(player, ConstTask.TASK_11_0)
                         || doneTask(player, ConstTask.TASK_12_0)
@@ -185,7 +185,7 @@ public class TaskService {
                         || doneTask(player, ConstTask.TASK_21_3)
                         || doneTask(player, ConstTask.TASK_22_4)
                         || doneTask(player, ConstTask.TASK_23_3)
-                        || doneTask(player, ConstTask.TASK_19_2));
+                        || if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_19_2))) { doneTask(player, ConstTask.TASK_19_2)); }
             case ConstNpc.ONG_GOHAN:
             case ConstNpc.ONG_MOORI:
             case ConstNpc.ONG_PARAGUS:
@@ -200,10 +200,10 @@ public class TaskService {
                         || doneTask(player, ConstTask.TASK_8_2)
                         || doneTask(player, ConstTask.TASK_10_3)
                         || doneTask(player, ConstTask.TASK_11_1)
-                        || doneTask(player, ConstTask.TASK_24_0));
+                        || if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_24_0))) { doneTask(player, ConstTask.TASK_24_0)); }
             case ConstNpc.BO_MONG:
                 return (doneTask(player, ConstTask.TASK_9_0)
-                        || doneTask(player, ConstTask.TASK_10_2));
+                        || if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_10_2))) { doneTask(player, ConstTask.TASK_10_2)); }
             case ConstNpc.DR_DRIEF:
             case ConstNpc.CARGO:
             case ConstNpc.CUI:
@@ -211,11 +211,11 @@ public class TaskService {
                         || doneTask(player, ConstTask.TASK_7_2)
                         || player.zone.map.mapId == 19 && doneTask(player, ConstTask.TASK_19_3)
                         || player.zone.map.mapId == 19 && doneTask(player, ConstTask.TASK_20_6)
-                        || player.zone.map.mapId == 19 && doneTask(player, ConstTask.TASK_21_4));
+                        || player.zone.map.mapId == 19 && if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_21_4))) { doneTask(player, ConstTask.TASK_21_4)); }
             case ConstNpc.BUNMA:
             case ConstNpc.DENDE:
             case ConstNpc.APPULE:
-                return doneTask(player, ConstTask.TASK_7_2);
+                return if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_7_2)) { doneTask(player, ConstTask.TASK_7_2); }
             case ConstNpc.BUNMA_TL:
                 return (doneTask(player, ConstTask.TASK_24_3)
                         || doneTask(player, ConstTask.TASK_24_5)
@@ -223,16 +223,16 @@ public class TaskService {
                         || doneTask(player, ConstTask.TASK_26_4)
                         || doneTask(player, ConstTask.TASK_27_5)
                         || doneTask(player, ConstTask.TASK_28_5)
-                        || doneTask(player, ConstTask.TASK_29_5));
+                        || if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_29_5))) { doneTask(player, ConstTask.TASK_29_5)); }
             case ConstNpc.CALICK:
-                return doneTask(player, ConstTask.TASK_24_1);
+                return if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_24_1)) { doneTask(player, ConstTask.TASK_24_1); }
             case ConstNpc.THAN_MEO_KARIN:
                 if (player.playerTask.taskMain.id == 29) {
                     if (player.nPoint.dameg >= 10000) {
-                        return doneTask(player, ConstTask.TASK_29_0);
+                        return if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_29_0)) { doneTask(player, ConstTask.TASK_29_0); }
                     }
                 }
-                return doneTask(player, ConstTask.TASK_9_3);
+                return if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_9_3)) { doneTask(player, ConstTask.TASK_9_3); }
         }
         return false;
     }
@@ -240,14 +240,14 @@ public class TaskService {
     //kiểm tra hoàn thành nhiệm vụ gia nhập bang hội
     public void checkDoneTaskJoinClan(Player player) {
 //        if (!player.isBoss && !player.isPet) {
-//            doneTask(player, ConstTask.TASK_12_0);
+//            if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_12_0)) { doneTask(player, ConstTask.TASK_12_0); }
 //        }
     }
 
     //kiểm tra hoàn thành nhiệm vụ lấy item từ rương
     public void checkDoneTaskGetItemBox(Player player) {
         if (!player.isBoss && !player.isPet && !player.isClone) {
-            doneTask(player, ConstTask.TASK_0_3);
+            if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_0_3)) { doneTask(player, ConstTask.TASK_0_3); }
         }
     }
 
@@ -255,28 +255,28 @@ public class TaskService {
     public void checkDoneTaskPower(Player player, long power) {
         if (!player.isBoss && !player.isPet&& !player.isClone) {
             if (power >= 16000) {
-                doneTask(player, ConstTask.TASK_7_0);
+                if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_7_0)) { doneTask(player, ConstTask.TASK_7_0); }
             }
             if (power >= 40000) {
-                doneTask(player, ConstTask.TASK_8_0);
+                if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_8_0)) { doneTask(player, ConstTask.TASK_8_0); }
             }
             if (power >= 200000) {
-                doneTask(player, ConstTask.TASK_14_0);
+                if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_14_0)) { doneTask(player, ConstTask.TASK_14_0); }
             }
             if (power >= 500000) {
-                doneTask(player, ConstTask.TASK_15_0);
+                if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_15_0)) { doneTask(player, ConstTask.TASK_15_0); }
             }
             if (power >= 1500000) {
-                doneTask(player, ConstTask.TASK_17_0);
+                if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_17_0)) { doneTask(player, ConstTask.TASK_17_0); }
             }
             if (power >= 5000000) {
-                doneTask(player, ConstTask.TASK_18_0);
+                if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_18_0)) { doneTask(player, ConstTask.TASK_18_0); }
             }
             if (power >= 50000000) {
-                doneTask(player, ConstTask.TASK_20_0);
+                if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_20_0)) { doneTask(player, ConstTask.TASK_20_0); }
             }
             if (power >= 15000000) {
-                doneTask(player, ConstTask.TASK_19_0);
+                if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_19_0)) { doneTask(player, ConstTask.TASK_19_0); }
             }
         }
     }
@@ -284,7 +284,7 @@ public class TaskService {
     //kiểm tra hoàn thành nhiệm vụ khi player sử dụng tiềm năng
     public void checkDoneTaskUseTiemNang(Player player) {
         if (!player.isBoss && !player.isPet) {
-            doneTask(player, ConstTask.TASK_3_0);
+            if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_3_0)) { doneTask(player, ConstTask.TASK_3_0); }
         }
     }
 
@@ -296,36 +296,37 @@ public class TaskService {
                 case 40:
                 case 41:
                     if (player.location.x >= 635) {
-                        doneTask(player, ConstTask.TASK_0_0);
+                        if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_0_0)) { doneTask(player, ConstTask.TASK_0_0); }
                     }
                     break;
                 case 21:
                 case 22:
                 case 23:
-                    doneTask(player, ConstTask.TASK_0_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_0_1)) { doneTask(player, ConstTask.TASK_0_1); }
                     break;
                 case 47:
-                    doneTask(player, ConstTask.TASK_8_3);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_8_3)) { doneTask(player, ConstTask.TASK_8_3); }
                     break;
                 case 93:
-                    doneTask(player, ConstTask.TASK_25_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_25_0)) { doneTask(player, ConstTask.TASK_25_0); }
                     break;
                 case 104:
-                    doneTask(player, ConstTask.TASK_26_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_26_0)) { doneTask(player, ConstTask.TASK_26_0); }
                     break;
                 case 97:
-                    doneTask(player, ConstTask.TASK_27_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_27_0)) { doneTask(player, ConstTask.TASK_27_0); }
                     break;
                 case 100:
-                    doneTask(player, ConstTask.TASK_28_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_28_0)) { doneTask(player, ConstTask.TASK_28_0); }
                     break;
                 case 103:
-                    doneTask(player, ConstTask.TASK_29_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_29_2)) { doneTask(player, ConstTask.TASK_29_2); }
+                    break;
                 case 114:
-                    doneTask(player, ConstTask.TASK_30_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_30_0)) { doneTask(player, ConstTask.TASK_30_0); }
                     break;
                 case 46:
-                    doneTask(player, ConstTask.TASK_9_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_9_2)) { doneTask(player, ConstTask.TASK_9_2); }
                     break;
             }
         }
@@ -336,20 +337,20 @@ public class TaskService {
         if (!player.isBoss && !player.isPet && item != null) {
             switch (item.itemTemplate.id) {
                 case 73: //đùi gà
-                    doneTask(player, ConstTask.TASK_2_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_2_0)) { doneTask(player, ConstTask.TASK_2_0); }
                     break;
                 case 78: //em bé
-                    doneTask(player, ConstTask.TASK_3_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_3_1)) { doneTask(player, ConstTask.TASK_3_1); }
                     Service.gI().sendFlagBag(player);
                     break;
                 case 20:
-                    doneTask(player, ConstTask.TASK_8_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_8_1)) { doneTask(player, ConstTask.TASK_8_1); }
                     break;
                 case 85:
-                    doneTask(player, ConstTask.TASK_14_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_14_1)) { doneTask(player, ConstTask.TASK_14_1); }
                     break;
                 case 380:
-                    doneTask(player, ConstTask.TASK_29_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_29_1)) { doneTask(player, ConstTask.TASK_29_1); }
                     break;
 
             }
@@ -369,7 +370,7 @@ public class TaskService {
                         case ConstNpc.MAGIC_TREE_NON_UPGRADE_LEFT_PEA:
                         case ConstNpc.MAGIC_TREE_NON_UPGRADE_FULL_PEA:
                             if (select == 0) {
-                                doneTask(player, ConstTask.TASK_0_4);
+                                if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_0_4)) { doneTask(player, ConstTask.TASK_0_4); }
                             }
                     }
                     break;
@@ -378,7 +379,7 @@ public class TaskService {
     }
 
     public void checkDoneTaskKillPlayer(Player player) {
-        doneTask(player, ConstTask.TASK_16_0);
+        if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_16_0)) { doneTask(player, ConstTask.TASK_16_0); }
     }
 
     //kiểm tra hoàn thành nhiệm vụ khi tiêu diệt được boss
@@ -386,94 +387,94 @@ public class TaskService {
         if (player != null && !player.isBoss && !player.isPet && !player.isClone) {
             switch ((int) boss.id) {
                 case BossFactory.TRUNG_UY_TRANG:
-                    doneTask(player, ConstTask.TASK_19_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_19_1)) { doneTask(player, ConstTask.TASK_19_1); }
                     break;
                 case BossFactory.KUKU:
-                    doneTask(player, ConstTask.TASK_21_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_21_0)) { doneTask(player, ConstTask.TASK_21_0); }
                     break;
                 case BossFactory.MAP_DAU_DINH:
-                    doneTask(player, ConstTask.TASK_21_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_21_1)) { doneTask(player, ConstTask.TASK_21_1); }
                     break;
                 case BossFactory.RAMBO:
-                    doneTask(player, ConstTask.TASK_21_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_21_2)) { doneTask(player, ConstTask.TASK_21_2); }
                     break;
                 case BossFactory.SO4:
-                    doneTask(player, ConstTask.TASK_22_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_22_0)) { doneTask(player, ConstTask.TASK_22_0); }
                     break;
                 case BossFactory.SO3:
-                    doneTask(player, ConstTask.TASK_22_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_22_1)) { doneTask(player, ConstTask.TASK_22_1); }
                     break;
                 case BossFactory.SO1:
-                    doneTask(player, ConstTask.TASK_22_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_22_2)) { doneTask(player, ConstTask.TASK_22_2); }
                     break;
                 case BossFactory.TIEU_DOI_TRUONG:
-                    doneTask(player, ConstTask.TASK_22_3);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_22_3)) { doneTask(player, ConstTask.TASK_22_3); }
                     break;
                 case BossFactory.FIDE_DAI_CA_1:
-                    doneTask(player, ConstTask.TASK_23_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_23_0)) { doneTask(player, ConstTask.TASK_23_0); }
                     break;
                 case BossFactory.FIDE_DAI_CA_2:
-                    doneTask(player, ConstTask.TASK_23_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_23_1)) { doneTask(player, ConstTask.TASK_23_1); }
                     break;
                 case BossFactory.FIDE_DAI_CA_3:
-                    doneTask(player, ConstTask.TASK_23_2); //
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_23_2)) { doneTask(player, ConstTask.TASK_23_2); } //
                     break;
                 case BossFactory.ANDROID_19:
-                    doneTask(player, ConstTask.TASK_25_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_25_1)) { doneTask(player, ConstTask.TASK_25_1); }
                     break;
                 case BossFactory.ANDROID_20:
-                    doneTask(player, ConstTask.TASK_25_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_25_2)) { doneTask(player, ConstTask.TASK_25_2); }
                     break;
                 case BossFactory.ANDROID_15:
-                    doneTask(player, ConstTask.TASK_26_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_26_1)) { doneTask(player, ConstTask.TASK_26_1); }
                     break;
                 case BossFactory.ANDROID_14:
-                    doneTask(player, ConstTask.TASK_26_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_26_2)) { doneTask(player, ConstTask.TASK_26_2); }
                     break;
                 case BossFactory.ANDROID_13:
-                    doneTask(player, ConstTask.TASK_26_3);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_26_3)) { doneTask(player, ConstTask.TASK_26_3); }
                     break;
                 case BossFactory.POC:
-                    doneTask(player, ConstTask.TASK_27_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_27_2)) { doneTask(player, ConstTask.TASK_27_2); }
                     break;
                 case BossFactory.PIC:
-                    doneTask(player, ConstTask.TASK_27_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_27_1)) { doneTask(player, ConstTask.TASK_27_1); }
                     break;
                 case BossFactory.KINGKONG:
-                    doneTask(player, ConstTask.TASK_27_3);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_27_3)) { doneTask(player, ConstTask.TASK_27_3); }
                     break;
                 case BossFactory.XEN_BO_HUNG_1:
-                    doneTask(player, ConstTask.TASK_28_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_28_1)) { doneTask(player, ConstTask.TASK_28_1); }
                     break;
                 case BossFactory.XEN_BO_HUNG_2:
-                    doneTask(player, ConstTask.TASK_28_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_28_2)) { doneTask(player, ConstTask.TASK_28_2); }
                     break;
                 case BossFactory.XEN_BO_HUNG_HOAN_THIEN:
-                    doneTask(player, ConstTask.TASK_28_3);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_28_3)) { doneTask(player, ConstTask.TASK_28_3); }
                     break;
                 case BossFactory.XEN_CON:
-                    doneTask(player, ConstTask.TASK_29_3);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_29_3)) { doneTask(player, ConstTask.TASK_29_3); }
                     break;
                 case BossFactory.SIEU_BO_HUNG:
-                    doneTask(player, ConstTask.TASK_29_4);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_29_4)) { doneTask(player, ConstTask.TASK_29_4); }
                     break;
                 case BossFactory.DRABULA_TANG1:
-                    doneTask(player, ConstTask.TASK_30_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_30_1)) { doneTask(player, ConstTask.TASK_30_1); }
                     break;
                 case BossFactory.BUIBUI_TANG2:
-                    doneTask(player, ConstTask.TASK_30_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_30_2)) { doneTask(player, ConstTask.TASK_30_2); }
                     break;
                 case BossFactory.BUIBUI_TANG3:
-                    doneTask(player, ConstTask.TASK_30_3);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_30_3)) { doneTask(player, ConstTask.TASK_30_3); }
                     break;
                 case BossFactory.YACON_TANG4:
-                    doneTask(player, ConstTask.TASK_30_4);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_30_4)) { doneTask(player, ConstTask.TASK_30_4); }
                     break;
                 case BossFactory.DRABULA_TANG5:
-                    doneTask(player, ConstTask.TASK_30_5);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_30_5)) { doneTask(player, ConstTask.TASK_30_5); }
                     break;
                 case BossFactory.MABU_MAP:
-                    doneTask(player, ConstTask.TASK_30_6);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_30_6)) { doneTask(player, ConstTask.TASK_30_6); }
                     break;
             }
         }
@@ -484,21 +485,21 @@ public class TaskService {
         if (!player.isBoss && !player.isPet&& !player.isClone) {
             switch (mob.tempId) {
                 case ConstMob.MOC_NHAN:
-                    doneTask(player, ConstTask.TASK_1_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_1_0)) { doneTask(player, ConstTask.TASK_1_0); }
                     break;
                 case ConstMob.KHUNG_LONG_ME:
-                    doneTask(player, ConstTask.TASK_4_0);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_4_0)) { doneTask(player, ConstTask.TASK_4_0); }
                     break;
                 case ConstMob.LON_LOI_ME:
-                    doneTask(player, ConstTask.TASK_4_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_4_1)) { doneTask(player, ConstTask.TASK_4_1); }
                     break;
                 case ConstMob.QUY_DAT_ME:
-                    doneTask(player, ConstTask.TASK_4_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_4_2)) { doneTask(player, ConstTask.TASK_4_2); }
                     break;
                 case ConstMob.THAN_LAN_BAY:
                 case ConstMob.PHI_LONG:
                 case ConstMob.QUY_BAY:
-                    doneTask(player, ConstTask.TASK_7_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_7_1)) { doneTask(player, ConstTask.TASK_7_1); }
                     break;
 
                 case ConstMob.HEO_RUNG:
@@ -558,28 +559,28 @@ public class TaskService {
                     }
                     break;
                 case ConstMob.TAMBOURINE:
-                    doneTask(player, ConstTask.TASK_17_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_17_2)) { doneTask(player, ConstTask.TASK_17_2); }
                     break;
                 case ConstMob.DRUM:
-                    doneTask(player, ConstTask.TASK_17_3);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_17_3)) { doneTask(player, ConstTask.TASK_17_3); }
                     break;
                 case ConstMob.AKKUMAN:
-                    doneTask(player, ConstTask.TASK_17_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_17_1)) { doneTask(player, ConstTask.TASK_17_1); }
                     break;
                 case ConstMob.NAPPA:
-                    doneTask(player, ConstTask.TASK_20_1);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_20_1)) { doneTask(player, ConstTask.TASK_20_1); }
                     break;
                 case ConstMob.SOLDIER:
-                    doneTask(player, ConstTask.TASK_20_2);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_20_2)) { doneTask(player, ConstTask.TASK_20_2); }
                     break;
                 case ConstMob.APPULE:
-                    doneTask(player, ConstTask.TASK_20_3);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_20_3)) { doneTask(player, ConstTask.TASK_20_3); }
                     break;
                 case ConstMob.RASPBERRY:
-                    doneTask(player, ConstTask.TASK_20_4);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_20_4)) { doneTask(player, ConstTask.TASK_20_4); }
                     break;
                 case ConstMob.THAN_LAN_XANH:
-                    doneTask(player, ConstTask.TASK_20_5);
+                    if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_20_5)) { doneTask(player, ConstTask.TASK_20_5); }
                     break;
                 case ConstMob.XEN_CON_CAP_1:
                 case ConstMob.XEN_CON_CAP_3:
@@ -597,16 +598,16 @@ public class TaskService {
                             for (Player pl : list) {
                                 switch (mob.tempId) {
                                     case ConstMob.XEN_CON_CAP_1:
-                                        doneTask(player, ConstTask.TASK_24_4);
+                                        if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_24_4)) { doneTask(player, ConstTask.TASK_24_4); }
                                         break;
                                     case ConstMob.XEN_CON_CAP_3:
-                                        doneTask(player, ConstTask.TASK_25_3);
+                                        if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_25_3)) { doneTask(player, ConstTask.TASK_25_3); }
                                         break;
                                     case ConstMob.XEN_CON_CAP_5:
-                                        doneTask(player, ConstTask.TASK_27_4);
+                                        if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_27_4)) { doneTask(player, ConstTask.TASK_27_4); }
                                         break;
                                     case ConstMob.XEN_CON_CAP_8:
-                                        doneTask(player, ConstTask.TASK_28_4);
+                                        if (player.playerTask.taskMain != null && !player.playerTask.isTaskDone(ConstTask.TASK_28_4)) { doneTask(player, ConstTask.TASK_28_4); }
                                         break;
                                 }
                             }
