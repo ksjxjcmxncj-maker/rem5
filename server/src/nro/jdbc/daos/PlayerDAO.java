@@ -596,9 +596,15 @@ public class PlayerDAO {
 
                     //data nhiệm vụ
                     JSONArray dataTask = new JSONArray();
-                    dataTask.add(player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count);
-                    dataTask.add(player.playerTask.taskMain.id);
-                    dataTask.add(player.playerTask.taskMain.index);
+                    if (player.playerTask.taskMain != null && player.playerTask.taskMain.subTasks != null) {
+                        dataTask.add(player.playerTask.taskMain.subTasks.get(player.playerTask.taskMain.index).count);
+                        dataTask.add(player.playerTask.taskMain.id);
+                        dataTask.add(player.playerTask.taskMain.index);
+                    } else {
+                        dataTask.add(0);
+                        dataTask.add(0);
+                        dataTask.add(0);
+                    }
                     String task = dataTask.toJSONString();
 
                     //data nhiệm vụ hàng ngày
@@ -612,7 +618,7 @@ public class PlayerDAO {
                     String sideTask = dataSideTask.toJSONString();
 
                     JSONArray dataAchive = new JSONArray();
-                    for (Achivement a : player.playerTask.achivements) {
+                    if (player.playerTask.achivements != null) for (Achivement a : player.playerTask.achivements) {
                         JSONObject jobj = new JSONObject();
                         jobj.put("id", a.getId());
                         jobj.put("count", a.getCount());
