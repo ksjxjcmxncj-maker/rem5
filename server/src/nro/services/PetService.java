@@ -327,7 +327,7 @@ public class PetService {
     }
     
     byte limitPower = 0; // default value or handle differently if necessary
-    if (player.pet.nPoint != null) {
+    if (player.pet != null && player.pet.nPoint != null) {
         limitPower = player.pet.nPoint.limitPower;
     }
 
