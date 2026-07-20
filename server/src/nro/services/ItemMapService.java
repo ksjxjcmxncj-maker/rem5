@@ -44,6 +44,7 @@ public class ItemMapService {
             Service.getInstance().sendMessAllPlayerInMap(itemMap.zone, msg);
             msg.cleanup();
         } catch (Exception e) {
+            e.printStackTrace();
             Log.error(ItemMapService.class, e);
         }
     }
