@@ -8,6 +8,7 @@ import nro.models.player.Player;
 import nro.services.MapService;
 import nro.services.Service;
 import nro.services.func.ChangeMapService;
+import java.util.Iterator;
 
 /**
  *
@@ -25,9 +26,10 @@ public class BossManager {
     }
 
     public void updateAllBoss() {
-        for (int i = BOSSES_IN_GAME.size() - 1; i >= 0; i--) {
+        Iterator<Boss> it = BOSSES_IN_GAME.iterator();
+        while (it.hasNext()) {
             try {
-                Boss boss = BOSSES_IN_GAME.get(i);
+                Boss boss = it.next();
                 if (boss != null) {
                     boss.update();
                 }
@@ -35,7 +37,6 @@ public class BossManager {
                 Log.error(BossManager.class, e);
             }
         }
-
     }
     public void FindBoss(Player player, int id) {
         Boss boss = BossManager.gI().getBossById(id);
