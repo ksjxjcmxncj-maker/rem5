@@ -363,11 +363,10 @@ public class Clan {
 
         String thongTinLeader = "[" + getLeader().id + "," + getLeader().name + "," + getLeader().head + "," + getLeader().body + "," + getLeader().leg + "]";
 
-        PreparedStatement ps = null;
-        try ( Connection con = DBService.gI().getConnectionForClan();) {
-            ps = con.prepareStatement("insert into clan_sv" + Manager.SERVER
+        try (Connection con = DBService.gI().getConnectionForClan();
+             PreparedStatement ps = con.prepareStatement("insert into clan_sv" + Manager.SERVER
                     + "(id, name, slogan, img_id, power_point, max_member, clan_point, level, members, thanhTichBDKB, thongTinLeader) "
-                    + "values (?,?,?,?,?,?,?,?,?,?,?)");
+                    + "values (?,?,?,?,?,?,?,?,?,?,?)")) {
             ps.setInt(1, this.id);
             ps.setString(2, this.name);
             ps.setString(3, this.slogan);
@@ -380,7 +379,6 @@ public class Clan {
             ps.setString(10, topBanDoKhoBau);
             ps.setString(11, thongTinLeader);
             ps.executeUpdate();
-            ps.close();
         } catch (Exception e) {
             Log.error(Clan.class, e, "Có lỗi khi insert clan vào db");
         }
@@ -389,7 +387,8 @@ public class Clan {
     public void update() {
         JSONArray dataArray = new JSONArray();
         JSONObject dataObject = new JSONObject();
-        for (ClanMember cm : this.members) {
+        List<ClanMember> snapshot = new ArrayList<>(this.members);
+        for (ClanMember cm : snapshot) {
             dataObject.put("id", cm.id);
             dataObject.put("name", cm.name);
             dataObject.put("head", cm.head);
@@ -421,7 +420,7 @@ public class Clan {
         try {
             ps = con.prepareStatement("update clan_sv" + Manager.SERVER
                     + " set slogan = ?, img_id = ?, power_point = ?, max_member = ?, clan_point = ?, "
-                    + "level = ?, members = ?, thanhTichBDKB = ?, thongTinLeader where id = ? limit 1");
+                    + "level = ?, members = ?, thanhTichBDKB = ?, thongTinLeader = ? where id = ? limit 1");
             ps.setString(1, this.slogan);
             ps.setInt(2, this.imgId);
             ps.setLong(3, this.powerPoint);
@@ -438,7 +437,7 @@ public class Clan {
             Log.error(Clan.class, e, "Có lỗi khi insert clan vào db");
         } finally {
             try {
-                ps.close();
+                if (ps != null) ps.close();
             } catch (Exception e) {
             Log.error(Clan.class, e);
         }
@@ -470,7 +469,7 @@ public class Clan {
             Log.error(Clan.class, e, "ERROR KHI UPDATE THÀNH TÍCH BANG");
         } finally {
             try {
-                ps.close();
+                if (ps != null) ps.close();
             } catch (Exception e) {
             Log.error(Clan.class, e);
         }
@@ -501,7 +500,7 @@ public class Clan {
             Log.error(Clan.class, e, "ERROR KHI UPDATE THÀNH TÍCH BANG");
         } finally {
             try {
-                ps.close();
+                if (ps != null) ps.close();
             } catch (Exception e) {
             Log.error(Clan.class, e);
         }
@@ -533,7 +532,7 @@ public class Clan {
             Log.error(Clan.class, e, "ERROR KHI UPDATE THÔNG TIN LEADER");
         } finally {
             try {
-                ps.close();
+                if (ps != null) ps.close();
             } catch (Exception e) {
             Log.error(Clan.class, e);
         }
