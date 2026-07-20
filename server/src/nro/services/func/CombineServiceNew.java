@@ -1413,8 +1413,8 @@ public class CombineServiceNew {
                         Service.getInstance().sendThongBao(player, "Không đủ Mảnh vỡ bông tai");
                         return;
                     }
-                    player.inventory.subGold(gold * 100L); // FIX
-                    player.inventory.subGem(gem * 100L); // FIX
+                    player.inventory.subGold((long) gold * 100L); // FIX
+                    player.inventory.subGem((long) gem * 100L); // FIX
                     InventoryService.gI().subQuantityItemsBag(player, manhvobt, countmvbt);
                     if (Util.isTrue(player.combineNew.ratioCombine, 45)) {
                         bongtai.template = ItemService.gI().getTemplate(getidbtsaukhilencap(lvbt));
@@ -1715,7 +1715,7 @@ public class CombineServiceNew {
                 }
             }
             if (bongTai != null && daXanhLam != null && manhHon.quantity >= 99) {
-                player.inventory.subGem(gem * 100L); // FIX
+                player.inventory.subGem((long) gem * 100L); // FIX
                 InventoryService.gI().subQuantityItemsBag(player, manhHon, 99);
                 InventoryService.gI().subQuantityItemsBag(player, daXanhLam, 1);
                 if (Util.isTrue(player.combineNew.ratioCombine, 100)) {
@@ -2354,7 +2354,7 @@ public class CombineServiceNew {
                     }
                 }
                 if (star < MAX_STAR_ITEM) {
-                    player.inventory.subGold(gold * 100L); // FIX
+                    player.inventory.subGold((long) gold * 100L); // FIX
                     player.inventory.subGem(gem);
                     if (Util.isTrue(player.combineNew.ratioCombine, 1700)) {
                         if (optionStar == null) {
@@ -2403,7 +2403,7 @@ public class CombineServiceNew {
                 }
                 if (star < MAX_STAR_ITEM) {
                     for (int i = 0; i < 10; i++) {
-                        player.inventory.subGold(gold * 100L); // FIX
+                        player.inventory.subGold((long) gold * 100L); // FIX
                         player.inventory.subGem(gem);
                         if (Util.isTrue(player.combineNew.ratioCombine, 1700)) {
                             if (optionStar == null) {
@@ -2458,7 +2458,7 @@ public class CombineServiceNew {
                 }
                 if (star < MAX_STAR_ITEM) {
                     for (int i = 0; i < 100; i++) {
-                        player.inventory.subGold(gold * 100L); // FIX
+                        player.inventory.subGold((long) gold * 100L); // FIX
                         player.inventory.subGem(gem);
                         if (Util.isTrue(player.combineNew.ratioCombine, 1700)) {
                             if (optionStar == null) {
@@ -2647,7 +2647,7 @@ public class CombineServiceNew {
                     }
                 }
                 if (level < MAX_LEVEL_ITEM) {
-                    player.inventory.subGold(gold * 100L); // FIX
+                    player.inventory.subGold((long) gold * 100L); // FIX
                     ItemOption option = null;
                     ItemOption option2 = null;
                     for (ItemOption io : trangBi.itemOptions) {
