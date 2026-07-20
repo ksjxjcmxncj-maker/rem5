@@ -1675,7 +1675,7 @@ start_server() {
 
     # 3. Setup DB nếu chưa có
     sudo mysql -e "CREATE DATABASE IF NOT EXISTS \`nro\` CHARACTER SET utf8mb4;" 2>/dev/null || true
-    TABLES=$(sudo mysql nro -se "SHOW TABLES;" 2>/dev/null | wc -l)
+    TABLES=$(sudo mysql nro1 -se "SHOW TABLES;" 2>/dev/null | wc -l)
     if [ "$TABLES" -lt 5 ] && [ -f "$REPO/database/srcteam_nro.sql" ]; then
       sudo mysql nro1 < $REPO/database/srcteam_nro.sql 2>/dev/null && echo "DB imported" || echo "DB import failed"
     fi
