@@ -307,13 +307,14 @@ public class PlayerDAO {
             LocalDateTime currentTime = LocalDateTime.now();
             Timestamp currentTimestamp = Timestamp.valueOf(currentTime);
             ps.setTimestamp(32, currentTimestamp);
-            ps.executeUpdate();
+            if (ps.executeUpdate() > 0) {
+                SieuHangManager.InsertNewPlayer(userId);
+            }
         } catch (Exception e) {
             Log.error(PlayerDAO.class, e, "Lỗi tạo player mới");
         } finally {
             try {
                 ps.close();
-                SieuHangManager.InsertNewPlayer(userId);
             } catch (Exception e) {
             }
         }
