@@ -1,12 +1,11 @@
 #!/bin/bash
-# Keep-alive + Failover + Tunnel Diagnostics cho NRO Server
+# Keep-alive + Failover cho NRO Server (No-TCP / WebSocket Cloud)
 # Lịch: 04:00-23:00 (giờ VN) → chạy | 23:00-04:00 → tắt
-# v2: diagnostics tunnel + tìm server châu Á
+# v5: ws_bridge qua cloud Codespace, loại bỏ frpc/bore/playit
 
 GH_BIN="/tmp/gh_2.52.0_linux_amd64/bin/gh"
 INTERVAL=1200   # 20 phút
 STATE_FILE="/tmp/nro_active"
-PLAYIT_BIN="/tmp/playit_old"
 DIAG_DONE_FILE="/tmp/nro_diag_done"
 
 CODESPACES=(
@@ -84,22 +83,9 @@ run_diagnostics() {
   $GH_BIN codespace ssh -c "$CS" -- bash -s 2>/dev/null << 'REMOTE'
 echo "══════ NRO DIAGNOSTICS ══════"
 
-echo "▶ TUNNELS:"
-pgrep -f frpc >/dev/null && echo "  frpc: ✅ PID=$(pgrep -f frpc|head -1)" || echo "  frpc: ❌"
-pgrep -f playit_old >/dev/null && echo "  playit: ✅ PID=$(pgrep -f playit_old|head -1)" || echo "  playit: ❌"
-
-echo "▶ frpc config:"
-cat /tmp/frpc_nro.toml 2>/dev/null | grep -E 'serverAddr|remotePort' | head -3
-
-echo "▶ LATENCY (Codespace → tunnel servers):"
-for S in "frp.freefrp.net|US-LA" "frp1.freefrp.net|US-NY" "frps.sueme.net|SG" "io.nfd.tw|TW"; do
-  H=$(echo $S|cut -d'|' -f1); R=$(echo $S|cut -d'|' -f2)
-  P=$(ping -c 2 -W 2 "$H" 2>/dev/null | awk -F'/' 'END{if($5)print $5"ms"; else print "N/A"}')
-  # TCP test port 7000 or 21445
-  TCP=$(timeout 3 bash -c "echo >/dev/tcp/$H/7000" 2>/dev/null && echo "TCP:7000✅" || timeout 3 bash -c "echo >/dev/tcp/$H/21445" 2>/dev/null && echo "TCP:21445✅" || echo "TCP:❌")
-  echo "  [$R] $H → ping $P $TCP"
-done
-
+echo "▶ CONNECTIONS (WebSocket / No-TCP):"
+pgrep -f ws_bridge >/dev/null && echo "  ws_bridge: ✅ PID=$(pgrep -f ws_bridge|head -1)" || echo "  ws_bridge: ❌"
+curl -sf http://localhost:8080/health >/dev/null 2>&1 && echo "  ws_bridge health: ✅" || echo "  ws_bridge health: ❌"
 echo "▶ ADMIN ACCOUNT:"
 mysql -u root nro1 -se "
 SELECT CONCAT('acc: ',a.username,' | pass: ',COALESCE(a.password,'null'),' | char: ',COALESCE(p.name,'?'),' | lv: ',COALESCE(p.level,'?'))
@@ -1644,66 +1630,6 @@ REMOTE
 }
 
 # Thử upgrade tunnel sang server châu Á nếu hiện tại là US
-try_upgrade_tunnel() {
-  local CS=$(echo "$1" | cut -d'|' -f1)
-  local TOKEN_VAR=$(echo "$1" | cut -d'|' -f2)
-  local NAME=$(echo "$1" | cut -d'|' -f3)
-
-  [ -f "/tmp/nro_tunnel_upgraded" ] && return 0
-  log "[$NAME] 🌐 Thử tìm frp server châu Á tốt hơn..."
-  auth_as "$TOKEN_VAR"
-
-  local RESULT
-  RESULT=$($GH_BIN codespace ssh -c "$CS" -- bash -s 2>/dev/null << 'REMOTE'
-# Thử frps.sueme.net (Singapore) trước
-for ENTRY in "frps.sueme.net:7000:SG:21001" "io.nfd.tw:7000:TW:21001"; do
-  H=$(echo $ENTRY|cut -d':' -f1)
-  P=$(echo $ENTRY|cut -d':' -f2)
-  R=$(echo $ENTRY|cut -d':' -f3)
-  RP=$(echo $ENTRY|cut -d':' -f4)
-  PING=$(ping -c 2 -W 2 "$H" 2>/dev/null | awk -F'/' 'END{print int($5)}')
-  TCP=$(timeout 3 bash -c "echo >/dev/tcp/$H/$P" 2>/dev/null && echo "ok" || echo "fail")
-  if [ "$TCP" = "ok" ] && [ -n "$PING" ] && [ "$PING" -lt 200 ]; then
-    echo "FOUND:$H:$P:$R:$RP:${PING}ms"
-    break
-  else
-    echo "SKIP:$R ping=${PING}ms tcp=$TCP"
-  fi
-done
-REMOTE
-  )
-  log "Tunnel scan: $RESULT"
-
-  if echo "$RESULT" | grep -q "^FOUND:"; then
-    LINE=$(echo "$RESULT" | grep "^FOUND:" | head -1)
-    FH=$(echo $LINE|cut -d':' -f2)
-    FP=$(echo $LINE|cut -d':' -f3)
-    FR=$(echo $LINE|cut -d':' -f4)
-    RP=$(echo $LINE|cut -d':' -f5)
-
-    log "[$NAME] ✅ Tìm được server $FR ($FH:$FP) → áp dụng..."
-    $GH_BIN codespace ssh -c "$CS" -- bash -s 2>/dev/null << REMOTE2
-cat > /tmp/frpc_nro.toml << EOF
-serverAddr = "$FH"
-serverPort = $FP
-
-[[proxies]]
-name = "nro-tcp"
-type = "tcp"
-localIP = "127.0.0.1"
-localPort = 14445
-remotePort = $RP
-EOF
-sed -i "s|server.sv1=.*|server.sv1=NRO:$FH::$RP|" ~/nro/SRC/Config.properties 2>/dev/null
-pkill -f frpc 2>/dev/null; sleep 2
-nohup /tmp/frp_0.61.0_linux_amd64/frpc -c /tmp/frpc_nro.toml >> ~/logs/frp.log 2>&1 &
-sleep 3
-pgrep -f frpc >/dev/null && echo "frpc OK: $FH:$RP ($FR)" || echo "frpc FAIL"
-REMOTE2
-    touch "/tmp/nro_tunnel_upgraded"
-  fi
-}
-
 start_server() {
   local CS=$(echo "$1" | cut -d'|' -f1)
   local TOKEN_VAR=$(echo "$1" | cut -d'|' -f2)
@@ -1751,68 +1677,25 @@ start_server() {
     sudo mysql -e "CREATE DATABASE IF NOT EXISTS \`nro\` CHARACTER SET utf8mb4;" 2>/dev/null || true
     TABLES=$(sudo mysql nro -se "SHOW TABLES;" 2>/dev/null | wc -l)
     if [ "$TABLES" -lt 5 ] && [ -f "$REPO/database/srcteam_nro.sql" ]; then
-      sudo mysql nro < $REPO/database/srcteam_nro.sql 2>/dev/null && echo "DB imported" || echo "DB import failed"
+      sudo mysql nro1 < $REPO/database/srcteam_nro.sql 2>/dev/null && echo "DB imported" || echo "DB import failed"
     fi
 
     # 4. Kill cũ
     pkill -f "SrcTeam|NgocRongOnline|ServerManager" 2>/dev/null
     pkill -f ws_bridge 2>/dev/null
-    pkill -f frpc 2>/dev/null
     sleep 2
 
-    # 5. frpc tunnel (frp.freefrp.net:21445)
-    if [ ! -f /tmp/frp/frpc ]; then
-      mkdir -p /tmp/frp
-      curl -sL "https://github.com/fatedier/frp/releases/download/v0.61.0/frp_0.61.0_linux_amd64.tar.gz" \
-        | tar -xz --strip-components=1 -C /tmp/frp/ 2>/dev/null || true
-    fi
-    cat > /tmp/frpc_nro.toml << 'EOF'
-serverAddr = "frp.freefrp.net"
-serverPort = 7000
-auth.method = "token"
-auth.token = "freefrp.net"
-[[proxies]]
-name = "nro-game"
-type = "tcp"
-localIP = "127.0.0.1"
-localPort = 14445
-remotePort = 21445
-EOF
-    nohup /tmp/frp/frpc -c /tmp/frpc_nro.toml > ~/logs/frp.log 2>&1 &
-    sleep 2
-
-    # 6. ws_bridge
-    if [ ! -f ~/bin/ws_bridge.py ]; then
-      curl -sf "https://raw.githubusercontent.com/ksjxjcmxncj-maker/rem5/main/scripts/ws_bridge.py" \
-        -o ~/bin/ws_bridge.py 2>/dev/null || cat > ~/bin/ws_bridge.py << 'PYEOF'
-#!/usr/bin/env python3
-import asyncio, websockets
-TARGET_HOST, TARGET_PORT = '127.0.0.1', 14445
-async def handle(ws):
-    try:
-        r, w = await asyncio.open_connection(TARGET_HOST, TARGET_PORT)
-        async def w2t():
-            async for m in ws:
-                w.write(m if isinstance(m, bytes) else m.encode()); await w.drain()
-        async def t2w():
-            while True:
-                d = await r.read(4096)
-                if not d: break
-                await ws.send(d)
-        await asyncio.gather(w2t(), t2w())
-    except: pass
-    finally:
-        try: w.close()
-        except: pass
-async def main():
-    async with websockets.serve(handle, '0.0.0.0', 8080):
-        await asyncio.Future()
-asyncio.run(main())
-PYEOF
-    fi
+    # 5. ws_bridge — kết nối qua cloud Codespace (NO TCP tunnel)
+    # Lấy ws_bridge.py mới nhất từ repo
+    mkdir -p ~/bin
+    curl -sf "https://raw.githubusercontent.com/ksjxjcmxncj-maker/rem5/main/scripts/ws_bridge.py" \
+      -o ~/bin/ws_bridge.py 2>/dev/null || true
     pip install websockets -q 2>/dev/null || true
+    pkill -f ws_bridge 2>/dev/null; sleep 1
     nohup python3 ~/bin/ws_bridge.py > ~/logs/ws_bridge.log 2>&1 &
     sleep 2
+    # Set port 8080 public
+    gh codespace ports visibility 8080:public -c "$CODESPACE_NAME" 2>/dev/null || true
 
     # 7. Login server
     if [ -f ~/nro/SRC/Login.jar ]; then
@@ -1831,19 +1714,12 @@ PYEOF
 
     JAVA_PID=$(pgrep -f SrcTeam | head -1)
     WS_PID=$(pgrep -f ws_bridge | head -1)
-    FRP_PID=$(pgrep -f frpc | head -1)
-    echo "SrcTeam: $JAVA_PID | ws_bridge: $WS_PID | frpc: $FRP_PID"
+    echo "SrcTeam: $JAVA_PID | ws_bridge: $WS_PID"
     [ -n "$JAVA_PID" ] && echo "START_OK" || echo "START_FAIL"
     [ -z "$JAVA_PID" ] && tail -20 ~/logs/server.log
 REMOTE
 
-  # 5. Set port 8080 public (URL cố định GitHub Codespaces)
-  if echo "$CS" | grep -q "improved-fishstick"; then
-    sleep 5
-    $GH_BIN codespace ports visibility 8080:public -c "$CS" 2>/dev/null \
-      && log "[$NAME] ✅ Port 8080 public — wss://improved-fishstick-966vx76qqgx7cqjp-8080.app.github.dev" \
-      || log "[$NAME] ⚠️ Set port public thất bại (thử lại sau)"
-  fi
+  log "[$NAME] ✅ WebSocket URL: wss://$CS-8080.app.github.dev"
 }
 
 revive_or_failover() {
@@ -1853,14 +1729,14 @@ revive_or_failover() {
   log "[$(echo $CURRENT|cut -d'|' -f3)] Thử restart..."
   local OUT; OUT=$(start_server "$CURRENT"); log "$OUT"
 
-  echo "$OUT" | grep -q "START_OK" && { log "✅ Restart thành công"; rm -f "$DIAG_DONE_FILE" "$DIAG_DONE_FILE" "/tmp/nro_tunnel_upgraded"; return 0; }
+  echo "$OUT" | grep -q "START_OK" && { log "✅ Restart thành công"; rm -f "$DIAG_DONE_FILE"; return 0; }
 
   for CS_ENTRY in "${CODESPACES[@]}"; do
     [ "$(echo $CS_ENTRY|cut -d'|' -f1)" = "$CURRENT_CS" ] && continue
     log "Thử [$(echo $CS_ENTRY|cut -d'|' -f3)]..."
     local OUT2; OUT2=$(start_server "$CS_ENTRY"); log "$OUT2"
     if echo "$OUT2" | grep -q "START_OK"; then
-      set_active "$CS_ENTRY"; rm -f "$DIAG_DONE_FILE" "/tmp/nro_tunnel_upgraded"
+      set_active "$CS_ENTRY"; rm -f "$DIAG_DONE_FILE"
       log "🔀 Failover sang [$(echo $CS_ENTRY|cut -d'|' -f3)]!"
       return 0
     fi
@@ -1879,10 +1755,10 @@ stop_active() {
   if [ "$STATE" = "Available" ] || [ "$STATE" = "Running" ]; then
     log "[$NAME] Giờ nghỉ → dừng..."
     $GH_BIN codespace ssh -c "$CS" -- bash -c \
-      "pkill -f 'SrcTeam|NgocRongOnline|ServerManager' 2>/dev/null; pkill -f ws_bridge 2>/dev/null; pkill -f frpc 2>/dev/null; echo Stopped" 2>/dev/null
+      "pkill -f 'SrcTeam|NgocRongOnline|ServerManager' 2>/dev/null; pkill -f ws_bridge 2>/dev/null; echo Stopped" 2>/dev/null
     $GH_BIN codespace stop -c "$CS" 2>/dev/null
     log "[$NAME] 💤 Đã dừng"
-    rm -f "$DIAG_DONE_FILE" "/tmp/nro_tunnel_upgraded"
+    rm -f "$DIAG_DONE_FILE"
   else
     log "[$NAME] Đã tắt ($STATE)"
   fi
