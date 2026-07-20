@@ -92,6 +92,10 @@ public class Trade {
     }
 
     public void addItemTrade(Player pl, byte index, int quantity) {
+        if (quantity <= 0) {
+            Service.getInstance().sendThongBao(pl, "Số lượng không hợp lệ");
+            return;
+        }
         if (index == -1) {
             if (pl.equals(this.player1)) {
                 goldTrade1 = quantity;
@@ -331,9 +335,9 @@ public class Trade {
 
     private void startTrade() {
         byte tradeStatus = SUCCESS;
-        if (player1.inventory.gold + goldTrade2 > player1.inventory.getGoldLimit()) {
+        if ((long)player1.inventory.gold + goldTrade2 > player1.inventory.getGoldLimit()) {
             tradeStatus = FAIL_MAX_GOLD_PLAYER1;
-        } else if (player2.inventory.gold + goldTrade1 > player2.inventory.getGoldLimit()) {
+        } else if ((long)player2.inventory.gold + goldTrade1 > player2.inventory.getGoldLimit()) {
             tradeStatus = FAIL_MAX_GOLD_PLAYER2;
         }
         if (tradeStatus != SUCCESS) {
