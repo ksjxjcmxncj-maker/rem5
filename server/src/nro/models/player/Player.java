@@ -556,7 +556,7 @@ public class Player {
                         boolean doneSendNotify = false;
                         if (this.zone.map.mapId == 57) {
                             if (this.zone.isCheckKilledAll(57)) {
-                                if (doneSendNotify = false) {
+                                if (!doneSendNotify) {
                                     Service.getInstance().sendThongBao(this, "Mau đi tìm độc nhãn");
                                     doneSendNotify = true;
                                 }
