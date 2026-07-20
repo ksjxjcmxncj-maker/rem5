@@ -1,30 +1,18 @@
 #!/bin/bash
-# Bootstrap: cài môi trường + chạy setup NRO
-export DEBIAN_FRONTEND=noninteractive
-LOG=~/logs
-mkdir -p "$LOG"
+# Bootstrap cho Codespace Alpine Linux — cài deps + chạy setup
+export CODESPACE_NAME="${CODESPACE_NAME:-}"
+LOG=~/logs; mkdir -p "$LOG"
 
-echo "[1/5] apt update..."
-sudo apt-get update -qq
-
-echo "[2/5] Java 17..."
-sudo apt-get install -y -qq openjdk-17-jre-headless
+echo "[1] apk deps..."
+sudo apk update -q 2>/dev/null
+sudo apk add -q openjdk17-jre mariadb mariadb-client py3-websockets 2>/dev/null
 java -version 2>&1 | head -1
 
-echo "[3/5] MariaDB..."
-sudo apt-get install -y -qq mariadb-server
-sudo service mariadb start
-sleep 3
-sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY ''; FLUSH PRIVILEGES;" 2>/dev/null || true
-sudo mysql -e "SELECT VERSION();" 2>/dev/null | head -1
+echo "[2] MariaDB init..."
+sudo mysql_install_db --user=mysql --datadir=/var/lib/mysql --skip-test-db >/dev/null 2>&1 || true
+sudo mysqld_safe --user=mysql --datadir=/var/lib/mysql >/dev/null 2>&1 &
+sleep 6
+mysqladmin -u root ping 2>/dev/null && echo "MariaDB OK" || echo "MariaDB FAIL"
 
-echo "[4/5] Python websockets..."
-sudo apt-get install -y -qq python3-pip
-pip3 install websockets -q
-
-echo "[5/5] gh CLI..."
-curl -sL https://github.com/cli/cli/releases/download/v2.52.0/gh_2.52.0_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/ 2>/dev/null
-sudo ln -sf /usr/local/gh_2.52.0_linux_amd64/bin/gh /usr/local/bin/gh 2>/dev/null || true
-
-echo "=== Môi trường OK — chạy setup.sh ==="
+echo "[3] Chạy setup.sh..."
 bash /workspaces/rem5/.devcontainer/setup.sh 2>&1 | tee "$LOG/setup.log"
