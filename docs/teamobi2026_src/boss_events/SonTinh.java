@@ -36,7 +36,7 @@ public class SonTinh extends Boss {
     @Override
     public void reward(Player plKill) {
         int diem = 5;
-        plKill.event.addEventPoint(diem);
+        plKill.event_point += diem;
         Service.gI().sendThongBao(plKill, "+5 Point");
         this.parentBoss.playerReward = plKill;
         this.parentBoss.changeStatus(BossStatus.AFK);

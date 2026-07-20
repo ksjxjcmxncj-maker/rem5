@@ -35,7 +35,7 @@ public class ThuyTinh extends Boss {
     @Override
     public void reward(Player plKill) {
         int diem = 5;
-        plKill.event.addEventPoint(diem);
+        plKill.event_point += diem;
         Service.gI().sendThongBao(plKill, "+5 Point");
         for (Boss boss : this.bossAppearTogether[this.currentLevel]) {
             boss.playerReward = plKill;

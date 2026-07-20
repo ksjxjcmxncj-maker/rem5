@@ -7,7 +7,6 @@ import nro.models.consts.ConstPlayer;
 import nro.models.consts.ConstTask;
 import nro.models.item.Item;
 import java.util.List;
-import nro.models.consts.ConstTaskBadges;
 import nro.models.map.ItemMap;
 import nro.models.player.Player;
 import nro.models.services.EffectSkillService;
@@ -16,7 +15,6 @@ import nro.models.services.Service;
 import nro.models.utils.Util;
 import nro.models.services.SkillService;
 import nro.models.services.TaskService;
-import nro.models.task.BadgesTaskService;
 
 public class Cumber extends Boss {
 
@@ -29,7 +27,8 @@ public class Cumber extends Boss {
 
     @Override
     public void reward(Player plKill) {
-        BadgesTaskService.updateCountBagesTask(plKill, ConstTaskBadges.TRUM_SAN_BOSS, 1);
+        // TODO: BadgesTaskService không có trong SRC-Team — bỏ qua hoặc tự implement
+        // BadgesTaskService.updateCountBagesTask(plKill, ConstTaskBadges.TRUM_SAN_BOSS, 1);
         int x = this.location.x;
         int y = this.zone.map.yPhysicInTop(x, this.location.y - 24);
         int drop = 190;
@@ -77,7 +76,7 @@ public class Cumber extends Boss {
         }
         TaskService.gI().checkDoneTaskKillBoss(plKill, this);
         int diem = 5;
-        plKill.event.addEventPoint(diem);
+        plKill.event_point += diem;
         Service.gI().sendThongBao(plKill, "+5 Point");
     }
     @Override

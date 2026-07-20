@@ -33,7 +33,7 @@ public class Baby extends Boss {
                 Service.gI().dropItemMap(zone, it);
             }
         }
-        plKill.bossBabyDefeatParticipationCount++;
+        plKill.point_sukien += 1; // SRC-Team: dùng point_sukien thay bossBabyDefeatParticipationCount;
         if (Util.isTrue(1, 100)) {
             int[] costumes = {1785, 1786, 1788};
             int costumeId = costumes[Util.nextInt(costumes.length)];

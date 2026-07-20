@@ -4,12 +4,13 @@
 # Chạy trên CODESPACE (không phải Replit)
 # ============================================================
 
-set -e
+set -eo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NRO_DIR="${NRO_DIR:-/home/codespace/nro/SRC}"
 DB_NAME="${DB_NAME:-nro1}"
 DB_USER="${DB_USER:-root}"
-BACKUP_DIR="/backup/nro_upgrades"
+BACKUP_DIR="$HOME/backup/nro_upgrades"
 
 echo "======================================================"
 echo " NRO UPGRADE: Teamobi2026 Features"
@@ -31,21 +32,21 @@ echo "  ✅ Backup: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
 # ===== BƯỚC 1: Import bảng mới =====
 echo ""
 echo "[BƯỚC 1] Import bảng database mới từ Teamobi2026..."
-mysql -u "$DB_USER" "$DB_NAME" < "$(dirname $0)/../docs/teamobi2026_new_tables.sql"
+mysql -u "$DB_USER" "$DB_NAME" < ""$SCRIPT_DIR/../docs/teamobi2026_new_tables.sql"
 echo "  ✅ 7 bảng mới: achievement_template, array_head_2_frames, bg_item_template,"
 echo "               clan_task_template, data_badges, task_badges_template, radar"
 
 # ===== BƯỚC 2: ALTER TABLE player =====
 echo ""
 echo "[BƯỚC 2] Thêm cột mới vào bảng player..."
-mysql -u "$DB_USER" "$DB_NAME" < "$(dirname $0)/../docs/teamobi2026_alter_player.sql"
+mysql -u "$DB_USER" "$DB_NAME" < ""$SCRIPT_DIR/../docs/teamobi2026_alter_player.sql"
 echo "  ✅ 40 cột mới thêm vào player (IF NOT EXISTS)"
 
 # ===== BƯỚC 3: Copy Java files =====
 echo ""
 echo "[BƯỚC 3] Copy Java source files vào $NRO_DIR/src..."
 
-SRC_DIR="$(dirname $0)/../docs/teamobi2026_src"
+SRC_DIR=""$SCRIPT_DIR/../docs/teamobi2026_src"
 JAVA_SRC="$NRO_DIR/src/nro/models"
 
 # Event bosses
@@ -91,6 +92,7 @@ cd "$NRO_DIR"
 
 # Biên dịch từng nhóm
 mkdir -p "$NRO_DIR/build"
+set +e  # Compile errors không abort toàn script
 javac -cp "$NRO_DIR/NgocRongOnline.jar:$NRO_DIR/lib/*" -d "$NRO_DIR/build/" \
     "$NRO_DIR/src/nro/models/boss/event/Halloween/BiMa.java" \
     "$NRO_DIR/src/nro/models/boss/event/Halloween/Doi.java" \
@@ -112,19 +114,26 @@ javac -cp "$NRO_DIR/NgocRongOnline.jar:$NRO_DIR/lib/*" -d "$NRO_DIR/build/" \
     "$NRO_DIR/src/nro/models/boss/trai_dat/SUPER_BOJACK.java" \
     "$NRO_DIR/src/nro/models/boss/Golden_fireza/GoldenFrieza.java" \
     "$NRO_DIR/src/nro/models/boss/Golden_fireza/DeathBeam1.java" \
-    2>&1 || {
-        echo "  ⚠️  Lỗi biên dịch (có thể do class phụ thuộc chưa có)"
-        echo "     Xem log trên để biết chi tiết"
-        echo "     Bỏ qua lỗi này nếu class phụ thuộc sẽ thêm sau"
-    }
+    2>&1
+COMPILE_EXIT=$?
+set -eo pipefail  # Bật lại sau compile
+if [ $COMPILE_EXIT -ne 0 ]; then
+    echo "  ⚠️  Lỗi biên dịch (exit $COMPILE_EXIT)"
+    echo "     Xem log trên để biết chi tiết"
+    echo "     Tiếp tục nhưng JAR sẽ không được update nếu class bị lỗi"
+fi
 
 # ===== BƯỚC 4b: Update JAR =====
 echo ""
 echo "[BƯỚC 4b] Update class files vào NgocRongOnline.jar..."
 cd "$NRO_DIR"
-cp NgocRongOnline.jar NgocRongOnline.jar.bak_$(date +%Y%m%d_%H%M%S)
-jar uf NgocRongOnline.jar -C build/ nro/
-echo "  ✅ JAR đã cập nhật"
+if [ ${COMPILE_EXIT:-0} -eq 0 ]; then
+    cp NgocRongOnline.jar NgocRongOnline.jar.bak_$(date +%Y%m%d_%H%M%S)
+    jar uf NgocRongOnline.jar -C build/ nro/
+    echo "  ✅ JAR đã cập nhật"
+else
+    echo "  ⚠️  Bỏ qua jar uf do compile lỗi — JAR giữ nguyên bản cũ"
+fi
 
 echo ""
 echo "======================================================"
