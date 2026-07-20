@@ -266,7 +266,7 @@ public class PlayerDAO {
             String blackBall = dataBlackBall.toJSONString();
 
             ps = con.prepareStatement("insert into player"
-                    + "(account_id, name, head, gender, have_tennis_space_ship, clan_id_sv" + Manager.SERVER + ", "
+                    + "(account_id, name, head, gender, have_tennis_space_ship, clan_id_sv" + (int) Manager.SERVER + ", "
                     + "data_inventory, data_location, data_point, data_magic_tree, items_body, "
                     + "items_bag, items_box, items_box_lucky_round, friends, enemies, data_intrinsic, data_item_time,"
                     + "data_task, data_mabu_egg, data_charm, skills, skills_shortcut, pet_info, pet_point, pet_body, pet_skill,"
@@ -321,10 +321,12 @@ public class PlayerDAO {
     }
 
     public static void updatePlayer(Player player, Connection connection) {
-        if (player.isDisposed() || player.isSaving()) {
-            return;
+        synchronized (player) {
+            if (player.isDisposed() || player.isSaving()) {
+                return;
+            }
+            player.setSaving(true);
         }
-        player.setSaving(true);
         try {
             int n1s = 0;
             int n2s = 0;
@@ -349,7 +351,7 @@ public class PlayerDAO {
                     int hp = player.nPoint.hp;
                     int mp = player.nPoint.mp;
                     if (player.isDie()) {
-                        mapId = player.gender + 21;
+                        mapId = (player.gender >= 0 && player.gender <= 2) ? player.gender + 21 : 21;
                         x = 300;
                         y = 336;
                         hp = 1;
@@ -357,7 +359,7 @@ public class PlayerDAO {
                     } else {
                         if (MapService.gI().isMapDoanhTrai(mapId) || MapService.gI().isMapBlackBallWar(mapId) || mapId == 126 || mapId == ConstMap.CON_DUONG_RAN_DOC
                                 || mapId == ConstMap.CON_DUONG_RAN_DOC_142 || mapId == ConstMap.CON_DUONG_RAN_DOC_143 || mapId == ConstMap.HOANG_MAC) {
-                            mapId = player.gender + 21;
+                            mapId = (player.gender >= 0 && player.gender <= 2) ? player.gender + 21 : 21;
                             x = 300;
                             y = 336;
                         }
@@ -853,7 +855,7 @@ public class PlayerDAO {
                     PreparedStatement ps = null;
                     try {
                         ps = connection.prepareStatement("UPDATE player SET head = ?, have_tennis_space_ship = ?,"
-                                + "clan_id_sv" + Manager.SERVER + " = ?, data_inventory = ?, data_location = ?, data_point = ?, data_magic_tree = ?,"
+                                + "clan_id_sv" + (int) Manager.SERVER + " = ?, data_inventory = ?, data_location = ?, data_point = ?, data_magic_tree = ?,"
                                 + "items_body = ?, items_bag = ?, items_box = ?, items_box_lucky_round = ?, friends = ?,"
                                 + "enemies = ?, data_intrinsic = ?, data_item_time = ?, data_task = ?, data_mabu_egg = ?,"
                                 + "pet_info = ?, pet_point = ?, pet_body = ?, pet_skill = ?, power = ?, pet_power = ?, "
@@ -940,18 +942,12 @@ public class PlayerDAO {
     }
 
     public static void saveName(Player player) {
-        PreparedStatement ps = null;
-        try (Connection con = DBService.gI().getConnectionForSaveData();) {
-            ps = con.prepareStatement("update player set name = ? where id = ?");
+        try (Connection con = DBService.gI().getConnectionForSaveData();
+             PreparedStatement ps = con.prepareStatement("update player set name = ? where id = ?")) {
             ps.setString(1, player.name);
             ps.setInt(2, (int) player.id);
             ps.executeUpdate();
         } catch (Exception e) {
-        } finally {
-            try {
-                ps.close();
-            } catch (Exception e) {
-            }
         }
     }
 
@@ -1194,6 +1190,5 @@ public class PlayerDAO {
                 }
             }
         }
-
     }
 }
