@@ -119,10 +119,14 @@ public class Controller {
                     if (player != null) {
                         switch (_msg.reader().readByte()) {
                             case 1:
-                                player.magicTree.openMenuTree();
+                                if (player.magicTree != null) {
+                                    player.magicTree.openMenuTree();
+                                }
                                 break;
                             case 2:
-                                player.magicTree.loadMagicTree();
+                                if (player.magicTree != null) {
+                                    player.magicTree.loadMagicTree();
+                                }
                                 break;
                         }
                     }
@@ -461,15 +465,15 @@ public class Controller {
                                 BlackBallWar.gI().changeMap(player, _msg.reader().readByte());
                                 break;
                             default:
-                                Boss boss = BossManager.BOSSES_IN_GAME.get(_msg.reader().readByte());
-                                if (boss.zone != null) {
+                                byte bossKey = _msg.reader().readByte();
+                                Boss boss = BossManager.BOSSES_IN_GAME.get(bossKey);
+                                if (boss != null && boss.zone != null) {
                                     ChangeMapService.gI().changeMap(player, boss.zone.map.mapId, boss.zone.zoneId, boss.location.x, boss.location.y);
-                                    break;
                                 } else {
-                                    Service.getInstance().sendThongBao(player, "Boss này chưa xuất hiện hoặc đang chết");
+                                    Service.getInstance().sendThongBao(player, "Boss này chưa xuất hiện hoặc đã bị tiêu diệt");
                                     Service.getInstance().sendMoney(player);
-                                    break;
                                 }
+                                break;
                         }
                     }
                     break;
