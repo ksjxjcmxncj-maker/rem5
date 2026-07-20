@@ -1,4 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
+set -e
 # ============================================================
 #  TEAMOBI 2026 - TERMUX SERVER MANAGER v1.1
 #  github.com/akah3674-glitch/rem5
@@ -21,7 +22,7 @@ DRIVE_ID="1uH2O2FtuGpIQfIYVAhi9wcuxfDjTQddY"
 DRIVE_URL="https://drive.usercontent.google.com/download?id=${DRIVE_ID}&export=download&authuser=0&confirm=t"
 RAR_FILE="$INSTALL_DIR/Teamobi2026.rar"
 DB_NAME="teamobi2026"
-DB_PASS="teamobi@2026"
+DB_PASS="${DB_PASSWORD:-teamobi@2026}"
 DB_USER="root"
 GAME_PORT=14445
 HTTP_PORT=8080
@@ -102,7 +103,8 @@ do_setup() {
   if [ -f "$RAR_FILE" ] && [ "$(stat -c%s "$RAR_FILE" 2>/dev/null)" -gt 100000000 ]; then
     warn_line "File đã tồn tại ($(du -sh "$RAR_FILE" | cut -f1)), bỏ qua."
   else
-    curl -L --max-redirs 15 --progress-bar --retry 3 -C - "$DRIVE_URL" -o "$RAR_FILE"
+    curl -L --max-redirs 15 --progress-bar --retry 3 -C - "$DRIVE_URL" -o "$RAR_FILE" \
+      || { echo 'Download failed' >&2; exit 1; }
     [ "$(stat -c%s "$RAR_FILE" 2>/dev/null)" -lt 1000000 ] && {
       err_line "Download thất bại! Kiểm tra kết nối."; press_enter; return
     }
@@ -110,7 +112,7 @@ do_setup() {
   fi
 
   info_line "Giải nén RAR..."
-  cd "$INSTALL_DIR" || exit 1
+  cd "$INSTALL_DIR" || { echo 'ERROR: Failed to cd into INSTALL_DIR' >&2; exit 1; }
   unrar x -o+ "$RAR_FILE" "$INSTALL_DIR/" &>/dev/null \
     || unrar e -o+ "$RAR_FILE" "$INSTALL_DIR/" &>/dev/null
 

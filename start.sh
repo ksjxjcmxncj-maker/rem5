@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # NRO Server Start v4 — Codespace
 # postStartCommand: bash start.sh > /tmp/autostart.log 2>&1 &
 LOG=~/logs
@@ -86,7 +87,7 @@ fi
 # 5. Login.jar
 log "[5] Login.jar..."
 pkill -9 -f Login.jar 2>/dev/null || true; sleep 1
-cd ~/nro/SRC
+cd ~/nro/SRC || { echo 'ERROR: Failed to cd into ~/nro/SRC' >&2; exit 1; }
 if [ -f Login.jar ]; then
   nohup java -Xms64m -Xmx256m -jar Login.jar >> "$LOG/login.log" 2>&1 &
   sleep 5
