@@ -9,34 +9,36 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Install gh CLI
         run: |
-          curl -sL https://github.com/cli/cli/releases/download/v2.52.0/gh_2.52.0_linux_amd64.tar.gz | tar -xz -C /tmp/
-          echo "/tmp/gh_2.52.0_linux_amd64/bin" >> $GITHUB_PATH
+          curl -sL https://github.com/cli/cli/releases/download/v2.52.0/gh_2.52.0_linux_amd64.tar.gz \
+            | tar -xz -C /tmp/
+          echo "/tmp/gh_2.52.0_linux_amd64/bin" >> "$GITHUB_PATH"
 
       - name: Ping & Keep Server Alive
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           CS_LIST=$(gh codespace list --json name,state \
-            -q '.[] | select(.state=="Available" or .state=="Starting") | .name' 2>/dev/null | head -3)
+            -q '.[] | select(.state=="Available" or .state=="Starting") | .name' \
+            2>/dev/null | head -3)
+
           if [ -z "$CS_LIST" ]; then
-            echo "Không có Codespace nào đang chạy"; exit 0
+            echo "Không có Codespace nào đang chạy"
+            exit 0
           fi
+
           for CS in $CS_LIST; do
             echo "--- Ping: $CS ---"
-            RESULT=$(timeout 50 gh codespace ssh -c "$CS" -- bash -s 2>/dev/null << 'REMOTE'
-          pgrep -f "SrcTeam|NgocRongOnline" && echo "ALIVE" || echo "DEAD"
-          cat /tmp/server_addr.txt 2>/dev/null || true
-REMOTE
-            )
+            RESULT=$(timeout 50 gh codespace ssh -c "$CS" -- \
+              'pgrep -f SrcTeam.jar > /dev/null && echo ALIVE || echo DEAD; cat /tmp/server_addr.txt 2>/dev/null' \
+              2>/dev/null)
             echo "Result: $RESULT"
+
             if echo "$RESULT" | grep -q "DEAD"; then
               echo "Server DEAD — restart..."
-              timeout 90 gh codespace ssh -c "$CS" -- bash start.sh > /dev/null 2>&1 || true
-              echo "Restart triggered"
+              timeout 90 gh codespace ssh -c "$CS" -- \
+                'nohup bash /workspaces/rem5/start.sh > /tmp/restart.log 2>&1 & sleep 20; pgrep -f SrcTeam.jar && echo OK' \
+                2>/dev/null || true
             fi
           done
