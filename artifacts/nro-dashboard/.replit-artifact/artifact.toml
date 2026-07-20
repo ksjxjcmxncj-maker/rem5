@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "NRO Server Dashboard"
+version = "1.0.0"
+id = "artifacts/nro-dashboard"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22433
+
+[services.development]
+run = "pnpm --filter @workspace/nro-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nro-dashboard", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/nro-dashboard/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22433"
+BASE_PATH = "/"

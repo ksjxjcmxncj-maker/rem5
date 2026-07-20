@@ -1,0 +1,4 @@
+- [Working Preferences](working-preferences.md) — quy tắc làm việc: tiết kiệm token tối đa, sửa đúng chỗ, hoàn thành đến cùng, test trước khi giao
+- [NRO Server trên Codespaces](nro-server-codespaces.md) — tunnel đã đổi sang frp.freefrp.net:21445 (thay bore.pub Ấn Độ); tất cả fix lag đã xong; keep_alive.sh tự restart frp+NRO
+- [NRO SRC-Team Analysis](nro-srcteam-analysis.md) — 417 Java files + 12744-line SQL; docs tại docs/NRO_UPGRADE*.md, scripts/nro_push_upgrade.sh
+- [NRO Teamobi2026 Upgrade](nro-teamobi2026-upgrade.md) — phân tích hoàn tất; SQL + boss Java + kế hoạch 9 bước tại docs/; push lên GitHub rem5 thành công
