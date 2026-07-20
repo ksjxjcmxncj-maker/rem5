@@ -147,7 +147,7 @@ public class CombineServiceNew {
 //        
 //        int chiSO1_trangBiCanChuyenHoa = 0;
 //        
-//        int chiSO_DaTangCap = trangbiChuyenHoa.itemOptions.get(0).param + (trangbiChuyenHoa.itemOptions.get(0).param * (levelTrangBi * 10 / 100));
+//        int chiSO_DaTangCap = trangbiChuyenHoa(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).param) + (trangbiChuyenHoa(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).param) * (levelTrangBi * 10 / 100));
 //
 //        if (soLanRotCap != 0) {
 //            chiSO1_trangBiCanChuyenHoa = chiSO_DaTangCap - chiSO_DaTangCap * ( soLanRotCap * 10 / 100);
@@ -393,7 +393,7 @@ public class CombineServiceNew {
                     }
 
                     // START Tính chỉ số nhân với số cấp và trừ với số lần rớt cấp //
-                    int chisogoc = trangBiCanChuyenHoa.itemOptions.get(0).param;
+                    int chisogoc = trangBiCanChuyenHoa(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).param);
 
                     chisogoc += chisogoc * (levelTrangBi * 0.1);
 
@@ -480,7 +480,7 @@ public class CombineServiceNew {
                     }
 
                     // START Tính chỉ số nhân với số cấp và trừ với số lần rớt cấp //
-                    int chisogoc = trangBiCanChuyenHoa.itemOptions.get(0).param;
+                    int chisogoc = trangBiCanChuyenHoa(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).param);
 
                     chisogoc += chisogoc * (levelTrangBi * 0.1);
 
@@ -1413,8 +1413,8 @@ public class CombineServiceNew {
                         Service.getInstance().sendThongBao(player, "Không đủ Mảnh vỡ bông tai");
                         return;
                     }
-                    player.inventory.subGold(gold); // FIX
-                    player.inventory.subGem(gem); // FIX
+                    player.inventory.subGold(gold * 100L); // FIX
+                    player.inventory.subGem(gem * 100L); // FIX
                     InventoryService.gI().subQuantityItemsBag(player, manhvobt, countmvbt);
                     if (Util.isTrue(player.combineNew.ratioCombine, 45)) {
                         bongtai.template = ItemService.gI().getTemplate(getidbtsaukhilencap(lvbt));
@@ -1600,7 +1600,7 @@ public class CombineServiceNew {
                 }
                 if (luotTay == 0) {
 
-                    player.inventory.subGold(goldPhanra); // FIX
+                    player.inventory.subGold(goldPhanra * 100L); // FIX
                     InventoryService.gI().subQuantityItemsBag(player, sachTuyetKy, 1);
                     InventoryService.gI().addItemBag(player, cuonSachCu, 999);
                     InventoryService.gI().sendItemBags(player);
@@ -1715,7 +1715,7 @@ public class CombineServiceNew {
                 }
             }
             if (bongTai != null && daXanhLam != null && manhHon.quantity >= 99) {
-                player.inventory.subGem(gem); // FIX
+                player.inventory.subGem(gem * 100L); // FIX
                 InventoryService.gI().subQuantityItemsBag(player, manhHon, 99);
                 InventoryService.gI().subQuantityItemsBag(player, daXanhLam, 1);
                 if (Util.isTrue(player.combineNew.ratioCombine, 100)) {
@@ -1909,7 +1909,7 @@ public class CombineServiceNew {
             }
 
             // START Tính chỉ số nhân với số cấp và trừ với số lần rớt cấp //
-            int chisogoc = trangBiCanChuyenHoa.itemOptions.get(0).param;
+            int chisogoc = trangBiCanChuyenHoa(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).param);
 
             chisogoc += chisogoc * (levelTrangBi * 0.1);
 
@@ -1935,7 +1935,7 @@ public class CombineServiceNew {
                     return;
                 } else {
 
-                    trangBiCanChuyenHoa.itemOptions.get(0).param = chisogoc;
+                    trangBiCanChuyenHoa(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).param) = chisogoc;
 
                     for (int i = 1; i < trangBiGoc.itemOptions.size(); i++) {
                         trangBiCanChuyenHoa.itemOptions.add(new ItemOption(trangBiGoc.itemOptions.get(i).optionTemplate.id, trangBiGoc.itemOptions.get(i).param));
@@ -1984,7 +1984,7 @@ public class CombineServiceNew {
             }
 
             // START Tính chỉ số nhân với số cấp và trừ với số lần rớt cấp //
-            int chisogoc = trangBiCanChuyenHoa.itemOptions.get(0).param;
+            int chisogoc = trangBiCanChuyenHoa(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).param);
 
             chisogoc += chisogoc * (levelTrangBi * 0.1);
 
@@ -2010,7 +2010,7 @@ public class CombineServiceNew {
                     return;
                 } else {
 
-                    trangBiCanChuyenHoa.itemOptions.get(0).param = chisogoc;
+                    trangBiCanChuyenHoa(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).param) = chisogoc;
 
                     for (int i = 1; i < trangBiGoc.itemOptions.size(); i++) {
                         trangBiCanChuyenHoa.itemOptions.add(new ItemOption(trangBiGoc.itemOptions.get(i).optionTemplate.id, trangBiGoc.itemOptions.get(i).param));
@@ -2339,7 +2339,7 @@ public class CombineServiceNew {
                 Service.getInstance().sendThongBao(player, "Bạn không đủ vàng, còn thiếu " + Util.numberToMoney(gold) + " vàng nữa");
                 return;
             } else if (player.inventory.gem < gem) {
-                Service.getInstance().sendThongBao(player, "Bạn không đủ vàng, còn thiếu " + Util.mumberToLouis(gem) + " ngọc nữa");
+                Service.getInstance().sendThongBao(player, "Bạn không đủ ngọc, còn thiếu " + Util.mumberToLouis(gem) + " ngọc nữa");
                 return;
             }
             Item item = player.combineNew.itemsCombine.get(0);
@@ -2354,7 +2354,7 @@ public class CombineServiceNew {
                     }
                 }
                 if (star < MAX_STAR_ITEM) {
-                    player.inventory.subGold(gold); // FIX
+                    player.inventory.subGold(gold * 100L); // FIX
                     player.inventory.subGem(gem);
                     if (Util.isTrue(player.combineNew.ratioCombine, 1700)) {
                         if (optionStar == null) {
@@ -2387,7 +2387,7 @@ public class CombineServiceNew {
                 Service.getInstance().sendThongBao(player, "Bạn không đủ vàng, còn thiếu " + Util.numberToMoney(gold * 10) + " vàng nữa");
                 return;
             } else if (player.inventory.gem < (gem * 100)) {
-                Service.getInstance().sendThongBao(player, "Bạn không đủ vàng, còn thiếu " + Util.mumberToLouis(gem * 10) + " ngọc nữa");
+                Service.getInstance().sendThongBao(player, "Bạn không đủ ngọc, còn thiếu " + Util.mumberToLouis(gem * 10) + " ngọc nữa");
                 return;
             }
             Item item = player.combineNew.itemsCombine.get(0);
@@ -2403,7 +2403,7 @@ public class CombineServiceNew {
                 }
                 if (star < MAX_STAR_ITEM) {
                     for (int i = 0; i < 10; i++) {
-                        player.inventory.subGold(gold); // FIX
+                        player.inventory.subGold(gold * 100L); // FIX
                         player.inventory.subGem(gem);
                         if (Util.isTrue(player.combineNew.ratioCombine, 1700)) {
                             if (optionStar == null) {
@@ -2442,7 +2442,7 @@ public class CombineServiceNew {
                 Service.getInstance().sendThongBao(player, "Bạn không đủ vàng, còn thiếu " + Util.numberToMoney(gold * 100) + " vàng nữa");
                 return;
             } else if (player.inventory.gem < (gem * 100)) {
-                Service.getInstance().sendThongBao(player, "Bạn không đủ vàng, còn thiếu " + Util.mumberToLouis(gem * 100) + " ngọc nữa");
+                Service.getInstance().sendThongBao(player, "Bạn không đủ ngọc, còn thiếu " + Util.mumberToLouis(gem * 100) + " ngọc nữa");
                 return;
             }
             Item item = player.combineNew.itemsCombine.get(0);
@@ -2458,7 +2458,7 @@ public class CombineServiceNew {
                 }
                 if (star < MAX_STAR_ITEM) {
                     for (int i = 0; i < 100; i++) {
-                        player.inventory.subGold(gold); // FIX
+                        player.inventory.subGold(gold * 100L); // FIX
                         player.inventory.subGem(gem);
                         if (Util.isTrue(player.combineNew.ratioCombine, 1700)) {
                             if (optionStar == null) {
@@ -2647,7 +2647,7 @@ public class CombineServiceNew {
                     }
                 }
                 if (level < MAX_LEVEL_ITEM) {
-                    player.inventory.subGold(gold); // FIX
+                    player.inventory.subGold(gold * 100L); // FIX
                     ItemOption option = null;
                     ItemOption option2 = null;
                     for (ItemOption io : trangBi.itemOptions) {
@@ -3422,7 +3422,7 @@ public class CombineServiceNew {
 
     private int getParamDaPhaLe(Item daPhaLe) {
         if (daPhaLe.template.type == 30) {
-            return daPhaLe.itemOptions.get(0).param;
+            return daPhaLe(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).param);
         }
         switch (daPhaLe.template.id) {
             case 20:
@@ -3446,7 +3446,7 @@ public class CombineServiceNew {
 
     private int getOptionDaPhaLe(Item daPhaLe) {
         if (daPhaLe.template.type == 30) {
-            return daPhaLe.itemOptions.get(0).optionTemplate.id;
+            return daPhaLe(.itemOptions.isEmpty() ? 0 : .itemOptions.get(0).optionTemplate.id);
         }
         switch (daPhaLe.template.id) {
             case 20:
