@@ -39,7 +39,7 @@ public class Input {
     public static final int CHOOSE_LEVEL_CDRD = 7700;
     public static final int TANG_NGOC_HONG = 505;
     public static final int ADD_ITEM = 506;
-public static final int TAI_taixiu = 323508;
+    public static final int TAI_taixiu = 323508;
     public static final int XIU_taixiu = 323505;
     public static final int CON_SO_MAY_MAN_NGOC = 507;
 
@@ -283,8 +283,8 @@ public static final int TAI_taixiu = 323508;
                 case BAN_THOI_VANG:
                     long soLuong = Long.parseLong(text[0]);
                     Item thoiVang = InventoryService.gI().findItemBagByTemp(player, (short) 457);
-                    if(soLuong < 0){
-                        Service.getInstance().sendThongBao(player, "Đã bán " + soLuong + " bãi cứt" + " thu được 1" + " vàng");
+                    if(soLuong <= 0){
+                        Service.getInstance().sendThongBao(player, "Số lượng không hợp lệ");
                         return;
                     }
                     if (soLuong <= thoiVang.quantity) {
