@@ -83,6 +83,9 @@ public class ClanService {
                 return null;
             }
             clan = Manager.CLANS.get(m);
+            if (clan == null) {
+                return null;
+            }
             if (clan.id == id) {
                 return clan;
             } else if (clan.id > id) {
@@ -97,22 +100,24 @@ public class ClanService {
     }
 
     public static boolean isNullClan(int clanid) {
+        if (clanid < 0 || clanid >= Manager.CLANS.size()) return true;
         return Manager.CLANS.get(clanid) == null;
     }
 
     public List<Clan> getClans(String name) {
         List<Clan> listClan = new ArrayList();
-        if (Manager.CLANS.size() <= 20) {
-            for (Clan clan : Manager.CLANS) {
-                if (clan.name.contains(name)) {
+        List<Clan> snapshot = new ArrayList<>(Manager.CLANS);
+        if (snapshot.size() <= 20) {
+            for (Clan clan : snapshot) {
+                if (clan != null && clan.name.contains(name)) {
                     listClan.add(clan);
                 }
             }
         } else {
-            int n = Util.nextInt(0, Manager.CLANS.size() - 20);
-            for (int i = n; i < Manager.CLANS.size(); i++) {
-                Clan clan = Manager.CLANS.get(i);
-                if (clan.name.contains(name)) {
+            int n = Util.nextInt(0, snapshot.size() - 20);
+            for (int i = n; i < snapshot.size(); i++) {
+                Clan clan = snapshot.get(i);
+                if (clan != null && clan.name.contains(name)) {
                     listClan.add(clan);
                 }
                 if (listClan.size() >= 20) {
@@ -120,15 +125,6 @@ public class ClanService {
                 }
             }
         }
-
-//        for (Clan clan : Manager.CLANS) {
-//            if (clan.name.contains(name)) {
-//                listClan.add(clan);
-//            }
-//            if (listClan.size() >= 20) {
-//                break;
-//            }
-//        }
         return listClan;
     }
 
@@ -154,7 +150,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.error(ClanService.class, e, "error");
 
         }
     }
@@ -174,7 +170,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
-            Log.error(ClanService.class, e);
+            Log.error(ClanService.class, e, "error");
         }
 
     }
@@ -209,7 +205,7 @@ public class ClanService {
                     }
                 }
             } catch (Exception e) {
-            Log.error(ClanService.class, e);
+            Log.error(ClanService.class, e, "error");
         }
         }
 
@@ -228,7 +224,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
-            Log.error(ClanService.class, e);
+            Log.error(ClanService.class, e, "error");
         }
 
     }
@@ -253,7 +249,7 @@ public class ClanService {
             }
 
         } catch (Exception e) {
-            Log.error(ClanService.class, e);
+            Log.error(ClanService.class, e, "error");
         }
     }
 
@@ -269,7 +265,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
-            Log.error(ClanService.class, e);
+            Log.error(ClanService.class, e, "error");
         }
 
     }
@@ -291,7 +287,7 @@ public class ClanService {
                 pl.sendMessage(msg);
                 msg.cleanup();
             } catch (Exception e) {
-            Log.error(ClanService.class, e);
+            Log.error(ClanService.class, e, "error");
         }
         }
     }
@@ -564,7 +560,7 @@ public class ClanService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            Log.error(ClanService.class, e);
+            Log.error(ClanService.class, e, "error");
         }
     }
 
@@ -620,7 +616,7 @@ public class ClanService {
             msg = new Message(Cmd.CLAN_INFO);
             msg.writer().writeInt(-1);
         } catch (Exception e) {
-            Log.error(ClanService.class, e, "Lỗi send my clan " + player.clan.name + " - " + player.clan.id);
+            Log.error(ClanService.class, e, "error");
         }
     }
 
@@ -686,7 +682,7 @@ public class ClanService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-            Log.error(ClanService.class, e, "Lỗi send my clan " + clan.name + " - " + clan.id);
+            Log.error(ClanService.class, e, "error");
         }
     }
 
@@ -703,7 +699,7 @@ public class ClanService {
             Service.getInstance().sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {
-            Log.error(ClanService.class, e);
+            Log.error(ClanService.class, e, "error");
         }
     }
 
@@ -718,35 +714,148 @@ public class ClanService {
             ClanMember cm = player.clan.getClanMember(playerId);
             if (cm != null) {
                 NpcService.gI().createMenuConMeo(player, ConstNpc.CONFIRM_NHUONG_PC, -1,
-                        "Bạn có đồng ý nhường chức bang chủ cho " + cm.name + "?", new String[]{"Đồng ý", "Từ chối"}, playerId);
+                        "Bạn có chắc muốn nhường chức bang chủ cho " + cm.name + " không?",
+                        "Đồng ý", "Từ chối", cm.id);
             }
         }
     }
 
-    public void changeSlogan(Player player, String slogan) {
-        if (slogan.length() > 250) {
-            slogan = slogan.substring(0, 250);
-        }
+    public void nhuongPc(Player player, int playerId) {
         Clan clan = player.clan;
         if (clan != null && clan.isLeader(player)) {
-            clan.slogan = slogan;
-            clan.sendMyClanForAllMember();
+            ClanMember cm = clan.getClanMember(playerId);
+            if (cm != null) {
+                clan.getLeader().role = Clan.MEMBER;
+                cm.role = Clan.LEADER;
+                clan.sendMyClanForAllMember();
+                Service.getInstance().sendThongBao(player, "Bạn đã nhường chức bang chủ cho " + cm.name);
+                Player plNewLeader = Client.gI().getPlayer(playerId);
+                if (plNewLeader != null) {
+                    Service.getInstance().sendThongBao(plNewLeader, player.name + " đã nhường chức bang chủ cho bạn");
+                }
+            }
         }
     }
 
-    public void changeFlag(Player player, int imgId) {
+    private void phongPho(Player player, int playerId) {
         Clan clan = player.clan;
-        if (clan != null && clan.isLeader(player) && imgId != clan.imgId) {
-            //sub money
-            FlagBag flagBag = FlagBagService.gI().getFlagBag(imgId);
+        if (clan != null && clan.isLeader(player)) {
+            ClanMember cm = clan.getClanMember(playerId);
+            if (cm != null) {
+                if (cm.role == Clan.MEMBER) {
+                    cm.role = Clan.DEPUTY;
+                    clan.sendMyClanForAllMember();
+                    Service.getInstance().sendThongBao(player, "Bạn đã phong phó bang cho " + cm.name);
+                    Player pl = Client.gI().getPlayer(playerId);
+                    if (pl != null) {
+                        Service.getInstance().sendThongBao(pl, player.name + " đã phong phó bang cho bạn");
+                    }
+                } else {
+                    Service.getInstance().sendThongBao(player, "Không thể thực hiện");
+                }
+            }
+        }
+    }
 
+    private void catChuc(Player player, int playerId) {
+        Clan clan = player.clan;
+        if (clan != null && clan.isLeader(player)) {
+            ClanMember cm = clan.getClanMember(playerId);
+            if (cm != null) {
+                if (cm.role == Clan.DEPUTY) {
+                    cm.role = Clan.MEMBER;
+                    clan.sendMyClanForAllMember();
+                    Service.getInstance().sendThongBao(player, "Bạn đã cắt chức phó bang của " + cm.name);
+                    Player pl = Client.gI().getPlayer(playerId);
+                    if (pl != null) {
+                        Service.getInstance().sendThongBao(pl, player.name + " đã cắt chức phó bang của bạn");
+                    }
+                } else {
+                    Service.getInstance().sendThongBao(player, "Không thể thực hiện");
+                }
+            }
+        }
+    }
+
+    private void kickOut(Player player, int playerId) {
+        Clan clan = player.clan;
+        if (clan != null && (clan.isLeader(player) || clan.isDeputy(player))) {
+            ClanMember cm = clan.getClanMember(playerId);
+            if (cm != null) {
+                if (clan.getRole(player) < cm.role) {
+                    clan.removeClanMember(cm);
+                    Player pl = Client.gI().getPlayer(playerId);
+                    if (pl != null) {
+                        pl.clan = null;
+                        pl.clanMember = null;
+                        this.sendClanId(pl);
+                        this.sendMyClan(pl);
+                        Service.getInstance().sendFlagBag(pl);
+                        Service.getInstance().sendThongBao(pl, "Bạn đã bị đuổi khỏi bang");
+                    }
+                    clan.sendMyClanForAllMember();
+                    Service.getInstance().sendThongBao(player, "Bạn đã đuổi " + cm.name + " khỏi bang");
+                } else {
+                    Service.getInstance().sendThongBao(player, "Không thể thực hiện");
+                }
+            }
+        }
+    }
+
+    public void leaveClan(Player player) {
+        Clan clan = player.clan;
+        if (clan != null) {
+            if (clan.isLeader(player)) {
+                if (clan.getCurrMembers() > 1) {
+                    Service.getInstance().sendThongBao(player, "Vui lòng nhường chức bang chủ trước khi rời bang");
+                } else {
+                    clan.removeClanMember(player.clanMember);
+                    Manager.CLANS.remove(clan);
+                    player.clan = null;
+                    player.clanMember = null;
+                    this.sendClanId(player);
+                    this.sendMyClan(player);
+                    Service.getInstance().sendFlagBag(player);
+                    Service.getInstance().sendThongBao(player, "Bạn đã giải tán bang thành công");
+                    ItemTimeService.gI().removeTextDoanhTrai(player);
+                }
+            } else {
+                clan.removeClanMember(player.clanMember);
+                player.clan = null;
+                player.clanMember = null;
+                this.sendClanId(player);
+                this.sendMyClan(player);
+                Service.getInstance().sendFlagBag(player);
+                Service.getInstance().sendThongBao(player, "Bạn đã rời bang thành công");
+                clan.sendMyClanForAllMember();
+                ItemTimeService.gI().removeTextDoanhTrai(player);
+            }
+        }
+    }
+
+    private void changeSlogan(Player player, String slogan) {
+        Clan clan = player.clan;
+        if (clan != null && (clan.isLeader(player) || clan.isDeputy(player))) {
+            if (slogan.length() > 100) {
+                Service.getInstance().sendThongBao(player, "Khẩu hiệu không được quá 100 ký tự");
+                return;
+            }
+            clan.slogan = slogan;
+            clan.sendMyClanForAllMember();
+            Service.getInstance().sendThongBao(player, "Đã đổi khẩu hiệu bang thành công");
+        }
+    }
+
+    private void changeFlag(Player player, byte imgId) {
+        Clan clan = player.clan;
+        if (clan != null && (clan.isLeader(player) || clan.isDeputy(player))) {
+            FlagBag flagBag = FlagBagService.gI().getFlagBag(imgId);
             if (flagBag != null) {
                 if (flagBag.gold > 0) {
                     if (player.inventory.gold >= flagBag.gold) {
-                        player.inventory.subGold(flagBag.gold); // FIX
+                        player.inventory.gold -= flagBag.gold;
                     } else {
-                        Service.getInstance().sendThongBao(player, "Bạn không đủ vàng, còn thiếu "
-                                + Util.numberToMoney(flagBag.gold - player.inventory.gold) + " vàng");
+                        Service.getInstance().sendThongBao(player, "Bạn không đủ vàng");
                         return;
                     }
                 }
@@ -754,248 +863,29 @@ public class ClanService {
                     if (player.inventory.getGem() >= flagBag.gem) {
                         player.inventory.subGem(flagBag.gem);
                     } else {
-                        Service.getInstance().sendThongBao(player, "Bạn không đủ ngọc, còn thiếu "
-                                + (flagBag.gem - player.inventory.getGem()) + " ngọc");
+                        Service.getInstance().sendThongBao(player, "Bạn không đủ ngọc");
                         return;
                     }
                 }
                 PlayerService.gI().sendInfoHpMpMoney(player);
-                player.clan.imgId = imgId;
-//                ClanDAO.saveClan(player.clan);
-                clan.sendFlagBagForAllMember();
-
-            }
-        }
-    }
-
-    //Rời khỏi bang
-    public void RemoveClanAll(Player player) {
-        Clan clan = player.clan;
-        if (clan != null) {
-            ClanMember cm = clan.getClanMember((int) player.id);
-            if (cm != null) {
-                if (!clan.isLeader(player)) {
-                    Service.getInstance().sendThongBao(player, "Phải là bang chủ mới có thể giải tán");
-                    return;
-                }
-                clan.removeClanMember(cm);
-                clan.removeMemberOnline(cm, null);
-                cm.clan = null;
-                cm = null;
-
-                player.clan = null;
-                player.clanMember = null;
-                ClanService.gI().sendMyClan(player);
-                ClanService.gI().sendClanId(player);
-                Service.getInstance().sendFlagBag(player);
-                Service.getInstance().sendThongBao(player, "Bạn đã giải tán bang thành công");
-                ItemTimeService.gI().removeTextDoanhTrai(player);
-                clan.name = null;
-                clan.slogan = null;
-                clan.sendRemoveClanForAllMember();
-                removeClan(clan.id);
-            }
-        }
-    }
-
-    //Rời khỏi bang
-    public void leaveClan(Player player) {
-        Clan clan = player.clan;
-        if (clan != null) {
-            ClanMember cm = clan.getClanMember((int) player.id);
-            if (cm != null) {
-                if (clan.isLeader(player)) {
-                    Service.getInstance().sendThongBao(player, "Phải nhường chức bang chủ trước khi rời");
-                    return;
-                }
-                ClanMessage cmg = new ClanMessage(clan);
-                cmg.type = 0;
-                cmg.role = clan.getRole(player);
-                cmg.color = ClanMessage.BLACK;
-                cmg.playerId = (int) player.id;
-                cmg.playerName = player.name;
-                cmg.text = player.name + " đã rời khỏi bang.";
-                cmg.color = ClanMessage.RED;
-
-                clan.removeClanMember(cm);
-                clan.removeMemberOnline(cm, null);
-                cm.clan = null;
-                cm = null;
-                player.clan = null;
-                player.clanMember = null;
-                ClanService.gI().sendMyClan(player);
-                ClanService.gI().sendClanId(player);
-                Service.getInstance().sendFlagBag(player);
-                Service.getInstance().sendThongBao(player, "Bạn đã rời khỏi bang");
-                ItemTimeService.gI().removeTextDoanhTrai(player);
-
+                clan.imgId = imgId;
                 clan.sendMyClanForAllMember();
-                clan.addClanMessage(cmg);
-                clan.sendMessageClan(cmg);
-            }
-        }
-    }
-
-    //Cắt chức
-    public void catChuc(Player player, int memberId) {
-        Clan clan = player.clan;
-        if (clan != null) {
-            if (player.clan.isLeader(player)) {
-                ClanMember cm = clan.getClanMember(memberId);
-                if (cm != null) {
-                    ClanMember leader = clan.getLeader();
-                    ClanMessage cmg = new ClanMessage(clan);
-                    cmg.type = 0;
-                    cmg.role = leader.role;
-                    cmg.playerId = leader.id;
-                    cmg.playerName = leader.name;
-                    cmg.text = "Cắt chức phó bang của " + cm.name;
-                    cmg.color = ClanMessage.RED;
-
-                    cm.role = Clan.MEMBER;
-                    clan.sendMyClanForAllMember();
-
-                    clan.addClanMessage(cmg);
-                    clan.sendMessageClan(cmg);
+                for (ClanMember cm : clan.members) {
+                    Player pl = Client.gI().getPlayer((int) cm.id);
+                    if (pl != null) {
+                        Service.getInstance().sendFlagBag(pl);
+                    }
                 }
+                Service.getInstance().sendThongBao(player, "Đã đổi cờ bang thành công");
             }
         }
     }
 
-    //Đuổi khỏi bang
-    public void kickOut(Player player, int memberId) {
-        Clan clan = player.clan;
-        ClanMember cm = clan.getClanMember(memberId);
-        if (clan != null && cm != null
-                && (clan.isLeader(player) || clan.isDeputy(player) && cm.role == Clan.MEMBER)) {
-            Player plKicked = clan.getPlayerOnline(memberId);
-            ClanMember cmKick = clan.getClanMember((int) player.id);
-            ClanMessage cmg = new ClanMessage(clan);
-            cmg.type = 0;
-            cmg.role = cmKick.role;
-            cmg.playerId = cmKick.id;
-            cmg.playerName = cmKick.name;
-            cmg.text = "Đuổi " + cm.name + " ra khỏi bang.";
-            cmg.color = ClanMessage.RED;
-
-            clan.removeClanMember(cm);
-            clan.removeMemberOnline(cm, null);
-            cm.clan = null;
-            cm = null;
-            if (plKicked != null) {
-                plKicked.clan = null;
-                plKicked.clanMember = null;
-                ClanService.gI().sendMyClan(plKicked);
-                ClanService.gI().sendClanId(plKicked);
-                Service.getInstance().sendFlagBag(plKicked);
-                Service.getInstance().sendThongBao(plKicked, "Bạn đã bị đuổi khỏi bang");
-                ItemTimeService.gI().removeTextDoanhTrai(plKicked);
-            } else {
-                removeClanPlayer(memberId);
-            }
-            clan.sendMyClanForAllMember();
-
-            clan.addClanMessage(cmg);
-            clan.sendMessageClan(cmg);
-        }
-    }
-
-    private void removeClan(int clId) {
-        PreparedStatement ps = null;
-        PreparedStatement ps2 = null;
-        try ( Connection con = DBService.gI().getConnectionForClan();) {
-            ps = con.prepareStatement("DELETE FROM clan_sv"
-                    + Manager.SERVER + " where id = " + clId);
-            ps.executeUpdate();
-            ps.close();
-
-            ps2 = con.prepareStatement("update player set clan_id_sv"
-                    + Manager.SERVER + " = -1 where clan_id_sv" + Manager.SERVER + " = " + clId);
-            ps2.executeUpdate();
-            ps2.close();
-        } catch (Exception ex) {
-            removeClan(clId);
-            return;
-        } finally {
-            try {
-                ps.close();
-                ps2.close();
-            } catch (Exception e) {
-            Log.error(ClanService.class, e);
-        }
-        }
-    }
-
-    private void removeClanPlayer(int plId) {
-        PreparedStatement ps = null;
-        try ( Connection con = DBService.gI().getConnectionForClan();) {
-            ps = con.prepareStatement("update player set clan_id_sv"
-                    + Manager.SERVER + " = -1 where id = " + plId);
-            ps.executeUpdate();
-            ps.close();
-        } catch (Exception ex) {
-            removeClanPlayer(plId);
-            return;
-        } finally {
-            try {
-                ps.close();
-            } catch (Exception e) {
-            Log.error(ClanService.class, e);
-        }
-        }
-    }
-
-    //Phong phó bang
-    public void phongPho(Player player, int memberId) {
-        Clan clan = player.clan;
-        if (clan != null && (clan.isLeader(player) || clan.isDeputy(player))) {
-            ClanMember cm1 = clan.getClanMember(memberId);
-            if (cm1 != null && cm1.role == Clan.MEMBER) {
-                ClanMember cm2 = clan.getClanMember((int) player.id);
-                ClanMessage cmg = new ClanMessage(clan);
-                cmg.type = 0;
-                cmg.role = cm2.role;
-                cmg.playerId = cm2.id;
-                cmg.playerName = cm2.name;
-                cmg.text = "Phong phó bang cho " + cm1.name;
-                cmg.color = ClanMessage.RED;
-
-                cm1.role = Clan.DEPUTY;
-                clan.sendMyClanForAllMember();
-
-                clan.addClanMessage(cmg);
-                clan.sendMessageClan(cmg);
-
-            } else {
-                Service.getInstance().sendThongBao(player, "Không thể thực hiện");
-            }
-        }
-    }
-
-    //Phong chủ bang
-    public void phongPc(Player player, int memberId) {
-        Clan clan = player.clan;
-        if (clan != null && clan.isLeader(player)) {
-            ClanMember leader = clan.getLeader();
-            ClanMember cm = clan.getClanMember(memberId);
-            if (cm != null) {
-                ClanMessage cmg = new ClanMessage(clan);
-                cmg.type = 0;
-                cmg.role = leader.role;
-                cmg.playerId = leader.id;
-                cmg.playerName = leader.name;
-                cmg.text = "Nhường chức bang chủ cho " + cm.name;
-                cmg.color = ClanMessage.RED;
-
-                leader.role = Clan.MEMBER;
-                cm.role = Clan.LEADER;
-//                ClanDAO.updateClanMember(leader);
-//                ClanDAO.updateClanMember(cm);
-                clan.sendMyClanForAllMember();
-
-                clan.addClanMessage(cmg);
-                clan.sendMessageClan(cmg);
-
+    private void checkDoneTaskJoinClan(Clan clan) {
+        for (ClanMember cm : clan.members) {
+            Player pl = Client.gI().getPlayer((int) cm.id);
+            if (pl != null) {
+                TaskService.gI().checkDoneTaskJoinClan(pl);
             }
         }
     }
@@ -1003,82 +893,15 @@ public class ClanService {
     public void chat(Player player, String text) {
         Clan clan = player.clan;
         if (clan != null) {
-            ClanMember cm = clan.getClanMember((int) player.id);
-            if (cm != null) {
-                ClanMessage cmg = new ClanMessage(clan);
-                cmg.type = 0;
-                cmg.playerId = cm.id;
-                cmg.playerName = cm.name;
-                cmg.role = cm.role;
-                cmg.text = text;
-                cmg.color = 0;
-
-                clan.addClanMessage(cmg);
-                clan.sendMessageClan(cmg);
-            }
+            ClanMessage cmg = new ClanMessage(clan);
+            cmg.type = 0;
+            cmg.playerId = (int) player.id;
+            cmg.playerName = player.name;
+            cmg.role = clan.getRole(player);
+            cmg.text = text;
+            cmg.color = 0;
+            clan.addClanMessage(cmg);
+            clan.sendMessageClan(cmg);
         }
     }
-
-    private void checkDoneTaskJoinClan(Clan clan) {
-        if (clan.getMembers().size() >= 3) { // CHECK SỐ THÀNH VIÊN TRONG BANG
-            for (Player player : clan.membersInGame) {
-                TaskService.gI().checkDoneTaskJoinClan(player);
-            }
-        }
-    }
-
-    public void close() {
-        PreparedStatement ps = null;
-
-        try {
-            Connection con = DBService.gI().getConnectionForClan();
-            ps = con.prepareStatement("update clan_sv" + Manager.SERVER
-                    + " set slogan = ?, img_id = ?, power_point = ?, max_member = ?, clan_point = ?, "
-                    + "level = ?, members = ? where id = ? limit 1");
-            for (Clan clan : Manager.CLANS) {
-                JSONArray dataArray = new JSONArray();
-                JSONObject dataObject = new JSONObject();
-                for (ClanMember cm : clan.members) {
-                    dataObject.put("id", cm.id);
-                    dataObject.put("power", cm.powerPoint);
-                    dataObject.put("name", cm.name);
-                    dataObject.put("head", cm.head);
-                    dataObject.put("body", cm.body);
-                    dataObject.put("leg", cm.leg);
-                    dataObject.put("role", cm.role);
-                    dataObject.put("donate", cm.donate);
-                    dataObject.put("receive_donate", cm.receiveDonate);
-                    dataObject.put("member_point", cm.memberPoint);
-                    dataObject.put("clan_point", cm.clanPoint);
-                    dataObject.put("join_time", cm.joinTime);
-                    dataObject.put("ask_pea_time", cm.timeAskPea);
-                    dataArray.add(dataObject.toJSONString());
-                    dataObject.clear();
-                }
-                String member = dataArray.toJSONString();
-
-                ps.setString(1, clan.slogan);
-                ps.setInt(2, clan.imgId);
-                ps.setLong(3, clan.powerPoint);
-                ps.setByte(4, clan.maxMember);
-                ps.setInt(5, clan.clanPoint);
-                ps.setInt(6, clan.level);
-                ps.setString(7, member);
-                ps.setInt(8, clan.id);
-                ps.addBatch();
-                Log.log("SAVE CLAN: " + clan.name + " (" + clan.id + ")");
-            }
-            ps.executeBatch();
-            ps.close();
-        } catch (Exception e) {
-            Log.error(Clan.class, e, "Có lỗi khi update clan vào db");
-        } finally {
-            try {
-                ps.close();
-            } catch (Exception e) {
-            Log.error(ClanService.class, e);
-        }
-        }
-    }
-
 }
