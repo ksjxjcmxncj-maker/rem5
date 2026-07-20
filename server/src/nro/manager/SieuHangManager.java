@@ -237,17 +237,14 @@ public class SieuHangManager {
     public static int GetFreeTurn(Player player) {
         int result = 0;
 
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT turn_per_day FROM `super` WHERE player_id = ?"); 
+        try (Connection connection = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = connection.prepareStatement("SELECT turn_per_day FROM `super` WHERE player_id = ?")) {
             ps.setLong(1, player.id); 
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                result = rs.getInt("turn_per_day");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result = rs.getInt("turn_per_day");
+                }
             }
-
-            rs.close();
-            ps.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -259,27 +256,16 @@ public class SieuHangManager {
         int result = 0;
         Connection connection = null;
 
-        try {
-            connection = DBService.gI().getConnectionForGame();
-            PreparedStatement ps = connection.prepareStatement("SELECT COALESCE(rank, -1) AS `rank` FROM (SELECT 1 AS dummy) dummy_table LEFT JOIN super_top ON super_top.player_id = ?"); 
+        try (Connection con = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = con.prepareStatement("SELECT COALESCE(rank, -1) AS `rank` FROM (SELECT 1 AS dummy) dummy_table LEFT JOIN super_top ON super_top.player_id = ?")) {
             ps.setLong(1, player_id);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                result = rs.getInt("rank");
-            }
-            rs.close();
-            ps.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result = rs.getInt("rank");
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return result;
@@ -288,17 +274,14 @@ public class SieuHangManager {
     public static boolean CanGetRewardDay(long player_id) {
         int result = 0;
 
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT is_get_reward_day FROM `super` WHERE player_id = ?"); 
+        try (Connection connection = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = connection.prepareStatement("SELECT is_get_reward_day FROM `super` WHERE player_id = ?")) {
             ps.setLong(1, player_id); 
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                result = rs.getInt("is_get_reward_day");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result = rs.getInt("is_get_reward_day");
+                }
             }
-
-            rs.close();
-            ps.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -309,17 +292,14 @@ public class SieuHangManager {
     public static Timestamp GetLastTimeCreateClone(Player player) {
         Timestamp result = null;
 
-        try {
-            PreparedStatement ps = DBService.gI().getConnectionForGame().prepareStatement("SELECT modified_date FROM `super` WHERE player_id = ?"); 
+        try (Connection connection = DBService.gI().getConnectionForGame();
+             PreparedStatement ps = connection.prepareStatement("SELECT modified_date FROM `super` WHERE player_id = ?")) {
             ps.setLong(1, player.id); 
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                result = rs.getTimestamp("modified_date");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result = rs.getTimestamp("modified_date");
+                }
             }
-
-            rs.close();
-            ps.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -538,22 +518,17 @@ public class SieuHangManager {
 
     public static List<SieuHangModel> GetInvite(Player player, int playerId) {
         List<SieuHangModel> result = new ArrayList<>();
-        try {
-            Connection connection = DBService.gI().getConnectionForLogin();
-            PreparedStatement ps = connection.prepareStatement("SELECT player_id, `rank` FROM `super` WHERE player_id IN (?, ?)");
+        try (Connection connection = DBService.gI().getConnectionForLogin();
+             PreparedStatement ps = connection.prepareStatement("SELECT player_id, `rank` FROM `super` WHERE player_id IN (?, ?)")) {
             ps.setLong(1, player.id);
             ps.setInt(2, playerId);
-            ResultSet rs = ps.executeQuery();
-            try {
+            try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     SieuHangModel sh = new SieuHangModel();
                     sh.player_id = rs.getInt("player_id");
                     sh.rank = rs.getInt("rank");
                     result.add(sh);
                 }
-            } finally {
-                rs.close();
-                ps.close();
             }
         } catch (Exception ex) {
             ex.printStackTrace();
