@@ -34,7 +34,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
 
@@ -48,7 +49,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
 
@@ -63,7 +65,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Oa oa oa...");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
 
@@ -78,7 +81,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Oa oa oa...");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
 
@@ -109,7 +113,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
 
@@ -140,7 +145,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
 
@@ -171,7 +177,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
     public void createPetBabyFide(Player player, byte... limitPower) {
@@ -201,7 +208,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
     public void createPetBabyKidbu(Player player, byte... limitPower) {
@@ -231,7 +239,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }public void createPetBabyCell(Player player, byte... limitPower) {
         new Thread(() -> {
@@ -260,7 +269,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Xin hãy thu nhận làm đệ tử");
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
     public void changeNormalPet(Player player, int gender) {
@@ -372,7 +382,8 @@ public class PetService {
                 Thread.sleep(1000);
                 Service.getInstance().chatJustForMe(player, player.pet, "Cảm ơn sư phụ đã đặt cho con tên " + name);
             } catch (Exception e) {
-            }
+            Log.error(PetService.class, e);
+        }
         }).start();
     }
 

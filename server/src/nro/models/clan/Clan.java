@@ -206,6 +206,7 @@ public class Clan {
             }
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Clan.class, e);
         }
     }
 
@@ -415,6 +416,7 @@ public class Clan {
         try {
             con = DBService.gI().getConnectionForClan();
         } catch (Exception e) {
+            Log.error(Clan.class, e);
         }
         try {
             ps = con.prepareStatement("update clan_sv" + Manager.SERVER
@@ -438,7 +440,8 @@ public class Clan {
             try {
                 ps.close();
             } catch (Exception e) {
-            }
+            Log.error(Clan.class, e);
+        }
             DBService.gI().release(con);
         }
     }
@@ -454,6 +457,7 @@ public class Clan {
         try {
             con = DBService.gI().getConnectionForClan();
         } catch (Exception e) {
+            Log.error(Clan.class, e);
         }
         try {
             ps = con.prepareStatement("update clan_sv" + Manager.SERVER
@@ -468,7 +472,8 @@ public class Clan {
             try {
                 ps.close();
             } catch (Exception e) {
-            }
+            Log.error(Clan.class, e);
+        }
             DBService.gI().release(con);
         }
     }
@@ -484,6 +489,7 @@ public class Clan {
         try {
             con = DBService.gI().getConnectionForClan();
         } catch (Exception e) {
+            Log.error(Clan.class, e);
         }
         try {
             ps = con.prepareStatement("update player set thanhTichBang = ? where id = ? limit 1");
@@ -497,7 +503,8 @@ public class Clan {
             try {
                 ps.close();
             } catch (Exception e) {
-            }
+            Log.error(Clan.class, e);
+        }
             DBService.gI().release(con);
         }
     }
@@ -513,6 +520,7 @@ public class Clan {
         try {
             con = DBService.gI().getConnectionForClan();
         } catch (Exception e) {
+            Log.error(Clan.class, e);
         }
         try {
             ps = con.prepareStatement("update clan_sv" + Manager.SERVER
@@ -527,7 +535,8 @@ public class Clan {
             try {
                 ps.close();
             } catch (Exception e) {
-            }
+            Log.error(Clan.class, e);
+        }
             DBService.gI().release(con);
         }
     }

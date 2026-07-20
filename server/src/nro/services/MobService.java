@@ -46,7 +46,7 @@ public class MobService {
         Message msg;
         try {
             msg = new Message(-9);
-            msg.writer().writeByte(mob.id);
+            msg.writer().writeShort(mob.id); // FIX: byte overflow → short
             msg.writer().writeInt(mob.point.getHP());
             msg.writer().writeInt(dameHit);
             msg.writer().writeBoolean(crit); // chí mạng
@@ -62,7 +62,7 @@ public class MobService {
         Message msg;
         try {
             msg = new Message(-12);
-            msg.writer().writeByte(mob.id);
+            msg.writer().writeShort(mob.id); // FIX: byte overflow → short
             msg.writer().writeInt(dameHit);
             msg.writer().writeBoolean(plKill.nPoint.isCrit); // crit
             List<ItemMap> items = mobReward(mob, plKill, msg);
@@ -153,7 +153,7 @@ public class MobService {
             Message msg;
             try {
                 msg = new Message(-11);
-                msg.writer().writeByte(mob.id);
+                msg.writer().writeShort(mob.id); // FIX: byte overflow → short
                 msg.writer().writeInt(dame); //dame
                 player.sendMessage(msg);
                 msg.cleanup();
@@ -167,7 +167,7 @@ public class MobService {
         Message msg;
         try {
             msg = new Message(-10);
-            msg.writer().writeByte(mob.id);
+            msg.writer().writeShort(mob.id); // FIX: byte overflow → short
             msg.writer().writeInt((int) player.id);
             msg.writer().writeInt(player.nPoint.hp);
             Service.getInstance().sendMessAnotherNotMeInMap(player, msg);
@@ -189,7 +189,7 @@ public class MobService {
             Message msg;
             try {
                 msg = new Message(-13);
-                msg.writer().writeByte(mob.id);
+                msg.writer().writeShort(mob.id); // FIX: byte overflow → short
                 msg.writer().writeByte(mob.tempId);
                 msg.writer().writeByte(mob.lvMob); //level mob
                 msg.writer().writeInt((mob.point.hp));
@@ -290,6 +290,7 @@ public class MobService {
                         Service.getInstance().sendThongBao(player, "Con thằn lằn mẹ này không giữ ngọc, hãy tìm con thằn lằn mẹ khác");
                     }
                 }
+                        break; // FIX: thiếu break → fall-through bug
             case ConstMob.OC_MUON_HON:
                 if (TaskService.gI().getIdTask(player) == ConstTask.TASK_14_1) {
 //                    if (Util.isTrue(1, 3)) {
@@ -298,6 +299,7 @@ public class MobService {
 //                        Service.getInstance().sendThongBao(player, "Con ốc mượn hồn này không giữ truyện tranh, hãy thử tìm con ốc mượn hồn khác");
 //                    }
                 }
+                        break; // FIX: thiếu break
             case ConstMob.HEO_XAYDA_ME:
                 if (TaskService.gI().getIdTask(player) == ConstTask.TASK_14_1) {
 //                    if (Util.isTrue(1, 3)) {
@@ -306,6 +308,7 @@ public class MobService {
 //                        Service.getInstance().sendThongBao(player, "Con heo xayda mẹ này không giữ truyện tranh, hãy thử tìm con heo xayda mẹ khác");
 //                    }
                 }
+                        break; // FIX: thiếu break
             case ConstMob.OC_SEN:
                 if (TaskService.gI().getIdTask(player) == ConstTask.TASK_14_1) {
 //                    if (Util.isTrue(1, 3)) {

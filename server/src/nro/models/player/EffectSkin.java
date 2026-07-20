@@ -387,7 +387,8 @@ public class EffectSkin {
                     }
                 }
             } catch (Exception e) {
-            }
+            Log.error(EffectSkin.class, e);
+        }
             for (int i = 0; i < cts.length; i++) {
                 if (cts[i] != 0) {
                     count++;
@@ -588,6 +589,7 @@ public class EffectSkin {
             Service.getInstance().sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(EffectSkin.class, e);
         }
     }
 

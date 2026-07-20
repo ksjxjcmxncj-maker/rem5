@@ -91,8 +91,8 @@ public class SkillService {
                 x = message.reader().readShort();
                 y = message.reader().readShort();
             } catch (Exception ex) {
-
-            }
+            Log.error(SkillService.class, ex);
+        }
             if (st == 20 && skillId != player.playerSkill.skillSelect.template.id) {
                 selectSkill(player, skillId);
                 return false;
@@ -199,6 +199,7 @@ public class SkillService {
             affterUseSkill(player, player.playerSkill.skillSelect.template.id);
 
         } catch (Exception ex) {
+            Log.error(SkillService.class, ex);
         }
     }
 
@@ -474,6 +475,7 @@ public class SkillService {
                 }
             }
         } catch (Exception e) {
+            Log.error(SkillService.class, e);
         }
     }
 
@@ -511,6 +513,7 @@ public class SkillService {
             Service.getInstance().sendMessAllPlayerInMap(player, message);
             message.cleanup();
         } catch (Exception e) {
+            Log.error(SkillService.class, e);
         } finally {
             if (message != null) {
                 message.cleanup();
@@ -536,6 +539,7 @@ public class SkillService {
             Service.getInstance().sendMessAllPlayerInMap(player, message);
             message.cleanup();
         } catch (Exception e) {
+            Log.error(SkillService.class, e);
         } finally {
             if (message != null) {
                 message.cleanup();
@@ -561,6 +565,7 @@ public class SkillService {
             Service.getInstance().sendMessAllPlayerInMap(player, message);
             message.cleanup();
         } catch (Exception e) {
+            Log.error(SkillService.class, e);
         } finally {
             if (message != null) {
                 message.cleanup();
@@ -1216,6 +1221,7 @@ public class SkillService {
             Service.getInstance().sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(SkillService.class, e);
         }
     }
 
@@ -1231,6 +1237,7 @@ public class SkillService {
             Service.getInstance().sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(SkillService.class, e);
         }
     }
 
@@ -1440,7 +1447,7 @@ public class SkillService {
             msg.cleanup();
 
         } catch (Exception e) {
-
+            Log.error(SkillService.class, e);
         }
     }
 

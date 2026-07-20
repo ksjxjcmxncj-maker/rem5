@@ -205,7 +205,8 @@ public class ServerManager {
                         sc.close();
                     }
                 } catch (Exception e) {
-                }
+            Log.error(ServerManager.class, e);
+        }
             }
             listenSocket.close();
         } catch (Exception e) {

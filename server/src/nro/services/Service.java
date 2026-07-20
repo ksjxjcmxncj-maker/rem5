@@ -142,6 +142,7 @@ public class Service {
             pl.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -441,7 +442,7 @@ public class Service {
             sendMessAnotherNotMeInMap(pl, msg);
             msg.cleanup();
         } catch (Exception e) {
-
+            Log.error(Service.class, e);
         }
     }
 
@@ -456,7 +457,7 @@ public class Service {
             sendMessAnotherNotMeInMap(pl, msg);
             msg.cleanup();
         } catch (Exception e) {
-
+            Log.error(Service.class, e);
         }
     }
 
@@ -468,6 +469,7 @@ public class Service {
             session.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -483,6 +485,7 @@ public class Service {
             msg.cleanup();
 
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -510,6 +513,7 @@ public class Service {
             Service.getInstance().sendMessAllPlayer(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -603,6 +607,7 @@ public class Service {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -615,6 +620,7 @@ public class Service {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -683,7 +689,8 @@ public class Service {
                 try {
                     Maintenance.gI().start(giay * 60);
                 } catch (Exception e) {
-                }
+            Log.error(Service.class, e);
+        }
                 return;
             } else if (text.startsWith("danhhieu ")) {
                 int sodanhhieu = Integer.parseInt(text.replace("danhhieu ", ""));
@@ -915,7 +922,8 @@ public class Service {
                     addSMTN(player, (byte) 2, power, false);
                     return;
                 } catch (Exception e) {
-                }
+            Log.error(Service.class, e);
+        }
             } else if (text.startsWith("m")) {
                 try {
                     int mapId = Integer.parseInt(text.replace("m", ""));
@@ -1025,6 +1033,7 @@ public class Service {
             session.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1037,6 +1046,7 @@ public class Service {
             me.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1491,6 +1501,7 @@ public class Service {
             sendMessAllPlayerInMap(pl, msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1502,6 +1513,7 @@ public class Service {
             msg.writer().writeByte(pl.type);
             pl.sendMessage(msg);
         } catch (Exception e) {
+            Log.error(Service.class, e);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -1547,6 +1559,7 @@ public class Service {
             session.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1558,6 +1571,7 @@ public class Service {
             this.sendMessAllPlayer(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1600,6 +1614,7 @@ public class Service {
             msg.cleanup();
 
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1618,7 +1633,7 @@ public class Service {
             pl.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-
+            Log.error(Service.class, e);
         }
     }
 
@@ -1636,6 +1651,7 @@ public class Service {
             }
             player.sendMessage(msg);
         } catch (Exception e) {
+            Log.error(Service.class, e);
         } finally {
             if (msg != null) {
                 msg.cleanup();
@@ -1653,7 +1669,7 @@ public class Service {
             sendMessAllPlayerIgnoreMe(player, msg);
             msg.cleanup();
         } catch (Exception e) {
-
+            Log.error(Service.class, e);
         }
     }
 
@@ -1697,7 +1713,8 @@ public class Service {
                         sendMessAllPlayer(msg);
                         msg.cleanup();
                     } catch (Exception e) {
-                    }
+            Log.error(Service.class, e);
+        }
                 } else {
                     sendThongBao(pl, "Sức mạnh phải ít nhất 2tỷ mới có thể chat thế giới");
                 }
@@ -1749,6 +1766,7 @@ public class Service {
             pl.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1803,6 +1821,7 @@ public class Service {
             me.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1847,6 +1866,7 @@ public class Service {
             pl.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1869,6 +1889,7 @@ public class Service {
             msg.cleanup();
 
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1887,6 +1908,7 @@ public class Service {
             pl.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -1905,6 +1927,7 @@ public class Service {
             sendMessAllPlayerInMap(zone, msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2044,6 +2067,7 @@ public class Service {
             sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2078,6 +2102,7 @@ public class Service {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2089,6 +2114,7 @@ public class Service {
             pl.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2110,6 +2136,7 @@ public class Service {
             plReceive.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2138,6 +2165,7 @@ public class Service {
             session.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2153,6 +2181,7 @@ public class Service {
             session.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2164,6 +2193,7 @@ public class Service {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2187,6 +2217,7 @@ public class Service {
             session.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2198,6 +2229,7 @@ public class Service {
             pl.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2214,6 +2246,7 @@ public class Service {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2260,6 +2293,7 @@ public class Service {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2309,6 +2343,7 @@ public class Service {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2523,6 +2558,7 @@ public class Service {
             msg.cleanup();
 
         } catch (Exception e) {
+            Log.error(Service.class, e);
         }
     }
 
@@ -2616,6 +2652,7 @@ public class Service {
             msg.writer().writeUTF(text.replace("$", ""));
             sendMessAllPlayer(msg);
         } catch (Exception e) {
+            Log.error(Service.class, e);
         } finally {
             if (msg != null) {
                 msg.cleanup();

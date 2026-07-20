@@ -174,6 +174,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
+            Log.error(ClanService.class, e);
         }
 
     }
@@ -208,7 +209,8 @@ public class ClanService {
                     }
                 }
             } catch (Exception e) {
-            }
+            Log.error(ClanService.class, e);
+        }
         }
 
     }
@@ -226,6 +228,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
+            Log.error(ClanService.class, e);
         }
 
     }
@@ -250,6 +253,7 @@ public class ClanService {
             }
 
         } catch (Exception e) {
+            Log.error(ClanService.class, e);
         }
     }
 
@@ -265,6 +269,7 @@ public class ClanService {
                     break;
             }
         } catch (Exception e) {
+            Log.error(ClanService.class, e);
         }
 
     }
@@ -286,7 +291,8 @@ public class ClanService {
                 pl.sendMessage(msg);
                 msg.cleanup();
             } catch (Exception e) {
-            }
+            Log.error(ClanService.class, e);
+        }
         }
     }
 
@@ -558,7 +564,7 @@ public class ClanService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
-
+            Log.error(ClanService.class, e);
         }
     }
 
@@ -697,6 +703,7 @@ public class ClanService {
             Service.getInstance().sendMessAllPlayerInMap(player, msg);
             msg.cleanup();
         } catch (Exception e) {
+            Log.error(ClanService.class, e);
         }
     }
 
@@ -914,7 +921,8 @@ public class ClanService {
                 ps.close();
                 ps2.close();
             } catch (Exception e) {
-            }
+            Log.error(ClanService.class, e);
+        }
         }
     }
 
@@ -932,7 +940,8 @@ public class ClanService {
             try {
                 ps.close();
             } catch (Exception e) {
-            }
+            Log.error(ClanService.class, e);
+        }
         }
     }
 
@@ -1067,7 +1076,8 @@ public class ClanService {
             try {
                 ps.close();
             } catch (Exception e) {
-            }
+            Log.error(ClanService.class, e);
+        }
         }
     }
 
