@@ -109,10 +109,12 @@ public class Pet extends Player {
         goingHome = true;
         new Thread(() -> {
             try {
+                if (master == null || master.isDisposed()) return;
                 Pet.this.status = Pet.ATTACK;
                 Thread.sleep(2000);
             } catch (Exception e) {
             }
+            if (master == null || master.isDisposed()) return;
             MapService.gI().goToMap(this, MapService.gI().getMapCanJoin(this, master.gender + 21));
             this.zone.load_Me_To_Another(this);
             Pet.this.status = Pet.GOHOME;
@@ -731,98 +733,69 @@ public class Pet extends Player {
         return mobAtt;
     }
 
-    private void updatePower() {
+    @Override
+    public void setSession(nro.server.io.Session session) {
+    }
+
+    @Override
+    public void sendMessage(nro.server.io.Message msg) {
+    }
+
+    public Skill getSkill(int index) {
+        if (index >= 1 && index <= playerSkill.skills.size()) {
+            return playerSkill.skills.get(index - 1);
+        }
+        return SkillUtil.createSkillLevel0(-1);
+    }
+
+    public void updatePower() {
         if (this.playerSkill != null) {
-            switch (this.playerSkill.getSizeSkill()) {
-                case 1:
-                    if (this.nPoint.power >= 150000000) {
-                        openSkill2();
-                    }
-                    break;
-                case 2:
-                    if (this.nPoint.power >= 1500000000) {
-                        openSkill3();
-                    }
-                    break;
-                case 3:
-                    if (this.nPoint.power >= 20000000000L) {
-                        openSkill4();
-                    }
-                    break;
+            int sizeSkill = this.playerSkill.skills.size();
+            if (sizeSkill > 0) {
+                if (sizeSkill < 2 && this.nPoint.power >= 1500000) {
+                    openedSkill(1);
+                } else if (sizeSkill < 3 && this.nPoint.power >= 15000000) {
+                    openedSkill(2);
+                } else if (sizeSkill < 4 && this.nPoint.power >= 150000000) {
+                    openedSkill(3);
+                } else if (sizeSkill < 5 && this.nPoint.power >= 1500000000) {
+                    openedSkill(4);
+                }
             }
         }
     }
 
-    public void openSkill2() {
-        Skill skill = null;
-        int tiLeKame = 33;
-        int tiLeMasenko = 33;
-        int tiLeAntomic = 33;
-
-        int rd = Util.nextInt(1, 100);
-        if (rd <= tiLeKame) {
-            skill = SkillUtil.createSkill(Skill.KAMEJOKO, 1);
-        } else if (rd <= tiLeKame + tiLeMasenko) {
-            skill = SkillUtil.createSkill(Skill.MASENKO, 1);
-        } else if (rd <= tiLeKame + tiLeMasenko + tiLeAntomic) {
-            skill = SkillUtil.createSkill(Skill.ANTOMIC, 1);
+    public void openedSkill(int index) {
+        if (playerSkill.skills.size() > index) {
+            return;
         }
-        skill.coolDown = 700;
-        this.playerSkill.skills.set(1, skill);
-    }
-
-    public void openSkill3() {
-        Skill skill = null;
-        int tiLeTDHS = 33;
-        int tiLeTTNL = 33;
-        int tiLeKOK = 33;
-
-        int rd = Util.nextInt(1, 100);
-        if (rd <= tiLeTDHS) {
-            skill = SkillUtil.createSkill(Skill.THAI_DUONG_HA_SAN, 1);
-        } else if (rd <= tiLeTDHS + tiLeTTNL) {
-            skill = SkillUtil.createSkill(Skill.TAI_TAO_NANG_LUONG, 1);
-        } else if (rd <= tiLeTDHS + tiLeTTNL + tiLeKOK) {
-            skill = SkillUtil.createSkill(Skill.KAIOKEN, 1);
+        int gender = this.gender;
+        short skillId = -1;
+        switch (index) {
+            case 1: //skill 2
+                skillId = (short) (gender == ConstPlayer.TRAI_DAT ? Skill.KAMEJOKO : (gender == ConstPlayer.NAMEC ? Skill.MASENKO : Skill.ANTOMIC));
+                break;
+            case 2: //skill 3
+                skillId = (short) (gender == ConstPlayer.TRAI_DAT ? Skill.KAIOKEN : (gender == ConstPlayer.NAMEC ? Skill.TAI_TAO_NANG_LUONG : Skill.THAI_DUONG_HA_SAN));
+                break;
+            case 3: //skill 4
+                skillId = (short) (gender == ConstPlayer.TRAI_DAT ? Skill.BIEN_KHI : (gender == ConstPlayer.NAMEC ? Skill.DE_TRUNG : Skill.KHIEN_NANG_LUONG));
+                break;
+            case 4: //skill 5
+                skillId = (short) (gender == ConstPlayer.TRAI_DAT ? Skill.TU_SAT : (gender == ConstPlayer.NAMEC ? Skill.MAKANKOSAPPO : Skill.TAI_TAO_NANG_LUONG));
+                break;
         }
-        this.playerSkill.skills.set(2, skill);
-    }
-
-    public void openSkill4() {
-        Skill skill = null;
-        int tiLeBienKhi = 10;
-        int tiLeDeTrung = 70;
-        int tiLeKNL = 20;
-
-        int rd = Util.nextInt(1, 100);
-        if (rd <= tiLeBienKhi) {
-            skill = SkillUtil.createSkill(Skill.BIEN_KHI, 1);
-        } else if (rd <= tiLeBienKhi + tiLeDeTrung) {
-            skill = SkillUtil.createSkill(Skill.DE_TRUNG, 1);
-        } else if (rd <= tiLeBienKhi + tiLeDeTrung + tiLeKNL) {
-            skill = SkillUtil.createSkill(Skill.KHIEN_NANG_LUONG, 1);
-        }
-        this.playerSkill.skills.set(3, skill);
-    }
-
-    private Skill getSkill(int indexSkill) {
-        return this.playerSkill.skills.get(indexSkill - 1);
-    }
-
-    public void transform() {
-        if (this.isMabu) {
-            this.isTransform = !this.isTransform;
-            Service.getInstance().Send_Caitrang(this);
-            Service.getInstance().chat(this, "Bư bư bư....");
+        if (skillId != -1) {
+            Skill skill = SkillUtil.createSkill(skillId, 1);
+            playerSkill.skills.add(skill);
+            Service.getInstance().chatJustForMe(master, this, "Sư phụ ơi, con vừa học được kỹ năng " + skill.template.name);
         }
     }
 
-    public void angry(Player plAtt) {
-        ANGRY = true;
-        if (plAtt != null) {
-            this.playerAttack = plAtt;
-            Service.getInstance().chatJustForMe(master, this, "Mi làm ta nổi giận rồi " + playerAttack.name
-                    .replace("$", ""));
-        }
+    @Override
+    public void move(int x, int y) {
+        this.location.x = x;
+        this.location.y = y;
+        PlayerService.gI().playerMove(this, x, y);
     }
 }
