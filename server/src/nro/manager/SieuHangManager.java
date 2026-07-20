@@ -100,7 +100,8 @@ public class SieuHangManager {
             String sql = "{CALL Proc_Update_BXH_New_Day_Super()}";
             ps = con.prepareCall(sql);
 
-            ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -335,8 +336,7 @@ public class SieuHangManager {
     }
 
     public static Player LoadPlayerByID(long playerId) {
-        try {
-            Connection connection = DBService.gI().getConnectionForLogin();
+        try (Connection connection = DBService.gI().getConnectionForLogin()) {
             PreparedStatement ps = connection.prepareStatement("select * from player where id = ? limit 1");
             ps.setLong(1, playerId);
             ResultSet rs = ps.executeQuery();
@@ -624,7 +624,7 @@ public class SieuHangManager {
             e.printStackTrace();
         } finally {
             try {
-                ps.close();
+                if (ps != null) ps.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -646,129 +646,11 @@ public class SieuHangManager {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
+            System.err.println("Lỗi Insert History Sieu Hang ");
             e.printStackTrace();
         } finally {
             try {
-                ps.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    public static void UpdateTurn(long player_id) {
-        PreparedStatement ps = null;
-        try (Connection con = DBService.gI().getConnectionForGetPlayer();) {
-            ps = con.prepareStatement("UPDATE `super` SET turn_per_day = turn_per_day - 1 WHERE player_id = ?");
-            ps.setLong(1, player_id);
-            ps.executeUpdate();
-        } catch (Exception e) {
-            Log.error(SieuHangManager.class, e);
-            e.printStackTrace();
-        } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-//    public static void UpdatePedingFight() {
-//        PreparedStatement ps = null;
-//        try (Connection con = DBService.gI().getConnectionForGetPlayer();) {
-//            ps = con.prepareStatement("UPDATE super set is_fight = FALSE WHERE is_fight = true AND TIMESTAMPDIFF(SECOND, modified_date, NOW()) > 500");
-//            ps.executeUpdate();
-//        } catch (Exception e) {
-//            Log.error(SieuHangManager.class, e);
-//            e.printStackTrace();
-//        } finally {
-//            try {
-//                ps.close();
-//            } catch (SQLException ex) {
-//                ex.printStackTrace();
-//            }
-//        }
-//    }
-    public static void UpdatePedingFight() {
-        Connection connection = null;
-        Statement statement = null;
-
-        try {
-            // Kết nối đến cơ sở dữ liệu
-            connection = DBService.gI().getConnectionForGame();
-            statement = connection.createStatement();
-
-            // Thực hiện lệnh TRUNCATE TABLE
-            String sql = "UPDATE super set is_fight = FALSE WHERE is_fight = true AND TIMESTAMPDIFF(SECOND, modified_date, NOW()) > 500";
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            // Đóng các tài nguyên (kết nối và câu lệnh)
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    public static List<SieuHangModel> UpdateBXH(SieuHangModel playerWin, SieuHangModel playerLose) {
-        List<SieuHangModel> result = new ArrayList<>();
-        Connection con = null;
-        CallableStatement ps = null;
-        try {
-            TOP_ID = new ArrayList<>();
-            SieuHangModel top;
-
-            con = DBService.gI().getConnection();
-            String sql = "{CALL Proc_Update_RankSuper(?, ?)}";
-            ps = con.prepareCall(sql);
-            ps.setDouble(1, playerWin.player_id);
-            ps.setDouble(2, playerLose.player_id);
-
-            ps.executeQuery();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (con != null) {
-                    con.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        return result;
-    }
-
-    public static void UpdateStatusFight(long player_id, int status) {
-        PreparedStatement ps = null;
-        try (Connection con = DBService.gI().getConnectionForGetPlayer();) {
-            ps = con.prepareStatement("UPDATE `super` set `is_fight` = ? WHERE player_id = ?;");
-            ps.setLong(1, status);
-            ps.setLong(2, player_id);
-            ps.executeUpdate();
-        } catch (Exception e) {
-            Log.error(SieuHangManager.class, e);
-            e.printStackTrace();
-        } finally {
-            try {
-                ps.close();
+                if (ps != null) ps.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -776,17 +658,21 @@ public class SieuHangManager {
     }
 
     public static void UpdateIsGetReward(long player_id) {
+        String UPDATE_PASS = "UPDATE `super` SET is_get_reward_day = 1 WHERE player_id = ?";
         PreparedStatement ps = null;
-        try (Connection con = DBService.gI().getConnectionForGetPlayer();) {
-            ps = con.prepareStatement("UPDATE `super` set `is_get_reward_day` = 1 WHERE player_id = ?;");
-            ps.setLong(1, player_id);
-            ps.executeUpdate();
-        } catch (Exception e) {
-            Log.error(SieuHangManager.class, e);
+        try {
+            try (Connection con = DBService.gI().getConnectionForGetPlayer();) {
+                ps = con.prepareStatement(UPDATE_PASS);
+                ps.setLong(1, player_id);
+
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi Update Is Get Reward Sieu Hang ");
             e.printStackTrace();
         } finally {
             try {
-                ps.close();
+                if (ps != null) ps.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -794,118 +680,20 @@ public class SieuHangManager {
     }
 
     public static void UpdateFreeTurn() {
+        String UPDATE_PASS = "UPDATE `super` SET turn_per_day = 3, is_get_reward_day = 0";
         PreparedStatement ps = null;
-        try (Connection con = DBService.gI().getConnectionForGetPlayer();) {
-            ps = con.prepareStatement("UPDATE `super` set `turn_per_day` = 3;");
-            ps.executeUpdate();
-        } catch (Exception e) {
-            Log.error(SieuHangManager.class, e);
-            e.printStackTrace();
-        } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    public static void CreateClone(Player player) {
-        String point = "", itemsBody = "", petInfo = "";
-
         try {
-            JSONObject jPetInfo = new JSONObject();
-            petInfo = jPetInfo.toJSONString();
+            try (Connection con = DBService.gI().getConnectionForGetPlayer();) {
+                ps = con.prepareStatement(UPDATE_PASS);
 
-            //data chỉ số
-            JSONArray dataPoint = new JSONArray();
-            dataPoint.add(0);
-            dataPoint.add(player.nPoint.mp);
-            dataPoint.add(player.nPoint.mpg);
-            dataPoint.add(player.nPoint.critg);
-            dataPoint.add(player.nPoint.limitPower);
-            dataPoint.add(player.nPoint.stamina);
-            dataPoint.add(player.nPoint.hp);
-            dataPoint.add(player.nPoint.defg);
-            dataPoint.add(player.nPoint.tiemNang);
-            dataPoint.add(player.nPoint.maxStamina);
-            dataPoint.add(player.nPoint.dameg);
-            dataPoint.add(player.nPoint.power);
-            dataPoint.add(player.nPoint.hpg);
-            point = dataPoint.toJSONString();
-
-            //data body
-            JSONArray dataBody = new JSONArray();
-            for (Item item : player.inventory.itemsBody) {
-                JSONObject dataItem = new JSONObject();
-                if (item.isNotNullItem()) {
-                    JSONArray options = new JSONArray();
-                    dataItem.put("temp_id", item.template.id);
-                    dataItem.put("quantity", item.quantity);
-                    dataItem.put("create_time", item.createTime);
-                    for (ItemOption io : item.itemOptions) {
-                        JSONArray option = new JSONArray();
-                        option.add(io.optionTemplate.id);
-                        option.add(io.param);
-                        options.add(option);
-                    }
-                    dataItem.put("option", options);
-                } else {
-                    JSONArray options = new JSONArray();
-                    dataItem.put("temp_id", -1);
-                    dataItem.put("quantity", 0);
-                    dataItem.put("create_time", 0);
-                    dataItem.put("option", options);
-                }
-                dataBody.add(dataItem);
+                ps.executeUpdate();
             }
-            itemsBody = dataBody.toJSONString();
-
-            //data pet
-            if (player.pet != null) {
-                jPetInfo.put("name", player.pet.name);
-                jPetInfo.put("gender", player.pet.gender);
-                jPetInfo.put("is_mabu", player.pet.typePet);
-                jPetInfo.put("status", player.pet.status);
-                jPetInfo.put("type_fusion", player.fusion.typeFusion);
-      //          jPetInfo.put("level", player.pet.getLever());
-                int timeLeftFusion = (int) (Fusion.TIME_FUSION - (System.currentTimeMillis() - player.fusion.lastTimeFusion));
-                jPetInfo.put("left_fusion", timeLeftFusion < 0 ? 0 : timeLeftFusion);
-                petInfo = jPetInfo.toJSONString();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        PreparedStatement ps = null;
-        try (Connection con = DBService.gI().getConnectionForGetPlayer();) {
-            ps = con.prepareStatement("UPDATE `super`\n"
-                    + "SET head = ?,\n"
-                    + "    NAME = ?,\n"
-                    + "    data_point = ?,\n"
-                    + "    items_body = ?,\n"
-                    + "    pet_info = ?,\n"
-                    + "    hp = ?,\n"
-                    + "    dame = ?,\n"
-                    + "    defend = ?,\n"
-                    + "    modified_date = NOW()\n"
-                    + "WHERE player_id = ?;");
-            ps.setShort(1, player.head);
-            ps.setString(2, player.name);
-            ps.setString(3, point);
-            ps.setString(4, itemsBody);
-            ps.setString(5, petInfo);
-            ps.setInt(6, player.nPoint.hpMax);
-            ps.setInt(7, player.nPoint.dame);
-            ps.setInt(8, player.nPoint.def);
-            ps.setLong(9, player.id);
-            ps.executeUpdate();
-        } catch (Exception e) {
-            Log.error(SieuHangManager.class, e);
+        } catch (SQLException e) {
+            System.err.println("Lỗi Update Free Turn Sieu Hang ");
             e.printStackTrace();
         } finally {
             try {
-                ps.close();
+                if (ps != null) ps.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
