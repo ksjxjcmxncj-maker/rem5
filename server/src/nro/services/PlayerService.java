@@ -30,7 +30,7 @@ public class PlayerService {
     public PlayerService() {
     }
 
-    public static PlayerService gI() {
+    public static synchronized PlayerService gI() {
         if (i == null) {
             i = new PlayerService();
         }

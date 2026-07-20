@@ -5,11 +5,14 @@ import db.DbManager;
 import io.Session;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Server {
+
+    private static final int MAX_CONNECTIONS = 500; // FIX: giới hạn kết nối
 
     private static final Server instance = new Server();
     private ServerSocket listen;
@@ -27,7 +30,7 @@ public class Server {
         DbManager.getInstance().start();
         this.running = true;
         try {
-            this.listen = new ServerSocket(this.config.getListen());
+            this.listen = new ServerSocket(this.config.getListen(), MAX_CONNECTIONS);
             System.out.println("listening port: " + this.config.getListen());
             int i = 0;
             while (this.running) {
@@ -54,16 +57,22 @@ public class Server {
 
     private void activeCommandLine() {
         new Thread(() -> {
-            Scanner sc = new Scanner(System.in);
-            while (true) {
-                String line = sc.nextLine();
-                if (line.equals("baotri")) {
-                    shutdown();
-                    break;
+            // FIX: bắt NoSuchElementException khi stdin bị đóng
+            try (Scanner sc = new Scanner(System.in)) {
+                while (true) {
+                    try {
+                        String line = sc.nextLine();
+                        if (line == null) break;
+                        if (line.equals("baotri")) {
+                            shutdown();
+                            break;
+                        }
+                    } catch (NoSuchElementException e) {
+                        System.out.println("[Server] stdin đã đóng, thoát command line");
+                        break;
+                    }
                 }
-
             }
-            sc.close();
         }, "Active line").start();
     }
 
@@ -71,15 +80,7 @@ public class Server {
         instance.start();
     }
 
-    public Config getConfig() {
-        return this.config;
-    }
-
-    public ServerManager getManager() {
-        return this.manager;
-    }
-
-    public ServerService getService() {
-        return this.service;
-    }
+    public Config getConfig() { return this.config; }
+    public ServerManager getManager() { return this.manager; }
+    public ServerService getService() { return this.service; }
 }

@@ -60,7 +60,7 @@ public class UseItem {
 
     }
 
-    public static UseItem gI() {
+    public static synchronized UseItem gI() {
         if (instance == null) {
             instance = new UseItem();
         }

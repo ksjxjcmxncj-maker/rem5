@@ -1025,9 +1025,7 @@ public class PlayerDAO {
         } catch (Exception e) {
             Log.error(PlayerDAO.class, e, "Lỗi update ruby " + player.name);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
                 java.util.logging.Logger.getLogger(PlayerDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -1043,9 +1041,7 @@ public class PlayerDAO {
         } catch (Exception e) {
             Log.error(PlayerDAO.class, e, "Lỗi update thỏi vàng " + player.name);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
                 java.util.logging.Logger.getLogger(PlayerDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -1060,9 +1056,7 @@ public class PlayerDAO {
         } catch (Exception e) {
             Log.error(PlayerDAO.class, e, "Lỗi update mở thành viên " + player.name);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
                 java.util.logging.Logger.getLogger(PlayerDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -1078,9 +1072,7 @@ public class PlayerDAO {
         } catch (Exception e) {
             Log.error(PlayerDAO.class, e, "Lỗi update thỏi vàng " + player.name);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
                 java.util.logging.Logger.getLogger(PlayerDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -1096,9 +1088,7 @@ public class PlayerDAO {
         } catch (Exception e) {
             Log.error(PlayerDAO.class, e, "Lỗi update vnd " + player.name);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
                 java.util.logging.Logger.getLogger(PlayerDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -1199,9 +1189,7 @@ public class PlayerDAO {
             } catch (Exception e) {
                 Log.error(PlayerDAO.class, e, "Lỗi save bag player " + player.name);
             } finally {
-                try {
-                    ps.close();
-                } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
                     java.util.logging.Logger.getLogger(PlayerDAO.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }

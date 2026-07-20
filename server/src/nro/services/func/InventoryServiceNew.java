@@ -2,6 +2,7 @@ package nro.services.func;
 
 import nro.models.item.Item;
 import nro.models.player.Player;
+import nro.services.InventoryService;
 
 /**
  *
@@ -11,21 +12,21 @@ import nro.models.player.Player;
  */
 public class InventoryServiceNew {
 
-    private static InventoryServiceNew i;
+    private static volatile InventoryServiceNew i; // FIX: volatile cho thread safety
 
-    public static InventoryServiceNew gI() {
+    public static synchronized InventoryServiceNew gI() { // FIX: synchronized
         if (i == null) {
             i = new InventoryServiceNew();
         }
         return i;
     }
 
+    // FIX: implement thực sự thay vì throw UnsupportedOperationException
     void sendItemBags(Player player) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        InventoryService.gI().sendItemBags(player);
     }
 
-    void subQuantityItemsBag(Player player, Item manhVo, int i) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    void subQuantityItemsBag(Player player, Item item, int quantity) {
+        InventoryService.gI().subQuantityItemsBag(player, item, quantity);
     }
-
 }

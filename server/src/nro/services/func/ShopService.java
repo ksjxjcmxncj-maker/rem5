@@ -45,7 +45,7 @@ public class ShopService {
 
     private static ShopService i;
 
-    public static ShopService gI() {
+    public static synchronized ShopService gI() {
         if (i == null) {
             i = new ShopService();
         }

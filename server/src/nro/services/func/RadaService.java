@@ -29,7 +29,7 @@ public class RadaService {
 
     }
 
-    public static RadaService getInstance() {
+    public static synchronized RadaService getInstance() {
         if (instance == null) {
             instance = new RadaService();
         }

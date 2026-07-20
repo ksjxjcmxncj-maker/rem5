@@ -20,7 +20,7 @@ public class LuckyRoundGold extends AbsLuckyRound {
 
     private static LuckyRoundGold i;
 
-    public static LuckyRoundGold gI() {
+    public static synchronized LuckyRoundGold gI() {
         if (i == null) {
             i = new LuckyRoundGold();
         }

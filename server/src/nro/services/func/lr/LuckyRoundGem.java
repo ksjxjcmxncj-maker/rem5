@@ -17,7 +17,7 @@ public class LuckyRoundGem extends AbsLuckyRound {
 
     private static LuckyRoundGem i;
 
-    public static LuckyRoundGem gI() {
+    public static synchronized LuckyRoundGem gI() {
         if (i == null) {
             i = new LuckyRoundGem();
         }

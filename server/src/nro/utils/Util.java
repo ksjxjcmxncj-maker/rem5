@@ -68,7 +68,6 @@ public class Util {
         long elapsedMilliseconds = currentTime - miliSecond;
         long elapsedMinutes = elapsedMilliseconds / (60 * 1000);
 
-        System.out.println("Thời gian đã trôi qua từ lastTimeUpdateBXH đến hiện tại: " + elapsedMinutes + " phút");
 
         return elapsedMinutes;
     }
@@ -271,7 +270,6 @@ public class Util {
     public static void main(String[] args) {
         for (int i = 0; i < 1008; i++) {
             if (!isTrue(104, 100)) {
-                System.out.println("xxx");
             }
         }
     }
@@ -467,22 +465,22 @@ public class Util {
         List<Integer> giay = Arrays.asList(563, 565, 567);
         int ntl = 561;
         if (ao.contains(tempId)) {
-            it.options.add(new ItemOption(47, highlightsItem(it.itemTemplate.gender == 2, new Random().nextInt(501) + 1000)));
+            it.options.add(new ItemOption(47, highlightsItem(it.itemTemplate.gender == 2, rand.nextInt(501) + 1000)));
         }
         if (quan.contains(tempId)) {
-            it.options.add(new ItemOption(6, highlightsItem(it.itemTemplate.gender == 0, new Random().nextInt(10001) + 45000)));
+            it.options.add(new ItemOption(6, highlightsItem(it.itemTemplate.gender == 0, rand.nextInt(10001) + 45000)));
         }
         if (gang.contains(tempId)) {
-            it.options.add(new ItemOption(0, highlightsItem(it.itemTemplate.gender == 2, new Random().nextInt(1001) + 3500)));
+            it.options.add(new ItemOption(0, highlightsItem(it.itemTemplate.gender == 2, rand.nextInt(1001) + 3500)));
         }
         if (giay.contains(tempId)) {
-            it.options.add(new ItemOption(7, highlightsItem(it.itemTemplate.gender == 1, new Random().nextInt(10001) + 35000)));
+            it.options.add(new ItemOption(7, highlightsItem(it.itemTemplate.gender == 1, rand.nextInt(10001) + 35000)));
         }
         if (ntl == tempId) {
-            it.options.add(new ItemOption(14, new Random().nextInt(4) + 15));
+            it.options.add(new ItemOption(14, rand.nextInt(4) + 15));
         }
         it.options.add(new ItemOption(21, 15));
-        it.options.add(new ItemOption(107, new Random().nextInt(7) + 0));
+        it.options.add(new ItemOption(107, rand.nextInt(7) + 0));
         return it;
     }
 

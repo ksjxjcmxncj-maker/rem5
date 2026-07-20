@@ -31,9 +31,7 @@ public class AccountDAO {
         } catch (Exception e) {
             Log.error(AccountDAO.class, e);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
             }
         }
     }
@@ -47,9 +45,7 @@ public class AccountDAO {
         } catch (Exception e) {
             Log.error(AccountDAO.class, e);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
 //                java.util.logging.Logger.getLogger(AccountDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -66,9 +62,7 @@ public class AccountDAO {
             } catch (Exception e) {
                 Log.error(AccountDAO.class, e);
             } finally {
-                try {
-                    ps.close();
-                } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
                 }
             }
         }
@@ -84,9 +78,7 @@ public class AccountDAO {
         } catch (Exception e) {
             Log.error(AccountDAO.class, e);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
             }
         }
     }
@@ -112,9 +104,7 @@ public class AccountDAO {
         } catch (Exception e) {
             Log.error(AccountDAO.class, e);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
+            try { if (ps != null) ps.close(); } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         }

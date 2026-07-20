@@ -33,7 +33,7 @@ public class TransactionService implements Runnable {
     private TransactionService() {
     }
 
-    public static TransactionService gI() {
+    public static synchronized TransactionService gI() {
         if (i == null) {
             i = new TransactionService();
             new Thread(i).start();

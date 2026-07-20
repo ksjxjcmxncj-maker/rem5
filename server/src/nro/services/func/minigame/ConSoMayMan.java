@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.security.SecureRandom;
 import java.util.Timer;
 import java.util.TimerTask;
 import nro.models.item.Item;
@@ -23,6 +24,7 @@ import nro.utils.Util;
  * @author louis
  */
 public class ConSoMayMan {
+    private static final Random RAND = new SecureRandom(); // FIX: SecureRandom, dùng chung, không tạo mới mỗi lần gọi
 
     // SETTING GAME
     public long second = 50;
@@ -185,9 +187,9 @@ public class ConSoMayMan {
     }
 
     public void ramdom1SoLe(Player player, int VangorNgoc) { // ngọc
-        Random random = new Random();
+        // FIX: dùng RAND static thay vì tạo mới
 
-        int point = random.nextInt(50) * 2 + 1;  // Lấy số lẻ từ 1 đến 99
+        int point = RAND.nextInt(50) * 2 + 1;  // Lấy số lẻ từ 1 đến 99
 
         Item thoiVang = InventoryService.gI().findItemBagByTemp(player, (short) 457);
         if (VangorNgoc == 0) {
@@ -254,9 +256,9 @@ public class ConSoMayMan {
     }
 
     public void ramdom1SoChan(Player player, int VangorNgoc) { // ngọc
-        Random random = new Random();
+        // FIX: dùng RAND static thay vì tạo mới
 
-        int point = random.nextInt(50) * 2;  // Lấy số lẻ từ 1 đến 99
+        int point = RAND.nextInt(50) * 2;  // Lấy số lẻ từ 1 đến 99
 
         Item thoiVang = InventoryService.gI().findItemBagByTemp(player, (short) 457);
         if (VangorNgoc == 0) {

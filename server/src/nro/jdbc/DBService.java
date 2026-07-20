@@ -21,12 +21,12 @@ public class DBService {
     public static int MAX_CONN = 2;
     private static final Connection[] connections = new Connection[10];
 
-    private static DBService i;
+    private static volatile DBService i; // FIX: volatile
     public static String dbName;
 
     private ConnPool connPool;
 
-    public static DBService gI() {
+    public static synchronized DBService gI() { // FIX: synchronized singleton
         if (i == null) {
             i = new DBService();
         }
@@ -37,174 +37,47 @@ public class DBService {
         this.connPool = ConnPool.gI();
     }
 
-    public synchronized Connection getConnectionForLogin() throws SQLException {
-        if (connections[0] != null) {
-            if (!connections[0].isValid(10)) {
-                connections[0].close();
+    // FIX: tất cả getConnectionForXxx() không còn đệ quy → không còn StackOverflowError
+    // Pattern cố định: kiểm tra, tạo mới 1 lần nếu cần, return ngay
+    private synchronized Connection getOrCreate(int idx) throws SQLException {
+        if (connections[idx] != null) {
+            try {
+                if (!connections[idx].isValid(5)) {
+                    connections[idx].close();
+                    connections[idx] = null;
+                }
+            } catch (SQLException e) {
+                connections[idx] = null;
             }
         }
-        if (connections[0] == null || connections[0].isClosed()) {
+        if (connections[idx] == null || connections[idx].isClosed()) {
             try {
-                connections[0] = getConnection();
-                return getConnectionForLogin();
+                connections[idx] = getConnection();
             } catch (Exception ex) {
                 ex.printStackTrace();
+                throw new SQLException("Không thể tạo DB connection [" + idx + "]", ex);
             }
         }
-        return connections[0];
+        return connections[idx];
     }
 
-    public synchronized Connection getConnectionForLogout() throws SQLException {
-        if (connections[1] != null) {
-            if (!connections[1].isValid(10)) {
-                connections[1].close();
-            }
-        }
-        if (connections[1] == null || connections[1].isClosed()) {
-            try {
-                connections[1] = getConnection();
-                return getConnectionForLogout();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        return connections[1];
-    }
-
-    public synchronized Connection getConnectionForSaveData() throws SQLException {
-        if (connections[2] != null) {
-            if (!connections[2].isValid(10)) {
-                connections[2].close();
-            }
-        }
-        if (connections[2] == null || connections[2].isClosed()) {
-            try {
-                connections[2] = getConnection();
-                return getConnectionForSaveData();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        return connections[2];
-    }
-
-    public synchronized Connection getConnectionForGame() throws SQLException {
-        if (connections[3] != null) {
-            if (!connections[3].isValid(10)) {
-                connections[3].close();
-            }
-        }
-        if (connections[3] == null || connections[3].isClosed()) {
-            try {
-                connections[3] = getConnection();
-                return getConnectionForGame();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        return connections[3];
-    }
-
-    public Connection getConnectionForClan() throws SQLException {
-        if (connections[4] != null) {
-            if (!connections[4].isValid(10)) {
-                connections[4].close();
-            }
-        }
-        if (connections[4] == null || connections[4].isClosed()) {
-            try {
-                connections[4] = getConnection();
-                return getConnectionForClan();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        return connections[4];
-    }
-
-    public Connection getConnectionForAutoSave() throws SQLException {
-        if (connections[5] != null) {
-            if (!connections[5].isValid(10)) {
-                connections[5].close();
-            }
-        }
-        if (connections[5] == null || connections[5].isClosed()) {
-            try {
-                connections[5] = getConnection();
-                return getConnectionForAutoSave();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        return connections[5];
-    }
-
-    public Connection getConnectionForSaveHistory() throws SQLException {
-        if (connections[6] != null) {
-            if (!connections[6].isValid(10)) {
-                connections[6].close();
-            }
-        }
-        if (connections[6] == null || connections[6].isClosed()) {
-            try {
-                connections[6] = getConnection();
-                return getConnectionForSaveHistory();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        return connections[6];
-    }
-
-    public Connection getConnectionForGetPlayer() throws SQLException {
-        if (connections[7] != null) {
-            if (!connections[7].isValid(10)) {
-                connections[7].close();
-            }
-        }
-        if (connections[7] == null || connections[7].isClosed()) {
-            try {
-                connections[7] = getConnection();
-                return getConnectionForGetPlayer();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        return connections[7];
-    }
-
-    public Connection getConnectionCreatPlayer() throws SQLException {
-        if (connections[8] != null) {
-            if (!connections[8].isValid(10)) {
-                connections[8].close();
-            }
-        }
-        if (connections[8] == null || connections[8].isClosed()) {
-            try {
-                connections[8] = getConnection();
-                return getConnectionCreatPlayer();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        return connections[8];
-    }
+    public Connection getConnectionForLogin() throws SQLException      { return getOrCreate(0); }
+    public Connection getConnectionForLogout() throws SQLException     { return getOrCreate(1); }
+    public Connection getConnectionForSaveData() throws SQLException   { return getOrCreate(2); }
+    public Connection getConnectionForGame() throws SQLException       { return getOrCreate(3); }
+    public Connection getConnectionForClan() throws SQLException       { return getOrCreate(4); }
+    public Connection getConnectionForAutoSave() throws SQLException   { return getOrCreate(5); }
+    public Connection getConnectionForGetPlayer() throws SQLException  { return getOrCreate(7); }
+    public Connection getConnectionCreatPlayer() throws SQLException   { return getOrCreate(8); }
 
     public Connection getConnection() throws Exception {
-//        return this.connPool.getConnection();
         return DBHika.getConnection();
     }
 
     public void release(Connection con) {
-//        this.connPool.free(con);
+        // no-op (HikariCP manages pooling)
     }
 
-    public int currentActive() {
-        return -1;
-    }
-
-    public int currentIdle() {
-        return -1;
-    }
-
+    public int currentActive() { return -1; }
+    public int currentIdle()   { return -1; }
 }

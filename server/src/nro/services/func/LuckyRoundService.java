@@ -20,7 +20,7 @@ public class LuckyRoundService {
 
     private static LuckyRoundService i;
 
-    public static LuckyRoundService gI() {
+    public static synchronized LuckyRoundService gI() {
         if (i == null) {
             i = new LuckyRoundService();
         }

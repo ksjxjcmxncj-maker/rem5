@@ -46,7 +46,7 @@ public class ChangeMapService {
 
     }
 
-    public static ChangeMapService gI() {
+    public static synchronized ChangeMapService gI() {
         if (instance == null) {
             instance = new ChangeMapService();
         }

@@ -14,7 +14,7 @@ public class MiniGame {
     private static MiniGame instance;
     public ConSoMayMan MiniGame_S1 = new ConSoMayMan(); // XoSo
     
-    public static MiniGame gI()
+    public static synchronized MiniGame gI()
     {
         if(instance == null)
         {

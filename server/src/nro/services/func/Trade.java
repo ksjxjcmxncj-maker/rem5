@@ -44,8 +44,8 @@ public class Trade {
 
     private List<Item> itemsTrade1;
     private List<Item> itemsTrade2;
-    private int goldTrade1;
-    private int goldTrade2;
+    private long goldTrade1; // FIX: int → long tránh overflow gold > 2.1 tỷ
+    private long goldTrade2; // FIX: int → long
 
     public byte accept;
 
