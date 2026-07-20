@@ -110,10 +110,17 @@ else
   log "    FAIL"; tail -5 "$LOG/server.log" >> "$LOG/autostart.log" 2>/dev/null || true
 fi
 
-# 7. Đăng ký cron watchdog nội bộ (mỗi 2 phút check cloudflared)
-log "[7] Cron watchdog..."
-CRON_LINE="*/2 * * * * bash /workspaces/rem5/scripts/quick_check.sh >> ~/logs/quick_check.log 2>&1"
-( crontab -l 2>/dev/null | grep -v quick_check; echo "$CRON_LINE" ) | crontab -
-log "    Cron đã đăng ký: $(crontab -l 2>/dev/null | grep quick_check)"
+# 7. Background watchdog — vòng lặp 2 phút, không cần crontab
+log "[7] Watchdog loop..."
+pkill -f quick_check.sh 2>/dev/null || true
+(
+  while true; do
+    sleep 120
+    bash /workspaces/rem5/scripts/quick_check.sh >> "$LOG/quick_check.log" 2>&1
+  done
+) &
+WATCHDOG_PID=$!
+echo $WATCHDOG_PID > /tmp/watchdog.pid
+log "    Watchdog PID=$WATCHDOG_PID (check mỗi 2 phút)"
 
 log "=== XONG === WSS: $(cat /tmp/server_addr.txt 2>/dev/null || echo N/A)"
