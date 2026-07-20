@@ -329,13 +329,13 @@ public class ConsignmentShop {
 
     public void buy(Player player, short itemID, byte monneyType, int money) {
         for (ConsignmentItem item : list) {
-            if (item.getConsignID() == itemID && monneyType == monneyType && money == money) {
+            if (item.getConsignID() == itemID) {
                 if (player.inventory.ruby < 1_000_000) {
                     Service.getInstance().sendThongBao(player, "Người bạn không đủ 1tr hồng ngọc");
                     show(player);
                     return;
                 }
-                if (player.playerTask.taskMain.id < 24) {
+                if (player.playerTask.taskMain == null || player.playerTask.taskMain.id < 24) {
                     Service.getInstance().sendThongBao(player, "Bạn phải hoàn thành nhiệm vụ Xên hoàn thiện");
                     show(player);
                     return;
@@ -350,7 +350,7 @@ public class ConsignmentShop {
                     show(player);
                     return;
                 }
-                if (item.isSold()) {
+                synchronized (item) { if (item.isSold()) {
                     NpcService.gI().createTutorial(player, -1, "Vật phẩm đã được bán");
                     return;
                 }
