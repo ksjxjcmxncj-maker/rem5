@@ -67,6 +67,7 @@ public class SubMenuService {
             player.sendMessage(msg);
             msg.cleanup();
         } catch (Exception e) {
+            e.printStackTrace();
             Log.error(SubMenuService.class, e);
         }
     }
