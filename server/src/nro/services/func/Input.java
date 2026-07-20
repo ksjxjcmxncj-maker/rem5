@@ -227,7 +227,7 @@ public static final int TAI_taixiu = 323508;
                     }
                 }
                 break;
-                              case TAI_taixiu:
+                               case TAI_taixiu:
                     int sotvxiu1 = Integer.valueOf(text[0]);
                     try {
                         if (sotvxiu1 >= 1000 && sotvxiu1 <= 1000000) {
@@ -289,9 +289,13 @@ public static final int TAI_taixiu = 323508;
                     }
                     if (soLuong <= thoiVang.quantity) {
                         long goldNhanDuoc = soLuong * 500000000;
+                        if (player.inventory.gold > Long.MAX_VALUE - goldNhanDuoc) {
+                             Service.getInstance().sendThongBao(player, "Vàng đã đầy");
+                             return;
+                        }
                         long soGoldAll = goldNhanDuoc + player.inventory.gold;
                         if (soGoldAll <= player.inventory.getGoldLimit()) {
-                            player.inventory.addGold((soLuong * 500000000)); // FIX
+                            player.inventory.addGold(goldNhanDuoc); // FIX
                             InventoryService.gI().subQuantityItemsBag(player, thoiVang, (int) soLuong);
                             InventoryService.gI().sendItemBags(player);
                             Service.getInstance().sendMoney(player);
