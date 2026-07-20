@@ -1,73 +1,46 @@
 #!/bin/bash
+# NRO Server Start — Codespace Network (no frp/ngrok)
 LOG=~/logs
 mkdir -p $LOG
 
-echo "[1] Khởi động MariaDB..."
+echo "[1] MariaDB..."
 sudo service mariadb start 2>/dev/null || true
 sleep 3
 sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY ''; FLUSH PRIVILEGES;" 2>/dev/null || true
 
-echo "[2] Import database..."
-SQL=$(find ~/nro -name "*.sql" 2>/dev/null | head -1)
-if [ -n "$SQL" ]; then
-  DBNAME=$(basename "$SQL" .sql)
-  sudo mysql -e "CREATE DATABASE IF NOT EXISTS \`$DBNAME\` CHARACTER SET utf8mb4;" 2>/dev/null || true
-  sudo mysql "$DBNAME" < "$SQL" 2>/dev/null && echo "✅ DB: $DBNAME" || echo "DB đã có"
-fi
-
-echo "[3] Cập nhật config..."
-CFG=$(find ~/nro -name "Config.properties" 2>/dev/null | head -1)
-if [ -n "$CFG" ]; then
-  sed -i "s|database.pass=.*|database.pass=|g" "$CFG"
-  sed -i "s|database.user=.*|database.user=root|g" "$CFG"
-  sed -i "s|server.local=.*|server.local=true|g" "$CFG"
-fi
-
-echo "[4] Chạy Java server..."
-JAR=$(find ~/nro -name "*.jar" | grep -viE "login|Login|lib/" | head -1)
-JAR_LOGIN=$(find ~/nro -name "*.jar" | grep -iE "login" | head -1)
-LIB=$(find ~/nro -name "lib" -type d | head -1)
-echo "  JAR game : $JAR"
-echo "  JAR login: $JAR_LOGIN"
-
-if [ -n "$JAR_LOGIN" ]; then
-  SDIR=$(dirname "$JAR_LOGIN")
-  CP="$(basename $JAR_LOGIN)"; [ -n "$LIB" ] && CP="$CP:$LIB/*"
-  cd "$SDIR"
-  nohup java -Xms128m -Xmx512m -cp "$CP" Main > $LOG/login.log 2>&1 &
-  echo "✅ Login server PID: $!"
+echo "[2] WebSocket bridge (8080 → 14445)..."
+pkill -f ws_bridge 2>/dev/null; sleep 1
+if [ -f ~/bin/ws_bridge.py ]; then
+  pip install websockets -q 2>/dev/null || true
+  nohup python3 ~/bin/ws_bridge.py > $LOG/ws_bridge.log 2>&1 &
   sleep 2
+  pgrep -f ws_bridge && echo "  ✅ ws_bridge up" || echo "  ❌ failed"
+else
+  echo "  ⚠️ Chưa có ws_bridge.py — chạy postCreateCommand trước"
 fi
 
-if [ -n "$JAR" ]; then
-  SDIR=$(dirname "$JAR")
-  CP="$(basename $JAR)"; [ -n "$LIB" ] && CP="$CP:$LIB/*"
-  cd "$SDIR"
-  nohup java -Xms256m -Xmx1g -cp "$CP" Main > $LOG/server.log 2>&1 &
-  echo "✅ Game server PID: $!"
-  sleep 5
-fi
+echo "[3] Set port 8080 public..."
+gh codespace ports visibility 8080:public -c "$CODESPACE_NAME" 2>/dev/null || true
 
-echo "[5] Mở ngrok tunnel port 14445..."
-pkill ngrok 2>/dev/null || true
-nohup ngrok tcp 14445 > $LOG/ngrok.log 2>&1 &
-sleep 6
+echo "[4] Java servers..."
+pkill -f "SrcTeam|Login" 2>/dev/null; sleep 2
+cd ~/nro/SRC
+[ -f Login.jar ] && { nohup java -Xms64m -Xmx256m -jar Login.jar > $LOG/login.log 2>&1 & echo "  Login PID: $!"; sleep 3; }
+nohup java -Xms256m -Xmx1g \
+  -XX:+UseG1GC -XX:MaxGCPauseMillis=50 \
+  -XX:+DisableExplicitGC \
+  -Djava.net.preferIPv4Stack=true \
+  -jar SrcTeam.jar > $LOG/server.log 2>&1 &
+echo "  Game PID: $!"
+sleep 8
 
-NGROK=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null | \
-  grep -o '"public_url":"tcp://[^"]*"' | cut -d'"' -f4)
-HOST=$(echo $NGROK | cut -d: -f2 | tr -d '/')
-PORT=$(echo $NGROK | cut -d: -f3)
-
+CS_NAME="${CODESPACE_NAME:-localhost}"
+WS_URL="wss://${CS_NAME}-8080.app.github.dev"
 echo ""
-echo "╔══════════════════════════════════════════╗"
-echo "  ✅  NGOC RONG SERVER ONLINE"
-echo "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  🌐 IP   : $HOST"
-echo "  🔌 Port : $PORT"
-echo "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Điền vào game: IP=$HOST  Port=$PORT"
-echo "╚══════════════════════════════════════════╝"
-
-# Ghi ra file để đọc sau
-echo "$NGROK" > /tmp/server_addr.txt
-tail -f $LOG/server.log
+echo "╔══════════════════════════════════╗"
+echo "  ✅ NRO STARTED"
+echo "  🌐 $WS_URL"
+echo "  📱 ${CS_NAME}-8080.app.github.dev:443"
+echo "╚══════════════════════════════════╝"
+echo "$WS_URL" > /tmp/server_ws.txt
+echo "${CS_NAME}-8080.app.github.dev:443" > /tmp/server_addr.txt
