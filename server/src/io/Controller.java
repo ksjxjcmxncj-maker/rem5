@@ -75,6 +75,6 @@ public class Controller {
 
     public void onDisconnected() {
         UserManager.getInstance().removeAllUserWithServerID(this.session.getServerID());
-        System.out.println("client " + this.session.sessionName + " ket noi thanh cong!");
+        System.out.println("client " + this.session.sessionName + " ngat ket noi!");
     }
 }

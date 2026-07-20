@@ -91,7 +91,7 @@ public class Session {
                 byte byte7 = this.writeKey((byte) (num & 0xFF));
                 this.dos.writeByte(byte7);
             } else {
-                this.dos.writeByte(num & 0xFF00);
+                this.dos.writeByte((num >> 8) & 0xFF);
                 this.dos.writeByte(num & 0xFF);
             }
             if (this.sendKeyComplete) {

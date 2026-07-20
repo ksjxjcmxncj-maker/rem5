@@ -52,7 +52,7 @@ public class User {
             rs = ps.executeQuery();
             if (rs.next()) {
                 int waitLogin;
-                this.userID = rs.getInt("account.id");
+                this.userID = rs.getInt("id");
                 int serverLogin = rs.getInt("server_login");
                 if (serverLogin != this.serverID) {
                     this.session.getService().loginFailed(this.clientID, "Account nay thuoc may chu SV" + serverLogin);
@@ -66,7 +66,9 @@ public class User {
                     boolean bl = false;
                     return bl;
                 }
-                this.lastTimeLogin = rs.getTimestamp("last_time_login").getTime();
+                java.sql.Timestamp ts = rs.getTimestamp("last_time_login");
+                long lastLoginTime = (ts != null) ? ts.getTime() : 0L;
+                this.lastTimeLogin = lastLoginTime;
                 this.lastTimeLogout = rs.getTimestamp("last_time_logout").getTime();
                 this.admin = rs.getBoolean("is_admin");
                 int secondsPass = (int) ((System.currentTimeMillis() - this.lastTimeLogout) / 1000L);
@@ -76,15 +78,15 @@ public class User {
                     return bl;
                 }
                 this.actived = rs.getBoolean("active");
-                this.goldBar = rs.getInt("account.thoi_vang");
+                this.goldBar = rs.getInt("thoi_vang");
                 this.rewards = rs.getString("reward");
 //                this.ruby = rs.getInt("ruby");
 //                this.mocNap = rs.getInt("count_card");
                 this.server = rs.getInt("server_login");
 //                this.isUseMaBaoVe = rs.getInt("isUseMaBaoVe");
 //                this.MaBaoVe = rs.getInt("MaBaoVe");
-                this.tongnap = rs.getInt("account.tongnap");
-                this.vndBar = rs.getInt("account.vnd");
+                this.tongnap = rs.getInt("tongnap");
+                this.vndBar = rs.getInt("vnd");
                 boolean ban = rs.getBoolean("ban");
                 if (!this.admin && Server.getInstance().getConfig().getTestmode() == 1) {
                     this.session.getService().loginFailed(this.clientID, "Server đang được admin xử lý và kiểm tra lại,vui lòng quay lại sau");

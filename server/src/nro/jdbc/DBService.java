@@ -13,11 +13,11 @@ public class DBService {
 
     public static String DRIVER = "com.mysql.cj.jdbc.Driver";
     public static String URL = "jdbc:#0://#1:#2/#3";
-    public static String DB_HOST = "localhost";
+    public static String DB_HOST = System.getenv("DB_HOST") != null ? System.getenv("DB_HOST") : "localhost";
     public static int DB_PORT = 3306;
     public static String DB_NAME = "";
-    public static String DB_USER = "root";
-    public static String DB_PASSWORD = "";
+    public static String DB_USER = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : "root";
+    public static String DB_PASSWORD = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "";
     public static int MAX_CONN = 2;
     private static final Connection[] connections = new Connection[10];
 

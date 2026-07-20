@@ -243,7 +243,7 @@ public class PlayerService {
                 }
             }
             if (!canHs) {
-                if (player.inventory.gem > 1) {
+                if (player.inventory.gem >= 1) {
                     player.inventory.subGem(1); // FIX
                     canHs = true;
                 } else {
