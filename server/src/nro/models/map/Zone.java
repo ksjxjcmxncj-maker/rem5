@@ -107,6 +107,7 @@ public class Zone {
             snapshot = new ArrayList<>(mobs);
         }
         for (Mob mob : snapshot) {
+            if (mob == null || mob.zone == null || mob.zone.map == null) continue;
             if (mob.zone.map.mapId == mapID) {
                 if (!mob.isDie()) {
                     return false;
@@ -129,6 +130,7 @@ public class Zone {
             snapshot = new ArrayList<>(this.mobs);
         }
         for (Mob mob : snapshot) {
+            if (mob == null) continue;
             mob.update();
         }
     }
