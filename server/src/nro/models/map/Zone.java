@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 import javax.sound.sampled.FloatControl;
 import nro.consts.ConstPlayer;
 import nro.models.boss.BossData;
@@ -49,7 +51,7 @@ public class Zone {
 
     public int countItemAppeaerd = 0;
 
-    public Map map;
+    public nro.models.map.Map map;
     public int zoneId;
     public int maxPlayer;
     private final List<Player> humanoids; //player, boss, pet
@@ -76,7 +78,9 @@ public class Zone {
     public List<TrapMap> trapMaps;
     public byte effDragon = -1;
 
-    public Zone(Map map, int zoneId, int maxPlayer) {
+    private static final java.util.Map<String, byte[]> fileCache = new HashMap<>();
+
+    public Zone(nro.models.map.Map map, int zoneId, int maxPlayer) {
         this.map = map;
         this.zoneId = zoneId;
         this.maxPlayer = maxPlayer;
@@ -92,16 +96,20 @@ public class Zone {
     }
 
     public boolean isFullPlayer() {
-        return this.players.size() >= this.maxPlayer;
+        synchronized (this.players) {
+            return this.players.size() >= this.maxPlayer;
+        }
     }
 
     public boolean isCheckKilledAll(int mapID) {
+        List<Mob> snapshot;
         synchronized (mobs) {
-            for (Mob mob : mobs) {
-                if (mob.zone.map.mapId == mapID) {
-                    if (!mob.isDie()) {
-                        return false;
-                    }
+            snapshot = new ArrayList<>(mobs);
+        }
+        for (Mob mob : snapshot) {
+            if (mob.zone.map.mapId == mapID) {
+                if (!mob.isDie()) {
+                    return false;
                 }
             }
         }
@@ -109,60 +117,80 @@ public class Zone {
     }
 
     public void addMob(Mob mob) {
-        mob.id = mobs.size();
-        mobs.add(mob);
+        synchronized (mobs) {
+            mob.id = mobs.size();
+            mobs.add(mob);
+        }
     }
 
     private void updateMob() {
-        for (Mob mob : this.mobs) {
+        List<Mob> snapshot;
+        synchronized (this.mobs) {
+            snapshot = new ArrayList<>(this.mobs);
+        }
+        for (Mob mob : snapshot) {
             mob.update();
         }
     }
 
     public long getTotalHP() {
         long total = 0;
+        List<Mob> mobSnapshot;
         synchronized (mobs) {
-            for (Mob mob : mobs) {
-                if (!mob.isDie()) {
-                    total += mob.point.hp;
-                }
+            mobSnapshot = new ArrayList<>(mobs);
+        }
+        for (Mob mob : mobSnapshot) {
+            if (!mob.isDie()) {
+                total += mob.point.hp;
             }
         }
+        List<Player> plSnapshot;
         synchronized (players) {
-            for (Player pl : players) {
-                if (pl.nPoint != null && !pl.isDie()) {
-                    total += pl.nPoint.hp;
-                }
+            plSnapshot = new ArrayList<>(players);
+        }
+        for (Player pl : plSnapshot) {
+            if (pl.nPoint != null && !pl.isDie()) {
+                total += pl.nPoint.hp;
             }
         }
+        List<Player> petSnapshot;
         synchronized (pets) {
-            for (Player pl : pets) {
-                if (pl.nPoint != null && !pl.isDie()) {
-                    total += pl.nPoint.hp;
-                }
+            petSnapshot = new ArrayList<>(pets);
+        }
+        for (Player pl : petSnapshot) {
+            if (pl.nPoint != null && !pl.isDie()) {
+                total += pl.nPoint.hp;
             }
         }
         return total;
     }
 
     private void updatePlayer() {
-        for (int i = this.notBosses.size() - 1; i >= 0; i--) {
-            Player pl = this.notBosses.get(i);
+        List<Player> snapshot;
+        synchronized (this.notBosses) {
+            snapshot = new ArrayList<>(this.notBosses);
+        }
+        for (int i = snapshot.size() - 1; i >= 0; i--) {
+            Player pl = snapshot.get(i);
             if (!pl.isPet && !pl.isMiniPet && !pl.isClone) {
-                this.notBosses.get(i).update();
+                pl.update();
             }
         }
     }
 
     private void updateReferee() {
-        referee.update();
+        if (referee != null) {
+            referee.update();
+        }
     }
 
     private void updateItem() {
+        List<ItemMap> snapshot;
         synchronized (items) {
-            for (ItemMap item : items) {
-                item.update();
-            }
+            snapshot = new ArrayList<>(items);
+        }
+        for (ItemMap item : snapshot) {
+            item.update();
         }
     }
 
@@ -176,15 +204,23 @@ public class Zone {
     }
 
     public int getNumOfPlayers() {
-        return this.players.size();
+        synchronized (this.players) {
+            return this.players.size();
+        }
     }
 
     public int getNumOfBosses() {
-        return this.bosses.size();
+        synchronized (this.bosses) {
+            return this.bosses.size();
+        }
     }
 
     public boolean isBossCanJoin(Boss boss) {
-        for (Player b : this.bosses) {
+        List<Player> snapshot;
+        synchronized (this.bosses) {
+            snapshot = new ArrayList<>(this.bosses);
+        }
+        for (Player b : snapshot) {
             if (b.id == boss.id) {
                 return false;
             }
@@ -247,7 +283,9 @@ public class Zone {
 
     public void removePlayer(Player player) {
         if (player != null) {
-            this.humanoids.remove(player);
+            synchronized (humanoids) {
+                this.humanoids.remove(player);
+            }
             if (!player.isBoss) {
                 synchronized (notBosses) {
                     this.notBosses.remove(player);
@@ -276,22 +314,26 @@ public class Zone {
     }
 
     public ItemMap getItemMapByItemMapId(int itemId) {
+        List<ItemMap> snapshot;
         synchronized (items) {
-            for (ItemMap item : this.items) {
-                if (item.itemMapId == itemId) {
-                    return item;
-                }
+            snapshot = new ArrayList<>(this.items);
+        }
+        for (ItemMap item : snapshot) {
+            if (item.itemMapId == itemId) {
+                return item;
             }
         }
         return null;
     }
 
     public ItemMap getItemMapByTempId(int tempId) {
+        List<ItemMap> snapshot;
         synchronized (items) {
-            for (ItemMap item : this.items) {
-                if (item.itemTemplate.id == tempId) {
-                    return item;
-                }
+            snapshot = new ArrayList<>(this.items);
+        }
+        for (ItemMap item : snapshot) {
+            if (item.itemTemplate != null && item.itemTemplate.id == tempId) {
+                return item;
             }
         }
         return null;
@@ -299,54 +341,43 @@ public class Zone {
 
     public List<ItemMap> getItemMapsForPlayer(Player player) {
         List<ItemMap> list = new ArrayList<>();
+        List<ItemMap> snapshot;
         synchronized (items) {
-            for (ItemMap item : items) {
-                if (item instanceof NamekBall ball) {
-                    if (ball.isHolding()) {
+            snapshot = new ArrayList<>(items);
+        }
+        for (ItemMap item : snapshot) {
+            if (item instanceof NamekBall ball) {
+                if (ball.isHolding()) {
+                    continue;
+                }
+            }
+            if (item != null && item.itemTemplate != null) {
+                if (item.itemTemplate.id == 78) {
+                    if (TaskService.gI().getIdTask(player) != ConstTask.TASK_3_1) {
                         continue;
                     }
                 }
-                if (item != null && item.itemTemplate != null) {
-                    if (item.itemTemplate.id == 78) {
-                        if (TaskService.gI().getIdTask(player) != ConstTask.TASK_3_1) {
-                            continue;
-                        }
+                if (item.itemTemplate.id == 74) {
+                    if (TaskService.gI().getIdTask(player) < ConstTask.TASK_3_0) {
+                        continue;
                     }
-                    if (item.itemTemplate.id == 74) {
-                        if (TaskService.gI().getIdTask(player) < ConstTask.TASK_3_0) {
-                            continue;
-                        }
-                    }
-                    list.add(item);
                 }
+                list.add(item);
             }
         }
         return list;
     }
 
-    public List<ItemMap> getSatellites() {
-        synchronized (items) {
-            return items.stream().filter(i -> i instanceof Satellite).collect(Collectors.toList());
-        }
-    }
-
-    public Player getPlayerInMap(int idPlayer) {
-        for (Player pl : humanoids) {
-            if (pl != null && pl.id == idPlayer) {
-                return pl;
-            }
-        }
-        return null;
-    }
-
     public List<Player> getPlayersSameClan(int clanID) {
         List<Player> list = new ArrayList<>();
+        List<Player> snapshot;
         synchronized (this.players) {
-            for (Player pl : this.players) {
-                if (pl.clan != null
-                        && pl.clan.id == clanID) {
-                    list.add(pl);
-                }
+            snapshot = new ArrayList<>(this.players);
+        }
+        for (Player pl : snapshot) {
+            if (pl.clan != null
+                    && pl.clan.id == clanID) {
+                list.add(pl);
             }
         }
         return list;
@@ -361,7 +392,7 @@ public class Zone {
             synchronized (itemMap) {
                 if (!itemMap.isPickedUp) {
                     if (itemMap.playerId == player.id || itemMap.playerId == -1) {
-                        if (itemMap.itemTemplate.id == 648) {
+                        if (itemMap.itemTemplate != null && itemMap.itemTemplate.id == 648) {
                             Item item = InventoryService.gI().findItemBagByTemp(player, 649);
                             if (item == null) {
                                 Service.getInstance().sendThongBao(player, "Bạn không có Tất,vớ giáng sinh để đựng quà.");
@@ -377,15 +408,15 @@ public class Zone {
                         }
                         Item item = ItemService.gI().createItemFromItemMap(itemMap);
                         int maxQuantity = 0;
-                        if (ItemService.gI().isItemNoLimitQuantity(item.template.id)) {
+                        if (item.template != null && ItemService.gI().isItemNoLimitQuantity(item.template.id)) {
                             maxQuantity = 99999;
                         }
                         boolean picked = InventoryService.gI().addItemBag(player, item, maxQuantity);
                         if (picked) {
-                            if (itemMap.itemTemplate.id != 74) {
+                            if (itemMap.itemTemplate != null && itemMap.itemTemplate.id != 74) {
                                 itemMap.isPickedUp = true;
                             }
-                            int itemType = item.template.type;
+                            int itemType = item.template != null ? item.template.type : -1;
                             Message msg;
                             try {
                                 msg = new Message(-20);
@@ -398,31 +429,35 @@ public class Zone {
                                         PlayerService.gI().sendInfoHpMpMoney(player);
                                         break;
                                     default:
-                                        switch (item.template.id) {
-                                            case 73:
-                                                msg.writer().writeUTF("");
-                                                msg.writer().writeShort(item.quantity);
-                                                player.sendMessage(msg);
-                                                msg.cleanup();
-                                                break;
-                                            case 74:
-                                                msg.writer().writeUTF("Bạn vừa ăn " + item.template.name);
-                                                break;
-                                            case 78:
-                                                msg.writer().writeUTF("Wow, một cậu bé dễ thương!");
-                                                msg.writer().writeShort(item.quantity);
-                                                player.sendMessage(msg);
-                                                msg.cleanup();
-                                                break;
-                                            case 516:
-                                                player.nPoint.setFullHpMp();
-                                                PlayerService.gI().sendInfoHpMp(player);
-                                                Service.getInstance().sendThongBao(player, "Bạn vừa ăn " + itemMap.itemTemplate.name);
-                                                break;
-                                            default:
-                                                msg.writer().writeUTF("Bạn nhặt được " + item.template.name);
-                                                InventoryService.gI().sendItemBags(player);
-                                                break;
+                                        if (item.template != null) {
+                                            switch (item.template.id) {
+                                                case 73:
+                                                    msg.writer().writeUTF("");
+                                                    msg.writer().writeShort(item.quantity);
+                                                    player.sendMessage(msg);
+                                                    msg.cleanup();
+                                                    break;
+                                                case 74:
+                                                    msg.writer().writeUTF("Bạn vừa ăn " + item.template.name);
+                                                    break;
+                                                case 78:
+                                                    msg.writer().writeUTF("Wow, một cậu bé dễ thương!");
+                                                    msg.writer().writeShort(item.quantity);
+                                                    player.sendMessage(msg);
+                                                    msg.cleanup();
+                                                    break;
+                                                case 516:
+                                                    player.nPoint.setFullHpMp();
+                                                    PlayerService.gI().sendInfoHpMp(player);
+                                                    if (itemMap.itemTemplate != null) {
+                                                        Service.getInstance().sendThongBao(player, "Bạn vừa ăn " + itemMap.itemTemplate.name);
+                                                    }
+                                                    break;
+                                                default:
+                                                    msg.writer().writeUTF("Bạn nhặt được " + item.template.name);
+                                                    InventoryService.gI().sendItemBags(player);
+                                                    break;
+                                            }
                                         }
 
                                 }
@@ -431,14 +466,14 @@ public class Zone {
                                 msg.cleanup();
                                 Service.getInstance().sendToAntherMePickItem(player, itemMapId);
                                 int mapID = this.map.mapId;
-                                if (!(mapID >= 21 && mapID <= 23 && itemMap.itemTemplate.id == 74 || mapID >= 42 && mapID <= 44 && itemMap.itemTemplate.id == 78)) {
+                                if (itemMap.itemTemplate != null && !(mapID >= 21 && mapID <= 23 && itemMap.itemTemplate.id == 74 || mapID >= 42 && mapID <= 44 && itemMap.itemTemplate.id == 78)) {
                                     removeItemMap(itemMap);
                                 }
                             } catch (Exception e) {
                                 Log.error(Zone.class, e);
                             }
                         } else {
-                            if (!ItemMapService.gI().isBlackBall(item.template.id)) {
+                            if (item.template != null && !ItemMapService.gI().isBlackBall(item.template.id)) {
                                 String text = "Hành trang không còn chỗ trống";
                                 Service.getInstance().sendThongBao(player, text);
                             }
@@ -468,8 +503,12 @@ public class Zone {
     }
 
     public Player getRandomPlayerInMap() {
-        if (!this.notBosses.isEmpty()) {
-            return this.notBosses.get(Util.nextInt(0, this.notBosses.size() - 1));
+        List<Player> snapshot;
+        synchronized (this.notBosses) {
+            snapshot = new ArrayList<>(this.notBosses);
+        }
+        if (!snapshot.isEmpty()) {
+            return snapshot.get(Util.nextInt(0, snapshot.size() - 1));
         } else {
             return null;
         }
@@ -482,28 +521,27 @@ public class Zone {
                     if (player.isPet && this.equals(((Pet) player).master.zone)) {
                         infoPlayer(((Pet) player).master, player);
                     }
+                    List<Player> snapshot;
                     synchronized (this.players) {
-                        for (Player pl : this.players) {
-                            if (!player.equals(pl)) {
-                                if (pl.idPlayerForNPC == player.idPlayerForNPC) {
-                                    infoPlayer(pl, player);
-                                }
-                            }
-                        }
+                        snapshot = new ArrayList<>(this.players);
                     }
-                } else {
-//                    if (player.zone.map.mapId >= 45 && player.zone.map.mapId <= 50 || player.zone.map.mapId == 154) {
-//                        
-//                    } else {
-                    synchronized (this.players) {
-                        for (Player pl : this.players) {
-                            if (!player.equals(pl)) {
+                    for (Player pl : snapshot) {
+                        if (!player.equals(pl)) {
+                            if (pl.idPlayerForNPC == player.idPlayerForNPC) {
                                 infoPlayer(pl, player);
                             }
                         }
                     }
-//                    }
-
+                } else {
+                    List<Player> snapshot;
+                    synchronized (this.players) {
+                        snapshot = new ArrayList<>(this.players);
+                    }
+                    for (Player pl : snapshot) {
+                        if (!player.equals(pl)) {
+                            infoPlayer(pl, player);
+                        }
+                    }
                 }
             }
             PlayerService.gI().sendPetFollow(player);
@@ -514,8 +552,12 @@ public class Zone {
 
     public void loadAnotherToMe(Player player) { //load những player trong map và gửi cho player vào map
         try {
+            List<Player> snapshot;
+            synchronized (this.humanoids) {
+                snapshot = new ArrayList<>(this.humanoids);
+            }
             if (this.map.isMapOffline) {
-                for (Player pl : this.humanoids) {
+                for (Player pl : snapshot) {
                     if (pl != null) {
                         if (pl.id == -player.id) {
                             infoPlayer(player, pl);
@@ -523,7 +565,7 @@ public class Zone {
                         }
                     }
                 }
-                for (Player pl : this.humanoids) {
+                for (Player pl : snapshot) {
                     if (pl != null) {
                         if (pl != player) {
                             if (pl.idPlayerForNPC == player.idPlayerForNPC) {
@@ -533,10 +575,7 @@ public class Zone {
                     }
                 }
             } else {
-//                if (player.zone.map.mapId >= 45 && player.zone.map.mapId <= 50 || player.zone.map.mapId == 154) {
-//                    
-//                } else {
-                for (Player pl : this.humanoids) {
+                for (Player pl : snapshot) {
                     if (pl != null) {
                         if (player != pl) {
                             infoPlayer(player, pl);
@@ -544,8 +583,6 @@ public class Zone {
                         }
                     }
                 }
-//                }
-
             }
         } catch (Exception e) {
             Log.error(MapService.class, e);
@@ -585,16 +622,12 @@ public class Zone {
 
             msg.writer().writeByte(plInfo.getUseSpaceShip());
 
-          
-           
             msg.writer().writeShort(plInfo.getMount());
             msg.writer().writeByte(plInfo.cFlag);
             msg.writer().writeByte(0);
 
-//            if (!plInfo.isPet && !plInfo.isBoss && plInfo.isAdmin()) {
             msg.writer().writeShort(plInfo.getAura()); //idauraeff
             msg.writer().writeByte(plInfo.getEffFront()); //seteff
-//            }
 
             plReceive.sendMessage(msg);
             msg.cleanup();
@@ -622,7 +655,6 @@ public class Zone {
                 msg.cleanup();
             }
         } catch (Exception e) {
-
         }
     }
 
@@ -654,9 +686,12 @@ public class Zone {
                 msg.writer().writeUTF(wp.name);
             }
             // mob
-            List<Mob> mobs = this.mobs;
-            msg.writer().writeByte(mobs.size());
-            for (Mob mob : mobs) {
+            List<Mob> snapshotMobs;
+            synchronized (this.mobs) {
+                snapshotMobs = new ArrayList<>(this.mobs);
+            }
+            msg.writer().writeByte(snapshotMobs.size());
+            for (Mob mob : snapshotMobs) {
                 msg.writer().writeBoolean(false); //is disable
                 msg.writer().writeBoolean(false); //is dont move
                 msg.writer().writeBoolean(false); //is fire
@@ -694,42 +729,57 @@ public class Zone {
             // item
             List<ItemMap> itemsMap = this.getItemMapsForPlayer(pl);
 
-            // Kiểm tra null cho itemsMap
             if (itemsMap != null && msg.writer() != null) {
                 msg.writer().writeByte(itemsMap.size());
 
                 for (ItemMap it : itemsMap) {
-                    // Kiểm tra null cho mỗi đối tượng ItemMap
-                    if (it != null) {
+                    if (it != null && it.itemTemplate != null) {
                         msg.writer().writeShort(it.itemMapId);
                         msg.writer().writeShort(it.itemTemplate.id);
                         msg.writer().writeShort(it.x);
                         msg.writer().writeShort(it.y);
                         msg.writer().writeInt((int) it.playerId);
-                        // Kiểm tra điều kiện trước khi ghi range
                         if (it.playerId == -2) {
                             msg.writer().writeShort(it.range);
                         }
-                    } else {
                     }
                 }
-            } else {
             }
 
             // bg item
-//                msg.writer().writeShort(0);
             try {
-                byte[] bgItem = FileIO.readFile("resources/data_game/map/item_bg_map_data/" + this.map.mapId);
-                msg.writer().write(bgItem);
+                String path = "resources/data_game/map/item_bg_map_data/" + this.map.mapId;
+                byte[] bgItem = fileCache.get(path);
+                if (bgItem == null) {
+                    bgItem = FileIO.readFile(path);
+                    if (bgItem != null) {
+                        fileCache.put(path, bgItem);
+                    }
+                }
+                if (bgItem != null) {
+                    msg.writer().write(bgItem);
+                } else {
+                    msg.writer().writeShort(0);
+                }
             } catch (Exception e) {
                 msg.writer().writeShort(0);
             }
 
             // eff item
-//            msg.writer().writeShort(0);
             try {
-                byte[] effItem = FileIO.readFile("resources/data_game/map/eff_map/" + this.map.mapId);
-                msg.writer().write(effItem);
+                String path = "resources/data_game/map/eff_map/" + this.map.mapId;
+                byte[] effItem = fileCache.get(path);
+                if (effItem == null) {
+                    effItem = FileIO.readFile(path);
+                    if (effItem != null) {
+                        fileCache.put(path, effItem);
+                    }
+                }
+                if (effItem != null) {
+                    msg.writer().write(effItem);
+                } else {
+                    msg.writer().writeShort(0);
+                }
             } catch (Exception e) {
                 msg.writer().writeShort(0);
             }
@@ -747,7 +797,11 @@ public class Zone {
     }
 
     public TrapMap isInTrap(Player player) {
-        for (TrapMap trap : this.trapMaps) {
+        List<TrapMap> snapshot;
+        synchronized (this.trapMaps) {
+            snapshot = new ArrayList<>(this.trapMaps);
+        }
+        for (TrapMap trap : snapshot) {
             if (player.location.x >= trap.x && player.location.x <= trap.x + trap.w
                     && player.location.y >= trap.y && player.location.y <= trap.y + trap.h) {
                 return trap;
@@ -783,7 +837,7 @@ public class Zone {
         }
         if (MapService.gI().isMapDoanhTrai(player.zone.map.mapId)) {  // khóa map ( phải tiêu diệt hết quái )
             if (!player.zone.isCheckKilledAll(player.zone.map.mapId)) {
-                if (player.zone.getBosses().size() != 0) {
+                if (player.zone.getNumOfBosses() != 0) {
                     int x = player.location.x;
                     if (player.location.x >= map.mapWidth - 60) {
                         x = map.mapWidth - 60;
@@ -926,23 +980,31 @@ public class Zone {
     }
 
     public Mob findMobByID(int id) {
+        List<Mob> snapshot;
+        synchronized (mobs) {
+            snapshot = new ArrayList<>(mobs);
+        }
         int low = 0;
-        int high = mobs.size() - 1;
+        int high = snapshot.size() - 1;
         while (low <= high) {
             int mid = (low + high) / 2;
-            if (mobs.get(mid).id < id) {
+            if (snapshot.get(mid).id < id) {
                 low = mid + 1;
-            } else if (mobs.get(mid).id > id) {
+            } else if (snapshot.get(mid).id > id) {
                 high = mid - 1;
             } else {
-                return mobs.get(mid);
+                return snapshot.get(mid);
             }
         }
         return null;
     }
 
     public Player findPlayerByID(long id) {
-        for (Player p : this.players) {
+        List<Player> snapshot;
+        synchronized (this.players) {
+            snapshot = new ArrayList<>(this.players);
+        }
+        for (Player p : snapshot) {
             if (p.id == id) {
                 return p;
             }
@@ -951,7 +1013,11 @@ public class Zone {
     }
 
     public void sendMessage(Message m) {
-        for (Player player : players) {
+        List<Player> snapshot;
+        synchronized (players) {
+            snapshot = new ArrayList<>(players);
+        }
+        for (Player player : snapshot) {
             player.sendMessage(m);
         }
     }
