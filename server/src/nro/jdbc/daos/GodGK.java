@@ -76,7 +76,7 @@ public class GodGK {
                 session.vndBar = rs.getInt("vnd");
                 session.tongnap = rs.getInt("tongnap");
                 session.dataReward = rs.getString("reward");
-                if (rs.getTimestamp("last_time_login").getTime() > session.lastTimeLogout) {
+                if ((rs.getTimestamp("last_time_login") != null ? rs.getTimestamp("last_time_login").getTime() : 0L) > session.lastTimeLogout) {
                     Service.getInstance().sendThongBaoOK(session, "Tài khoản đang đăng nhập máy chủ khác!");
                     return false;
                 }
