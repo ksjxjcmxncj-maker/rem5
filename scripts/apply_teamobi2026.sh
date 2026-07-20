@@ -8,7 +8,11 @@ set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NRO_DIR="${NRO_DIR:-/home/codespace/nro/SRC}"
-DB_NAME="${DB_NAME:-nro1}"
+DB_NAME="${DB_NAME:-}"
+# Auto-detect: thử nro1 trước, nếu không có thử nro
+if [ -z "$DB_NAME" ]; then
+    mysql -u root -e "USE nro1;" 2>/dev/null && DB_NAME="nro1" || DB_NAME="nro"
+fi
 DB_USER="${DB_USER:-root}"
 BACKUP_DIR="$HOME/backup/nro_upgrades"
 

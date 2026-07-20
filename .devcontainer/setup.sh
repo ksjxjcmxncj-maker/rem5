@@ -16,7 +16,8 @@ sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY ''; FLUSH PRIVILEGES;
 
 # ── 2. Sync files từ repo vào ~/nro/SRC ──────
 echo "[2] Sync server files từ repo..."
-REPO=/workspaces/rem5
+REPO="${CODESPACE_REPO:-/workspaces/rem5}"
+[ ! -d "$REPO" ] && REPO="$HOME/workspace/rem5"  # fallback
 cd $REPO 2>/dev/null && git pull --quiet 2>/dev/null || true
 
 cp -f $REPO/server/SrcTeam.jar         ~/nro/SRC/SrcTeam.jar        2>/dev/null || true
@@ -29,10 +30,10 @@ echo "  JAR: $(ls -lh ~/nro/SRC/SrcTeam.jar 2>/dev/null | awk '{print $5}')"
 # ── 3. Import database ────────────────────────
 echo "[3] Setup database 'nro'..."
 sudo mysql -e "CREATE DATABASE IF NOT EXISTS \`nro\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null || true
-TABLES=$(sudo mysql nro -se "SHOW TABLES;" 2>/dev/null | wc -l)
+TABLES=$(sudo mysql nro1 -se "SHOW TABLES;" 2>/dev/null | wc -l)
 if [ "$TABLES" -lt 5 ]; then
   echo "  Import srcteam_nro.sql..."
-  sudo mysql nro < $REPO/database/srcteam_nro.sql 2>/dev/null && echo "  ✅ DB imported" || echo "  ⚠️ DB import lỗi"
+  sudo mysql nro1 < $REPO/database/srcteam_nro.sql 2>/dev/null && echo "  ✅ DB imported" || echo "  ⚠️ DB import lỗi"
 else
   echo "  ✅ DB đã có $TABLES tables"
 fi
@@ -49,7 +50,7 @@ if pgrep -f frpc >/dev/null 2>&1; then
 fi
 sed -i "s|server.db.ip=.*|server.db.ip=localhost|" "$CFG"
 sed -i "s|server.db.pw=.*|server.db.pw=|" "$CFG"
-sed -i "s|server.db.name=.*|server.db.name=nro|" "$CFG"
+sed -i "s|server.db.name=.*|server.db.name=nro1|" "$CFG"
 echo "  sv1: $(grep 'server.sv1' $CFG)"
 
 # ── 5. Khởi động frpc tunnel ─────────────────
