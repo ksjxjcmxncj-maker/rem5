@@ -290,7 +290,7 @@ public class InventoryService {
     public void throwItem(Player player, int where, int index) {
         Item itemThrow = null;
         if (where == 0) {
-            if (index >= 0 && index <= player.inventory.itemsBody.size()) {
+            if (index >= 0 && index < player.inventory.itemsBody.size()) {
                 itemThrow = player.inventory.itemsBody.get(index);
                 if (itemThrow.isNotNullItem()) {
                     removeItemBody(player, index);
@@ -298,7 +298,7 @@ public class InventoryService {
                 }
             }
         } else if (where == 1) {
-            if (index >= 0 && index <= player.inventory.itemsBag.size()) {
+            if (index >= 0 && index < player.inventory.itemsBag.size()) {
                 itemThrow = player.inventory.itemsBag.get(index);
                 if (itemThrow.isNotNullItem()) {
                     if (itemThrow.template.id != 457) {
@@ -370,7 +370,7 @@ public class InventoryService {
     private Item putItemBody(Player player, Item item) {
         Item sItem = item;
         byte type = item.getType();
-        if (item.isNotNullItem()) {
+        if (item != null && item.isNotNullItem()) {
             if (type >= 0 && type <= 5 || type == 32 || type == 11 || type == 23 || type == 24 || type == 35 || type == 72 || type == 21|| type == 74 || type == 39) {
                 if (item.template.gender == player.gender || item.template.gender == 3) {
                     if (item.getId() == ConstItem.QUAN_DI_BIEN) {
@@ -452,7 +452,7 @@ public class InventoryService {
             return;
         }
         Item item = player.inventory.itemsBag.get(index);
-        if (item.isNotNullItem()) {
+        if (item != null && item.isNotNullItem()) {
             player.inventory.itemsBag.set(index, putItemBody(player, item));
             if (item.template.id > 1323 && item.template.id < 1331) {
                 Service.getInstance().removeTitle(player);
@@ -475,7 +475,7 @@ public class InventoryService {
             return;
         }
         Item item = player.inventory.itemsBody.get(index);
-        if (item.isNotNullItem()) {
+        if (item != null && item.isNotNullItem()) {
             if (item.template.type == 74) {
                 Service.getInstance().removeTitle(player);
                 Service.getInstance().removeFoot(player);
@@ -501,7 +501,7 @@ public class InventoryService {
             Item item = player.inventory.itemsBag.get(index);
             if ((item.template.type >= 0 && item.template.type <= 5)
                     || item.template.type == 32) {
-                if (item.isNotNullItem()) {
+                if (item != null && item.isNotNullItem()) {
                     Item itemSwap = putItemBody(player.pet, item);
                     player.inventory.itemsBag.set(index, itemSwap);
                     sendItemBags(player);
@@ -526,7 +526,7 @@ public class InventoryService {
             return;
         }
         Item item = player.pet.inventory.itemsBody.get(index);
-        if (item.isNotNullItem()) {
+        if (item != null && item.isNotNullItem()) {
             player.pet.inventory.itemsBody.set(index, putItemBag(player, item));
             sendItemBags(player);
             sendItemBody(player);
@@ -543,7 +543,7 @@ public class InventoryService {
             return;
         }
         Item item = player.inventory.itemsBox.get(index);
-        if (item.isNotNullItem()) {
+        if (item != null && item.isNotNullItem()) {
             boolean done = false;
             if (item.template.type >= 0 && item.template.type <= 5 || item.template.type == 32) {
                 Item itemBody = player.inventory.itemsBody.get(item.template.type == 32 ? 6 : item.template.type);
@@ -588,7 +588,7 @@ public class InventoryService {
                 Service.gI().sendThongBao(player, "Không thể cất vàng vào rương");
                 return;
             }
-            if (item.isNotNullItem()) {
+            if (item != null && item.isNotNullItem()) {
                 if (addItemBox(player, item, 99999999)) {
                     if (item.quantity == 0) {
                         Item sItem = ItemService.gI().createItemNull();
@@ -607,7 +607,7 @@ public class InventoryService {
             return;
         }
         Item item = player.inventory.itemsBody.get(index);
-        if (item.isNotNullItem()) {
+        if (item != null && item.isNotNullItem()) {
             player.inventory.itemsBody.set(index, putItemBox(player, item));
             arrangeItems(player.inventory.itemsBag);
             sendItemBody(player);
@@ -660,7 +660,7 @@ public class InventoryService {
     public void sortItem(List<Item> items) {
         int index = 0;
         for (Item item : items) {
-            if (item.isNotNullItem()) {
+            if (item != null && item.isNotNullItem()) {
                 items.set(index, item);
                 index++;
             }
@@ -1095,7 +1095,7 @@ public class InventoryService {
         JSONArray dataBag = new JSONArray();
         for (Item item : player.inventory.itemsBag) {
             JSONObject dataItem = new JSONObject();
-            if (item.isNotNullItem()) {
+            if (item != null && item.isNotNullItem()) {
                 JSONArray options = new JSONArray();
                 dataItem.put("temp_id", item.template.id);
                 dataItem.put("quantity", item.quantity);
