@@ -422,6 +422,7 @@ public class NPoint {
         CollectionBook book = player.getCollectionBook();
 
         if (book != null) {
+            if (book == null) return;
             List<Card> cards = book.getCards();
             if (cards != null) {
                 for (Card c : cards) {
