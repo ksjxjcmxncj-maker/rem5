@@ -528,7 +528,7 @@ public class ChangeMapService {
         effectChangeMap(player, 50, EFFECT_GO_TO_BDKB);
         player.type = 3;
         player.maxTime = 50;
-        new Thread(() -> { try { Thread.sleep(9000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }).start(); // FIX: không chặn thread chính
+         // FIX: không chặn thread chính
     }
 
     public void goToKhiGas(Player player) { // send hiệu ứng vô BDKB
@@ -536,7 +536,7 @@ public class ChangeMapService {
         effectChangeMap(player, 50, EFFECT_GO_TO_BDKB);
         player.type = 3;
         player.maxTime = 52;
-        new Thread(() -> { try { Thread.sleep(9000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }).start(); // FIX: không chặn thread chính
+         // FIX: không chặn thread chính
     }
 
     public void nextmap(Player player) {
@@ -545,7 +545,7 @@ public class ChangeMapService {
         player.type = 3;
         player.maxTime = 51;
         Service.getInstance().sendMoney(player);
-        new Thread(() -> { try { Thread.sleep(9000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }).start(); // FIX: không chặn thread chính
+         // FIX: không chặn thread chính
     }
 
     public void goToPrimaryForest(Player player) {
