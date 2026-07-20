@@ -21,12 +21,12 @@ public class DBService {
     public static int MAX_CONN = 2;
     private static final Connection[] connections = new Connection[10];
 
-    private static volatile DBService i; // FIX: volatile
+    private static volatile DBService i;
     public static String dbName;
 
     private ConnPool connPool;
 
-    public static synchronized DBService gI() { // FIX: synchronized singleton
+    public static synchronized DBService gI() {
         if (i == null) {
             i = new DBService();
         }
@@ -37,8 +37,6 @@ public class DBService {
         this.connPool = ConnPool.gI();
     }
 
-    // FIX: tất cả getConnectionForXxx() không còn đệ quy → không còn StackOverflowError
-    // Pattern cố định: kiểm tra, tạo mới 1 lần nếu cần, return ngay
     private synchronized Connection getOrCreate(int idx) throws SQLException {
         if (connections[idx] != null) {
             try {
@@ -47,6 +45,16 @@ public class DBService {
                     connections[idx] = null;
                 }
             } catch (SQLException e) {
+                // FIX: Đảm bảo đóng Connection khi isValid ném exception
+                if (connections[idx] != null) {
+                    try {
+                        if (!connections[idx].isClosed()) {
+                            connections[idx].close();
+                        }
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }
                 connections[idx] = null;
             }
         }
