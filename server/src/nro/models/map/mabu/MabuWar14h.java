@@ -37,7 +37,7 @@ public class MabuWar14h {
     public boolean initBoss;
     public boolean clearBoss;
 
-    public static MabuWar14h gI() {
+    public static synchronized MabuWar14h gI() {
         if (i == null) {
             i = new MabuWar14h();
         }

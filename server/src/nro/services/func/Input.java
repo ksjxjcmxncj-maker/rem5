@@ -232,7 +232,7 @@ public static final int TAI_taixiu = 323508;
                     try {
                         if (sotvxiu1 >= 1000 && sotvxiu1 <= 1000000) {
                             if (player.inventory.ruby >= sotvxiu1) {
-                                player.inventory.ruby -= sotvxiu1;
+                                player.inventory.subRuby(sotvxiu1); // FIX
                                 player.goldTai += sotvxiu1;
                                 player.taixiu.toptaixiu += sotvxiu1;
                                 TaiXiu.gI().goldTai += sotvxiu1;
@@ -259,7 +259,7 @@ public static final int TAI_taixiu = 323508;
                     try {
                         if (sotvxiu2 >= 1000 && sotvxiu2 <= 1000000) {
                             if (player.inventory.ruby >= sotvxiu2) {
-                                player.inventory.ruby -= sotvxiu2;
+                                player.inventory.subRuby(sotvxiu2); // FIX
                                 player.goldXiu += sotvxiu2;
                                 player.taixiu.toptaixiu += sotvxiu2;
                                 TaiXiu.gI().goldXiu += sotvxiu2;
@@ -319,7 +319,7 @@ public static final int TAI_taixiu = 323508;
                             Item item = InventoryService.gI().findVeTangNgoc(player);
                             player.inventory.subRuby(numruby);
                             PlayerService.gI().sendInfoHpMpMoney(player);
-                            pl.inventory.ruby += numruby;
+                            pl.inventory.addRuby(numruby); // FIX
                             PlayerService.gI().sendInfoHpMpMoney(pl);
                             Service.getInstance().sendThongBao(player, "Tặng Hồng ngọc thành công");
                             Service.getInstance().sendThongBao(pl, "Bạn được " + player.name + " tặng " + numruby + " Hồng ngọc");

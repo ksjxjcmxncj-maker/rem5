@@ -17,7 +17,7 @@ import java.util.List;
 public class EffectEventManager {
     private static final EffectEventManager i = new EffectEventManager();
 
-    public static EffectEventManager gI() {
+    public static synchronized EffectEventManager gI() {
         return i;
     }
 

@@ -113,12 +113,12 @@ public class GiftService {
                 }
 
                 if (gem > 0) {
-                    player.inventory.gem += gem;
+                    player.inventory.addGem(gem); // FIX
                     sb.append(String.format("- %s ngọc xanh", Util.numberToMoney(gem))).append("\b");
                 }
 
                 if (ruby > 0) {
-                    player.inventory.ruby += ruby;
+                    player.inventory.addRuby(ruby); // FIX
                     sb.append(String.format("- %s hồng ngọc", Util.numberToMoney(ruby))).append("\b");
                 }
                 Service.getInstance().sendMoney(player);

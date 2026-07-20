@@ -20,7 +20,7 @@ public class CaptionManager {
 
     private static final CaptionManager instance = new CaptionManager();
 
-    public static CaptionManager getInstance() {
+    public static synchronized CaptionManager getInstance() {
         return instance;
     }
 

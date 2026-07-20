@@ -16,6 +16,7 @@ import nro.services.func.SummonDragon;
 import nro.services.func.TransactionService;
 import nro.utils.Log;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
@@ -34,12 +35,12 @@ public class Client implements Runnable {
     private static Client i;
 
     @Getter
-    public final List<Session> sessions = new ArrayList<>();
+    public final List<Session> sessions = new CopyOnWriteArrayList<>(); // FIX: thread-safe
     private final Map<Integer, Session> sessions_id = new ConcurrentHashMap<>(); // FIX: thread-safe
     private final Map<Long, Player> players_id = new ConcurrentHashMap<>(); // FIX: thread-safe
     private final Map<Integer, Player> players_userId = new ConcurrentHashMap<>(); // FIX: thread-safe
     private final Map<String, Player> players_name = new ConcurrentHashMap<>(); // FIX: thread-safe
-    private final List<Player> players = new ArrayList<>();
+    private final List<Player> players = new CopyOnWriteArrayList<>(); // FIX: thread-safe
 
     private boolean running = true;
 

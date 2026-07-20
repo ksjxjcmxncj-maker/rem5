@@ -115,11 +115,11 @@ public class InventoryService {
                     return false;
                 }
             case 10:
-                player.inventory.gem += item.quantity;
+                player.inventory.addGem(item.quantity); // FIX
                 Service.getInstance().sendMoney(player);
                 return true;
             case 34:
-                player.inventory.ruby += item.quantity;
+                player.inventory.addRuby(item.quantity); // FIX
                 Service.getInstance().sendMoney(player);
                 return true;
         }

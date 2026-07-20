@@ -68,30 +68,34 @@ public class Inventory {
             this.subRuby(num);
         } else {
             this.gem -= num;
+            if (this.gem < 0) this.gem = 0; // FIX: không để gem âm
         }
     }
 
     public void subGold(int num) {
         this.gold -= num;
+        if (this.gold < 0) this.gold = 0; // FIX: không để gold âm
     }
 
     public void subRuby(int num) {
         this.ruby -= num;
+        if (this.ruby < 0) this.ruby = 0; // FIX: không để ruby âm
     }
 
     public void addGold(int gold) {
-        this.gold += gold;
+        this.gold += (long) gold; // FIX: cast để tránh int overflow
         long goldLimit = getGoldLimit();
-        if (this.gold > goldLimit) {
-            this.gold = goldLimit;
-        }
+        if (this.gold > goldLimit) { this.gold = goldLimit; }
+        if (this.gold < 0) this.gold = 0; // FIX: phòng overflow âm
     }
-public void addRuby(int ruby) {
+    public void addRuby(int ruby) {
         this.ruby += ruby;
-        long goldLimit = getGoldLimit();
-        if (this.ruby > goldLimit) {
-            this.gold = goldLimit;
-        }
+        if (this.ruby < 0) this.ruby = 0; // FIX: không để âm
+    }
+
+    public void addGem(int gem) { // FIX: thêm method an toàn
+        this.gem += gem;
+        if (this.gem < 0) this.gem = 0;
     }
     public void dispose() {
         this.player = null;
@@ -130,6 +134,6 @@ public void addRuby(int ruby) {
     }
 
     public void Ruby(int i) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        addRuby(i); // FIX: stub → delegate addRuby()
     }
 }

@@ -3118,7 +3118,7 @@ public class TaskService {
     public void rewardAchivement(Player player, byte id) {
         Achivement achivement = player.playerTask.achivements.get(id);
         if (achivement.isFinish()) {
-            player.inventory.ruby += achivement.getMoney();
+            player.inventory.addRuby(achivement.getMoney()); // FIX
             Service.getInstance().sendMoney(player);
             achivement.setReceive(true);
             sendAchivement(player);

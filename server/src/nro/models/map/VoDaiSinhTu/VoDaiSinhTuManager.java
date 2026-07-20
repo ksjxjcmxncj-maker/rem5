@@ -15,7 +15,7 @@ public class VoDaiSinhTuManager {
     private static List<VoDaiSinhTu> list = new ArrayList<>();
     private static List<VoDaiSinhTu> toRemove = new ArrayList<>();
 
-    public static VoDaiSinhTuManager gI() {
+    public static synchronized VoDaiSinhTuManager gI() {
         if (i == null) {
             i = new VoDaiSinhTuManager();
         }

@@ -1414,7 +1414,7 @@ public class CombineServiceNew {
                         return;
                     }
                     player.inventory.gold -= gold;
-                    player.inventory.gem -= gem;
+                    player.inventory.subGem(gem); // FIX
                     InventoryService.gI().subQuantityItemsBag(player, manhvobt, countmvbt);
                     if (Util.isTrue(player.combineNew.ratioCombine, 45)) {
                         bongtai.template = ItemService.gI().getTemplate(getidbtsaukhilencap(lvbt));
@@ -1715,7 +1715,7 @@ public class CombineServiceNew {
                 }
             }
             if (bongTai != null && daXanhLam != null && manhHon.quantity >= 99) {
-                player.inventory.gem -= gem;
+                player.inventory.subGem(gem); // FIX
                 InventoryService.gI().subQuantityItemsBag(player, manhHon, 99);
                 InventoryService.gI().subQuantityItemsBag(player, daXanhLam, 1);
                 if (Util.isTrue(player.combineNew.ratioCombine, 100)) {
@@ -2020,7 +2020,7 @@ public class CombineServiceNew {
                         trangBiCanChuyenHoa_2.itemOptions.add(new ItemOption(trangBiCanChuyenHoa.itemOptions.get(i).optionTemplate.id, trangBiCanChuyenHoa.itemOptions.get(i).param));
                     }
 
-                    player.inventory.gem -= ngocChuyenHoa;
+                    player.inventory.subGem(ngocChuyenHoa); // FIX
                     Service.getInstance().sendMoney(player);
                     InventoryService.gI().addItemBag(player, trangBiCanChuyenHoa_2, 1);
                     InventoryService.gI().subQuantityItemsBag(player, trangBiGoc, 1);

@@ -194,7 +194,7 @@ public class SummonDragon {
         }
     }
 
-    public static SummonDragon gI() {
+    public static synchronized SummonDragon gI() {
         if (instance == null) {
             instance = new SummonDragon();
         }
@@ -581,7 +581,7 @@ public class SummonDragon {
                         }
                         break;
                     case 1: //+1,5 ngọc
-                        this.playerSummonShenron.inventory.gem += 10000;
+                        this.playerSummonShenron.inventory.addGem(10000); // FIX
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 2: //+200 tr smtn
@@ -639,7 +639,7 @@ public class SummonDragon {
             case ConstNpc.SHENRON_2:
                 switch (this.select) {
                     case 0: //+150 ngọc
-                        this.playerSummonShenron.inventory.gem += 2000;
+                        this.playerSummonShenron.inventory.addGem(2000); // FIX
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 1: //+20 tr smtn
@@ -661,7 +661,7 @@ public class SummonDragon {
             case ConstNpc.SHENRON_3:
                 switch (this.select) {
                     case 0: //+15 ngọc
-                        this.playerSummonShenron.inventory.gem += 200;
+                        this.playerSummonShenron.inventory.addGem(200); // FIX
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 1: //+2 tr smtn

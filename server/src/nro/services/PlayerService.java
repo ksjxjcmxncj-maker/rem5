@@ -244,7 +244,7 @@ public class PlayerService {
             }
             if (!canHs) {
                 if (player.inventory.gem > 1) {
-                    player.inventory.gem -= 1;
+                    player.inventory.subGem(1); // FIX
                     canHs = true;
                 } else {
                     Service.getInstance().sendThongBao(player, "Bạn không đủ ngọc xanh để hồi sinh");

@@ -830,7 +830,7 @@ public class NpcFactory {
                                     ChonAiDay_Gold.gI().lastTimeEnd = System.currentTimeMillis() + 300000;
                                 }
                                 if (player.inventory.gold >= 1_000_000) {
-                                    player.inventory.gold -= 1_000_000;
+                                    player.inventory.subGold(1_000_000); // FIX: dùng method an toàn
                                     Service.gI().sendMoney(player);
                                     player.goldNormar += 1_000_000;
                                     ChonAiDay_Gold.gI().goldNormar += 1_000_000;
@@ -851,7 +851,7 @@ public class NpcFactory {
                                     ChonAiDay_Gold.gI().lastTimeEnd = System.currentTimeMillis() + 300000;
                                 }
                                 if (player.inventory.gold >= 10_000_000) {
-                                    player.inventory.gold -= 10_000_000;
+                                    player.inventory.subGold(10_000_000); // FIX: dùng method an toàn
                                     Service.gI().sendMoney(player);
                                     player.goldVIP += 10_000_000;
                                     ChonAiDay_Gold.gI().goldVip += 10_000_000;
@@ -873,7 +873,7 @@ public class NpcFactory {
                                     ChonAiDay_Ruby.gI().lastTimeEnd = System.currentTimeMillis() + 300000;
                                 }
                                 if (player.inventory.ruby >= 10) {
-                                    player.inventory.ruby -= 10;
+                                    player.inventory.subRuby(10); // FIX
                                     Service.gI().sendMoney(player);
                                     player.rubyNormar += 10;
                                     ChonAiDay_Ruby.gI().rubyNormar += 10;
@@ -894,7 +894,7 @@ public class NpcFactory {
                                     ChonAiDay_Ruby.gI().lastTimeEnd = System.currentTimeMillis() + 300000;
                                 }
                                 if (player.inventory.ruby >= 100) {
-                                    player.inventory.ruby -= 100;
+                                    player.inventory.subRuby(100); // FIX
                                     Service.gI().sendMoney(player);
                                     player.rubyVIP += 100;
                                     ChonAiDay_Ruby.gI().rubyVip += 100;
@@ -916,7 +916,7 @@ public class NpcFactory {
                                     ChonAiDay_Gem.gI().lastTimeEnd = System.currentTimeMillis() + 300000;
                                 }
                                 if (player.inventory.gem >= 10) {
-                                    player.inventory.gem -= 10;
+                                    player.inventory.subGem(10); // FIX
                                     Service.gI().sendMoney(player);
                                     player.gemNormar += 10;
                                     ChonAiDay_Gem.gI().gemNormar += 10;
@@ -937,7 +937,7 @@ public class NpcFactory {
                                     ChonAiDay_Gem.gI().lastTimeEnd = System.currentTimeMillis() + 300000;
                                 }
                                 if (player.inventory.gem >= 100) {
-                                    player.inventory.gem -= 100;
+                                    player.inventory.subGem(100); // FIX
                                     Service.gI().sendMoney(player);
                                     player.gemVIP += 100;
                                     ChonAiDay_Gem.gI().gemVip += 100;
@@ -1004,7 +1004,7 @@ public class NpcFactory {
 
                                                 }
                                                 Service.getInstance().sendTimeSkill(player);
-                                                player.inventory.gold -= 100_000_000_0;
+                                                player.inventory.subGold(100_000_000_0); // FIX: dùng method an toàn
                                                 Service.getInstance().sendMoney(player);
                                                 Service.getInstance().sendThongBao(player, "Hồi skill Thành Công");
                                             } else {
@@ -1360,7 +1360,7 @@ public class NpcFactory {
                                                 Service.getInstance().sendThongBao(player, "Tiêu bớt ngọc xanh đi bạn ơi");
                                                 return;
                                             } else {
-                                                player.inventory.gem += 100000;
+                                                player.inventory.addGem(100000); // FIX
                                                 Service.getInstance().sendMoney(player);
                                             }
                                             break;
@@ -1740,7 +1740,7 @@ public class NpcFactory {
                                                 Boss boss = BossManager.gI().getBossById(BossFactory.KUKU);
                                                 if (boss != null && !boss.isDie()) {
                                                     if (player.inventory.gold >= COST_FIND_BOSS) {
-                                                        player.inventory.gold -= COST_FIND_BOSS;
+                                                        player.inventory.subGold(COST_FIND_BOSS); // FIX: dùng method an toàn
                                                         ChangeMapService.gI().changeMap(player, boss.zone,
                                                                 boss.location.x, boss.location.y);
                                                         Service.getInstance().sendMoney(player);
@@ -1766,7 +1766,7 @@ public class NpcFactory {
                                                 Boss boss = BossManager.gI().getBossById(BossFactory.MAP_DAU_DINH);
                                                 if (boss != null && !boss.isDie()) {
                                                     if (player.inventory.gold >= COST_FIND_BOSS) {
-                                                        player.inventory.gold -= COST_FIND_BOSS;
+                                                        player.inventory.subGold(COST_FIND_BOSS); // FIX: dùng method an toàn
                                                         ChangeMapService.gI().changeMap(player, boss.zone,
                                                                 boss.location.x, boss.location.y);
                                                         Service.getInstance().sendMoney(player);
@@ -1792,7 +1792,7 @@ public class NpcFactory {
                                                 Boss boss = BossManager.gI().getBossById(BossFactory.RAMBO);
                                                 if (boss != null && !boss.isDie()) {
                                                     if (player.inventory.gold >= COST_FIND_BOSS) {
-                                                        player.inventory.gold -= COST_FIND_BOSS;
+                                                        player.inventory.subGold(COST_FIND_BOSS); // FIX: dùng method an toàn
                                                         ChangeMapService.gI().changeMap(player, boss.zone,
                                                                 boss.location.x, boss.location.y);
                                                         Service.getInstance().sendMoney(player);
@@ -3424,7 +3424,7 @@ public class NpcFactory {
                                     if (select == 0) {
                                         if (player.inventory.gold >= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER) {
                                             if (OpenPowerService.gI().openPowerSpeed(player.pet)) {
-                                                player.inventory.gold -= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER;
+                                                player.inventory.subGold(OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER); // FIX: dùng method an toàn
                                                 Service.getInstance().sendMoney(player);
                                             }
                                         } else {
@@ -3683,7 +3683,7 @@ public class NpcFactory {
                                                         Service.getInstance().sendPowerInfo(player, "%",
                                                                 player.getPowerPoint());
                                                         if (Util.isTrue(1, 30)) {
-                                                            player.inventory.ruby += 1;
+                                                            player.inventory.addRuby(1); // FIX
                                                             PlayerService.gI().sendInfoHpMpMoney(player);
                                                             Service.getInstance().sendThongBao(player,
                                                                     "Bạn nhận được 1 Hồng Ngọc");
@@ -3711,7 +3711,7 @@ public class NpcFactory {
                                                 if (player.inventory.ruby < 55) {
                                                     Service.getInstance().sendThongBao(player, "Bạn không đủ hồng ngọc");
                                                 } else {
-                                                    player.inventory.ruby -= 55;
+                                                    player.inventory.subRuby(55); // FIX
                                                     player.effectSkin.isPhuHo = true;
                                                     Service.getInstance().point(player);
                                                     this.npcChat("Ta đã phù hộ cho con hãy giúp ta tiêu diệt Mabư!");
@@ -3787,7 +3787,7 @@ public class NpcFactory {
                                                         Service.getInstance().sendPowerInfo(player, "TL",
                                                                 player.getPowerPoint());
                                                         if (Util.isTrue(1, 30)) {
-                                                            player.inventory.ruby += 1;
+                                                            player.inventory.addRuby(1); // FIX
                                                             PlayerService.gI().sendInfoHpMpMoney(player);
                                                             Service.getInstance().sendThongBao(player,
                                                                     "Bạn nhận được 1 Hồng Ngọc");
@@ -3951,7 +3951,7 @@ public class NpcFactory {
                                         switch (select) {
                                             case 0:
                                                 player.mabuEgg.timeDone = 0;
-                                                player.inventory.gold -= 1000000000;
+                                                player.inventory.subGold(1000000000); // FIX: dùng method an toàn
                                                 Service.getInstance().sendMoney(player);
                                                 Service.getInstance().sendThongBao(player, "Đã nở trứng nhanh thành công");
                                                 break;
@@ -4054,7 +4054,7 @@ public class NpcFactory {
                                         case 1:
                                             if (player.inventory.gold >= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER) {
                                                 if (OpenPowerService.gI().openPowerSpeed(player)) {
-                                                    player.inventory.gold -= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER;
+                                                    player.inventory.subGold(OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER); // FIX: dùng method an toàn
                                                     Service.getInstance().sendMoney(player);
                                                 }
                                             } else {
@@ -4070,7 +4070,7 @@ public class NpcFactory {
                                     if (select == 0) {
                                         if (player.inventory.gold >= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER) {
                                             if (OpenPowerService.gI().openPowerSpeed(player.pet)) {
-                                                player.inventory.gold -= OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER;
+                                                player.inventory.subGold(OpenPowerService.COST_SPEED_OPEN_LIMIT_POWER); // FIX: dùng method an toàn
                                                 Service.getInstance().sendMoney(player);
                                             }
                                         } else {
@@ -4636,7 +4636,7 @@ public class NpcFactory {
                                                         return;
                                                     }
 
-                                                    player.inventory.gold -= 2000000000;
+                                                    player.inventory.subGold(2000000000); // FIX: dùng method an toàn
                                                     Service.getInstance().sendMoney(player);
 
                                                     if (condition1) { // ÁO
@@ -5159,7 +5159,7 @@ public class NpcFactory {
                                                             if (DaiHoiVoThuatManager.gI().isAssignDHVT(player.id)) {
                                                                 Service.getInstance().sendThongBao(player, "Bạn đã đăng ký tham gia đại hội võ thuật rồi");
                                                             } else {
-                                                                player.inventory.gold -= 10000;
+                                                                player.inventory.subGold(10000); // FIX: dùng method an toàn
                                                                 Service.getInstance().sendMoney(player);
                                                                 Service.getInstance().sendThongBao(player, "Bạn đã đăng ký thành công, nhớ có mặt tại đây trước giờ thi đấu");
                                                                 DaiHoiVoThuatManager.gI().lstIDPlayers.add(player.id);
@@ -5168,7 +5168,7 @@ public class NpcFactory {
                                                             if (DaiHoiVoThuatManager.gI().isAssignDHVT(player.id)) {
                                                                 Service.getInstance().sendThongBao(player, "Bạn đã đăng ký tham gia đại hội võ thuật rồi");
                                                             } else {
-                                                                player.inventory.gem -= (int) (2 * DaiHoiVoThuatManager.gI().typeDHVT);
+                                                                player.inventory.subGem((int) (2 * DaiHoiVoThuatManager.gI().typeDHVT)); // FIX
                                                                 Service.getInstance().sendMoney(player);
                                                                 Service.getInstance().sendThongBao(player, "Bạn đã đăng ký thành công, nhớ có mặt tại đây trước giờ thi đấu");
                                                                 DaiHoiVoThuatManager.gI().lstIDPlayers.add(player.id);
@@ -5895,7 +5895,7 @@ public class NpcFactory {
                             player.sendMenuGotoNextFloorMabuWar = false;
                             Service.getInstance().sendPowerInfo(player, "TL", player.getPowerPoint());
                             if (Util.isTrue(1, 30)) {
-                                player.inventory.ruby += 1;
+                                player.inventory.addRuby(1); // FIX
                                 PlayerService.gI().sendInfoHpMpMoney(player);
                                 Service.getInstance().sendThongBao(player, "Bạn nhận được 1 Hồng Ngọc");
                             } else {
@@ -6200,7 +6200,7 @@ public class NpcFactory {
 
     public static void processGemPurchase(Player player, int requiredVndBar, int gemAmount) {
         if (player.soDuVND >= requiredVndBar) {
-            player.inventory.gem += gemAmount;
+            player.inventory.addGem(gemAmount); // FIX
             player.soDuVND -= requiredVndBar;
             PlayerDAO.subVndBar(player, requiredVndBar);
             Service.getInstance().sendMoney(player);
@@ -6480,7 +6480,7 @@ public class NpcFactory {
                             if (day >= 22 && day <= 24) {
                                 Item goldBar = ItemService.gI().createNewItem((short) ConstItem.THOI_VANG,
                                         Util.nextInt(1, 3));
-                                player.inventory.ruby += Util.nextInt(10, 30);
+                                player.inventory.addRuby(Util.nextInt(10, 30)); // FIX
                                 goldBar.quantity = Util.nextInt(1, 3);
                                 InventoryService.gI().addItemBag(player, goldBar, 99999);
                                 InventoryService.gI().sendItemBags(player);

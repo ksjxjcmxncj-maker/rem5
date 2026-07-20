@@ -151,7 +151,7 @@ public class Manager {
     @Getter
     public GameConfig gameConfig;
 
-    public static Manager gI() {
+    public static synchronized Manager gI() {
         if (i == null) {
             i = new Manager();
         }

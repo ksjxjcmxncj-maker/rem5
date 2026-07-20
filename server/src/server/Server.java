@@ -51,6 +51,7 @@ public class Server {
                 this.listen.close();
             }
         } catch (IOException iOException) {
+            // suppress: server socket already closing
         }
         DbManager.getInstance().shutdown();
     }

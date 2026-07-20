@@ -164,7 +164,7 @@ public class Osin extends Npc {
                                                         Service.getInstance().sendPowerInfo(player, "%",
                                                                 player.getPowerPoint());
                                                         if (Util.isTrue(1, 30)) {
-                                                            player.inventory.ruby += 1;
+                                                            player.inventory.addRuby(1); // FIX
                                                             PlayerService.gI().sendInfoHpMpMoney(player);
                                                             Service.getInstance().sendThongBao(player,
                                                                     "Bạn nhận được 1 Hồng Ngọc");
@@ -192,7 +192,7 @@ public class Osin extends Npc {
                                                 if (player.inventory.ruby < 55) {
                                                     Service.getInstance().sendThongBao(player, "Bạn không đủ hồng ngọc");
                                                 } else {
-                                                    player.inventory.ruby -= 55;
+                                                    player.inventory.subRuby(55); // FIX
                                                     player.effectSkin.isPhuHo = true;
                                                     Service.getInstance().point(player);
                                                     this.npcChat("Ta đã phù hộ cho con hãy giúp ta tiêu diệt Mabư!");

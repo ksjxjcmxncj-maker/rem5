@@ -69,7 +69,7 @@ public class RewardBlackBall {
                     break;
                 case 7:
 
-                        player.inventory.ruby += R7S;
+                        player.inventory.addRuby(R7S); // FIX
                         Service.getInstance().sendMoney(player);
                         lastTimeGetReward[star - 1] = System.currentTimeMillis();
 

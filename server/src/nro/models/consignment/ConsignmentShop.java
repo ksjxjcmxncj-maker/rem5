@@ -387,9 +387,9 @@ public class ConsignmentShop {
         for (ConsignmentItem item : list) {
             if (item.template.id == itemID && item.getConsignorID() == player.id && item.isSold()) {
                 if (item.getPriceGold() > 0) {
-                    player.inventory.gold += item.getPriceGold() - (item.getPriceGold() * 10 / 100);
+                    player.inventory.addGold(item.getPriceGold() - (item.getPriceGold() * 10 / 100)); // FIX: dùng method an toàn
                 } else if (item.getPriceGem() > 0) {
-                    player.inventory.ruby += item.getPriceGem() - (item.getPriceGem() * 10 / 100);
+                    player.inventory.addRuby(item.getPriceGem() - (item.getPriceGem() * 10 / 100)); // FIX
                 }
                 removeItem(item);
                 Service.getInstance().sendMoney(player);

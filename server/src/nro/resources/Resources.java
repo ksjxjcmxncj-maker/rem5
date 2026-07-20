@@ -34,7 +34,7 @@ public class Resources {
 
     private static final Resources instance = new Resources();
 
-    public static Resources getInstance() {
+    public static synchronized Resources getInstance() {
         return instance;
     }
 

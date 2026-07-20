@@ -21,7 +21,7 @@ public class NotiManager {
 
     private static final NotiManager INSTANCE = new NotiManager();
 
-    public static NotiManager getInstance() {
+    public static synchronized NotiManager getInstance() {
         return INSTANCE;
     }
 

@@ -360,7 +360,7 @@ public class UseItem {
                         PhanQua17.quantity = 10;
 
                         pl.inventory.gold = 2000000000L;
-                        pl.inventory.gem += 1000000;
+                        pl.inventory.addGem(1000000); // FIX
 
                         Service.gI().sendThongBao(pl, "Bạn nhận được " + PhanQua.Name());
 //                        InventoryService.gI().addItemBag(pl, PhanQua2, 0);
@@ -798,7 +798,7 @@ public class UseItem {
                 listClothesReward = new int[]{randClothes(param), randClothes(param), randClothes(param)};
                 listItemReward = Util.pickNRandInArr(listItem, 5);
                 int ruby = Util.nextInt(1, 5);
-                pl.inventory.ruby += ruby;
+                pl.inventory.addRuby(ruby); // FIX
                 pl.textRuongGo.add(text + "|1| " + ruby + " Hồng Ngọc");
             }
             for (var i : listClothesReward) {
@@ -1017,7 +1017,7 @@ public class UseItem {
 
             if (Util.isTrue(30, 100)) {
                 int ruby = Util.nextInt(1, 5);
-                pl.inventory.ruby += ruby;
+                pl.inventory.addRuby(ruby); // FIX
                 CombineServiceNew.gI().sendEffectOpenItem(pl, item.template.iconID, (short) 7743);
                 PlayerService.gI().sendInfoHpMpMoney(pl);
                 InventoryService.gI().subQuantityItemsBag(pl, item, 1);
@@ -1246,7 +1246,7 @@ public class UseItem {
                             CombineServiceNew.gI().sendEffectOpenItem(pl, icon[0], icon[1]);
                             InventoryService.gI().addItemBag(pl, it, 0);
                             int ruby = Util.nextInt(1, 5);
-                            pl.inventory.ruby += ruby;
+                            pl.inventory.addRuby(ruby); // FIX
                             InventoryService.gI().sendItemBags(pl);
                             PlayerService.gI().sendInfoHpMpMoney(pl);
                             Service.getInstance().sendThongBao(pl, "Bạn được tặng kèm " + ruby + " Hồng Ngọc");
@@ -1267,7 +1267,7 @@ public class UseItem {
 
                             if (Util.isTrue(5, 90)) {
                                 int ruby = Util.nextInt(1, 3);
-                                pl.inventory.ruby += ruby;
+                                pl.inventory.addRuby(ruby); // FIX
                                 CombineServiceNew.gI().sendEffectOpenItem(pl, item.template.iconID, (short) 7743);
                                 PlayerService.gI().sendInfoHpMpMoney(pl);
                                 InventoryService.gI().subQuantityItemsBag(pl, item, 1);

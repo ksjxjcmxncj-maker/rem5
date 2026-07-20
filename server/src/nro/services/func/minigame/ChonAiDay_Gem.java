@@ -70,7 +70,7 @@ public class ChonAiDay_Gem implements Runnable {
                             String chatMessage = pl.name + " đã chiến thắng Chọn ai đây giải thưởng";
                             int goldC = gemNormar * 80 / 100;
                             Service.gI().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.mumberToLouis(goldC) + " hồng ngọc");
-                            pl.inventory.ruby += goldC;
+                            pl.inventory.addRuby(goldC); // FIX
                             Service.getInstance().sendMoney(pl);
                             ChatGlobalService.gI().chat(pl, chatMessage);
                         }
@@ -89,7 +89,7 @@ public class ChonAiDay_Gem implements Runnable {
                             String chatMessage = pl.name + " đã chiến thắng Chọn Ai Đây ngọc xanh giải VIP";
                             int goldC = gemVip * 90 / 100;
                             Service.gI().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.mumberToLouis(goldC) + " hồng ngọc");
-                            pl.inventory.ruby += goldC;
+                            pl.inventory.addRuby(goldC); // FIX
                             Service.getInstance().sendMoney(pl);
                             ChatGlobalService.gI().chat(pl, chatMessage);
                         }

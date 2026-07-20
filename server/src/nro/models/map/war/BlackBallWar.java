@@ -71,7 +71,7 @@ public class BlackBallWar {
         this.maps = new ArrayList<>();
     }
 
-    public static BlackBallWar gI() {
+    public static synchronized BlackBallWar gI() {
         if (i == null) {
             i = new BlackBallWar();
         }
@@ -284,7 +284,7 @@ public class BlackBallWar {
                 break;
         }
         if (player.inventory.gold >= cost) {
-            player.inventory.gold -= cost;
+            player.inventory.subGold(cost); // FIX: dùng method an toàn
             Service.getInstance().sendMoney(player);
             player.effectSkin.lastTimeXHPKI = System.currentTimeMillis();
             player.effectSkin.xHPKI = x;

@@ -26,8 +26,8 @@ public class ChallengePVP extends PVP {
     public void start() {
         super.start();
         this.totalGold += ((long) gold * 90 / 100) * 2;
-        this.player1.inventory.gold -= gold;
-        this.player2.inventory.gold -= gold;
+        this.player1.inventory.subGold(gold); // FIX: dùng method an toàn
+        this.player2.inventory.subGold(gold); // FIX: dùng method an toàn
         Service.getInstance().sendMoney(player1);
         Service.getInstance().sendMoney(player2);
         PlayerService.gI().changeAndSendTypePK(this.player1, ConstPlayer.PK_PVP);

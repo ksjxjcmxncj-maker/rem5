@@ -15,7 +15,7 @@ public class MartialCongressManager {
     private static List<MartialCongress> list = new ArrayList<>();
     private static List<MartialCongress> toRemove = new ArrayList<>();
 
-    public static MartialCongressManager gI() {
+    public static synchronized MartialCongressManager gI() {
         if (i == null) {
             i = new MartialCongressManager();
         }

@@ -164,7 +164,7 @@ public class ConSoMayMan {
                 data.conSoMayManNgoc = 1;
                 data.point = point;
                 players.add(data);
-                player.inventory.gem -= (giaSo_Gem);
+                player.inventory.subGem((giaSo_Gem)); // FIX
                 Service.gI().sendMoney(player);
                 Service.gI().showYourNumber(player, strNumber((int) player.id), null, null, 0);
             }
@@ -231,7 +231,7 @@ public class ConSoMayMan {
                 data.conSoMayManNgoc = 1;
                 data.point = point;
                 players.add(data);
-                player.inventory.gem -= (giaSo_Gem);
+                player.inventory.subGem((giaSo_Gem)); // FIX
                 Service.gI().sendMoney(player);
                 Service.gI().showYourNumber(player, strNumber((int) player.id), null, null, 0);
             }
@@ -300,7 +300,7 @@ public class ConSoMayMan {
                 data.conSoMayManNgoc = 1;
                 data.point = point;
                 players.add(data);
-                player.inventory.gem -= (giaSo_Gem);
+                player.inventory.subGem((giaSo_Gem)); // FIX
                 Service.gI().sendMoney(player);
                 Service.gI().showYourNumber(player, strNumber((int) player.id), null, null, 0);
             }
@@ -343,7 +343,7 @@ public class ConSoMayMan {
                 Player player = Client.gI().getPlayer(g.id);
                 finish = "Chúc mừng " + (player == null ? "NULL" : player.name) + " đã thắng " + MiniGame.gI().MiniGame_S1.money + " ngọc với con số may mắn " + result;
                 // trả thưởng cho player trúng thưởng //
-                player.inventory.ruby += MiniGame.gI().MiniGame_S1.money;
+                player.inventory.addRuby(MiniGame.gI().MiniGame_S1.money); // FIX
                 Service.getInstance().sendMoney(player);
                 // end trả thưởng //
                 break;

@@ -142,7 +142,7 @@ public class TaiXiu implements Runnable {
                                     Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
                                             + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(TÀI)\n\n|1|Bạn đã chiến thắng!!");
                                     Service.getInstance().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.format(goldC) + " Hồng ngọc");
-                                    pl.inventory.ruby += goldC;
+                                    pl.inventory.addRuby(goldC); // FIX
                                     pl.taixiu.win += pl.goldTai * 80 / 100;
                                     Service.getInstance().sendMoney(pl);
                                     InventoryService.gI().sendItemBags(pl);
@@ -190,7 +190,7 @@ public class TaiXiu implements Runnable {
                                     Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
                                             + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(XỈU)\n\n|1|Bạn đã chiến thắng!!");
                                     Service.getInstance().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.format(goldC) + " Hồng ngọc");
-                                    pl.inventory.ruby += goldC;
+                                    pl.inventory.addRuby(goldC); // FIX
                                     pl.taixiu.win += pl.goldXiu * 80 / 100;
                                     Service.getInstance().sendMoney(pl);
                                     InventoryService.gI().sendItemBags(pl);

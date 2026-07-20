@@ -19,7 +19,7 @@ public class PowerLimitManager {
 
     private static final PowerLimitManager instance = new PowerLimitManager();
 
-    public static PowerLimitManager getInstance() {
+    public static synchronized PowerLimitManager getInstance() {
         return instance;
     }
 
