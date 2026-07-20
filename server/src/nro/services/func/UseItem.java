@@ -779,7 +779,7 @@ public class UseItem {
         int time = (int) TimeUtil.diffDate(new Date(), new Date(item.createTime), TimeUtil.DAY);
         if (time != 0) {
             Item itemReward = null;
-            int param = item.itemOptions.get(0).param;
+            if (item.itemOptions == null || item.itemOptions.isEmpty()) return; int param = item.itemOptions.get(0).param;
             long gold = 0; // FIX: int→long tránh overflow
             int[] listItem = {441, 442, 443, 444, 445, 446, 447, 220, 221, 222, 223, 224, 225};
             int[] listClothesReward;
