@@ -35,6 +35,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import java.sql.Timestamp;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -68,7 +69,8 @@ public class GodGK {
                 }
 
                 session.isAdmin = rs.getBoolean("is_admin");
-                session.lastTimeLogout = rs.getTimestamp("last_time_logout").getTime();
+                Timestamp _logoutTs = rs.getTimestamp("last_time_logout");
+                session.lastTimeLogout = _logoutTs != null ? _logoutTs.getTime() : 0L;
                 session.actived = rs.getBoolean("active");
                 session.goldBar = rs.getInt("thoi_vang");
                 session.vndBar = rs.getInt("vnd");
