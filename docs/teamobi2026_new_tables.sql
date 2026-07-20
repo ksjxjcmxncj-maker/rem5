@@ -1,9 +1,11 @@
 -- ============================================================
 -- MIGRATION: Teamobi2026 → NRO SRC-Team
 -- Tạo bảng mới + dữ liệu từ Teamobi2026.rar
+-- FIXED: Charset thống nhất utf8mb4
+-- FIXED: PRIMARY KEY thêm đầy đủ cho tất cả bảng template
 -- BACKUP TRƯỚC KHI CHẠY:
 --   mysqldump -u root nro1 > /backup/nro1_backup.sql
--- CHẠY: mysql -u root nro1 < scripts/teamobi2026_new_tables.sql
+-- CHẠY: mysql -u root nro1 < docs/teamobi2026_new_tables.sql
 -- ============================================================
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -17,6 +19,8 @@ CREATE TABLE `achievement_template` (
   `info2` text NOT NULL,
   `money` int(11) NOT NULL,
   `max_count` bigint(20) NOT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 INSERT INTO `achievement_template` (`id`, `info1`, `info2`, `money`, `max_count`) VALUES
@@ -46,6 +50,8 @@ DROP TABLE IF EXISTS `array_head_2_frames`;
 CREATE TABLE `array_head_2_frames` (
   `id` int(11) NOT NULL,
   `data` text NOT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 INSERT INTO `array_head_2_frames` (`id`, `data`) VALUES
@@ -110,6 +116,8 @@ CREATE TABLE `bg_item_template` (
   `layer` int(11) NOT NULL,
   `dx` int(11) NOT NULL,
   `dy` int(11) NOT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 INSERT INTO `bg_item_template` (`id`, `image_id`, `layer`, `dx`, `dy`) VALUES
@@ -721,6 +729,8 @@ CREATE TABLE `clan_task_template` (
   `max_count_lv3` varchar(255) NOT NULL,
   `max_count_lv4` varchar(255) NOT NULL,
   `max_count_lv5` varchar(255) NOT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 INSERT INTO `clan_task_template` (`id`, `NAME`, `max_count_lv1`, `max_count_lv2`, `max_count_lv3`, `max_count_lv4`, `max_count_lv5`) VALUES
@@ -790,9 +800,11 @@ CREATE TABLE `data_badges` (
   `id` int(11) NOT NULL,
   `idEffect` int(11) NOT NULL,
   `idItem` int(11) NOT NULL,
-  `NAME` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `NAME` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `Options` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=DYNAMIC;
+,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 INSERT INTO `data_badges` (`id`, `idEffect`, `idItem`, `NAME`, `Options`) VALUES
 (1, 218, 1289, 'Đại gia mới nhú', '[{\"param\":15,\"id\":50},{\"param\":30,\"id\":93}]'),
@@ -816,10 +828,12 @@ INSERT INTO `data_badges` (`id`, `idEffect`, `idItem`, `NAME`, `Options`) VALUES
 DROP TABLE IF EXISTS `task_badges_template`;
 CREATE TABLE `task_badges_template` (
   `id` int(11) NOT NULL,
-  `NAME` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+  `NAME` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `maxCount` int(11) NOT NULL DEFAULT 0,
   `idBadgesReward` int(11) NOT NULL DEFAULT -1
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci ROW_FORMAT=DYNAMIC;
+,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 INSERT INTO `task_badges_template` (`id`, `NAME`, `maxCount`, `idBadgesReward`) VALUES
 (1, 'Nạp Tích luỹ 1 Triệu Trong Ngày', 1000000, 218),
@@ -857,6 +871,8 @@ CREATE TABLE `radar` (
   `require` int(11) DEFAULT -1,
   `require_level` int(11) DEFAULT 0,
   `aura_id` smallint(6) DEFAULT -1
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 INSERT INTO `radar` (`id`, `iconId`, `rank`, `max`, `type`, `mob_id`, `body`, `name`, `info`, `options`, `require`, `require_level`, `aura_id`) VALUES

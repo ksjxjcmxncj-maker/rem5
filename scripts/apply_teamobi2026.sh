@@ -6,7 +6,7 @@
 
 set -e
 
-NRO_DIR="${NRO_DIR:-/workspace/NRO}"
+NRO_DIR="${NRO_DIR:-/home/codespace/nro/SRC}"
 DB_NAME="${DB_NAME:-nro1}"
 DB_USER="${DB_USER:-root}"
 BACKUP_DIR="/backup/nro_upgrades"
@@ -90,32 +90,41 @@ echo "[BƯỚC 4] Biên dịch Java files mới..."
 cd "$NRO_DIR"
 
 # Biên dịch từng nhóm
-javac -cp 20.jar -d build/ \
-    src/nro/models/boss/event/Halloween/BiMa.java \
-    src/nro/models/boss/event/Halloween/Doi.java \
-    src/nro/models/boss/event/Halloween/MaTroi.java \
-    src/nro/models/boss/event_noel/OngGiaNoel.java \
-    src/nro/models/boss/event_tet/LanCon.java \
-    src/nro/models/boss/event_trung_thu/KhiDot.java \
-    src/nro/models/boss/event_trung_thu/NguyetThan.java \
-    src/nro/models/boss/event_trung_thu/NhatThan.java \
-    src/nro/models/boss/event_hung_vuong/SonTinh.java \
-    src/nro/models/boss/event_hung_vuong/ThuyTinh.java \
-    src/nro/models/boss/cumber/Cumber.java \
-    src/nro/models/boss/Baby/Baby.java \
-    src/nro/models/boss/trai_dat/BUJIN.java \
-    src/nro/models/boss/trai_dat/KOGU.java \
-    src/nro/models/boss/trai_dat/ZANGYA.java \
-    src/nro/models/boss/trai_dat/BIDO.java \
-    src/nro/models/boss/trai_dat/BOJACK.java \
-    src/nro/models/boss/trai_dat/SUPER_BOJACK.java \
-    src/nro/models/boss/Golden_fireza/GoldenFrieza.java \
-    src/nro/models/boss/Golden_fireza/DeathBeam1.java \
+mkdir -p "$NRO_DIR/build"
+javac -cp "$NRO_DIR/NgocRongOnline.jar:$NRO_DIR/lib/*" -d "$NRO_DIR/build/" \
+    "$NRO_DIR/src/nro/models/boss/event/Halloween/BiMa.java" \
+    "$NRO_DIR/src/nro/models/boss/event/Halloween/Doi.java" \
+    "$NRO_DIR/src/nro/models/boss/event/Halloween/MaTroi.java" \
+    "$NRO_DIR/src/nro/models/boss/event_noel/OngGiaNoel.java" \
+    "$NRO_DIR/src/nro/models/boss/event_tet/LanCon.java" \
+    "$NRO_DIR/src/nro/models/boss/event_trung_thu/KhiDot.java" \
+    "$NRO_DIR/src/nro/models/boss/event_trung_thu/NguyetThan.java" \
+    "$NRO_DIR/src/nro/models/boss/event_trung_thu/NhatThan.java" \
+    "$NRO_DIR/src/nro/models/boss/event_hung_vuong/SonTinh.java" \
+    "$NRO_DIR/src/nro/models/boss/event_hung_vuong/ThuyTinh.java" \
+    "$NRO_DIR/src/nro/models/boss/cumber/Cumber.java" \
+    "$NRO_DIR/src/nro/models/boss/Baby/Baby.java" \
+    "$NRO_DIR/src/nro/models/boss/trai_dat/BUJIN.java" \
+    "$NRO_DIR/src/nro/models/boss/trai_dat/KOGU.java" \
+    "$NRO_DIR/src/nro/models/boss/trai_dat/ZANGYA.java" \
+    "$NRO_DIR/src/nro/models/boss/trai_dat/BIDO.java" \
+    "$NRO_DIR/src/nro/models/boss/trai_dat/BOJACK.java" \
+    "$NRO_DIR/src/nro/models/boss/trai_dat/SUPER_BOJACK.java" \
+    "$NRO_DIR/src/nro/models/boss/Golden_fireza/GoldenFrieza.java" \
+    "$NRO_DIR/src/nro/models/boss/Golden_fireza/DeathBeam1.java" \
     2>&1 || {
         echo "  ⚠️  Lỗi biên dịch (có thể do class phụ thuộc chưa có)"
         echo "     Xem log trên để biết chi tiết"
         echo "     Bỏ qua lỗi này nếu class phụ thuộc sẽ thêm sau"
     }
+
+# ===== BƯỚC 4b: Update JAR =====
+echo ""
+echo "[BƯỚC 4b] Update class files vào NgocRongOnline.jar..."
+cd "$NRO_DIR"
+cp NgocRongOnline.jar NgocRongOnline.jar.bak_$(date +%Y%m%d_%H%M%S)
+jar uf NgocRongOnline.jar -C build/ nro/
+echo "  ✅ JAR đã cập nhật"
 
 echo ""
 echo "======================================================"
@@ -124,6 +133,6 @@ echo "======================================================"
 echo " 1. Cập nhật BossID.java: thêm constants từ docs/teamobi2026_src/BossID.java"
 echo " 2. Cập nhật BossesData.java: merge data từ docs/teamobi2026_src/BossesData.java"
 echo " 3. Cập nhật BossManager.java: đăng ký boss mới vào spawn schedule"
-echo " 4. Restart server: pkill -f 'java.*20.jar' && java -Xmx512m -jar 20.jar &"
+echo " 4. Restart server: pkill -f NgocRongOnline; sleep 2; cd $NRO_DIR; nohup java -Xms512m -Xmx1g -XX:+UseG1GC -jar NgocRongOnline.jar >> ~/logs/server.log 2>&1 &"
 echo ""
 echo " Đọc docs/NRO_UPGRADE_PLAN_TEAMOBI2026.md để biết chi tiết từng bước."
