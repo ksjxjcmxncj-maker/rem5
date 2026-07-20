@@ -201,7 +201,7 @@ public class InventoryService {
                 }
             }
             for (Item it : items) {
-                if (it.isNotNullItem() && it.template.id == item.template.id) {
+                if (it != null && it.isNotNullItem() && it.template.id == item.template.id) {
                     for (ItemOption io : it.itemOptions) {
                         if (io.optionTemplate.id == optionId) {
                             io.param += param;
@@ -301,7 +301,7 @@ public class InventoryService {
             if (index >= 0 && index < player.inventory.itemsBag.size()) {
                 itemThrow = player.inventory.itemsBag.get(index);
                 if (itemThrow.isNotNullItem()) {
-                    if (itemThrow.template.id != 457) {
+                    if (itemThrow.template.id != 457 && itemThrow.template.id != 674) {
                         removeItemBag(player, index);
                         sortItemBag(player);
                         sendItemBags(player);
