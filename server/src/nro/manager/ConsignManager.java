@@ -58,7 +58,6 @@ public class ConsignManager {
                 if (daysExpired < 6) {
                     consignmentShop.addItem(item);
                 }
-//                System.err.println("sss " + item.getConsignID());
             }
         } catch (Exception e) {
             e.printStackTrace();
