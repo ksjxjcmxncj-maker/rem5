@@ -35,17 +35,31 @@ else
   echo "  ✅ DB sẵn sàng ($TABLES tables)"
 fi
 
-# ── 4. Config.properties ─────────────────────
+# ── 4. Patch config với Codespace WSS URL ────
 echo "[4] Config..."
-CFG=~/nro/SRC/Config.properties
 CS_NAME="${CODESPACE_NAME:-localhost}"
-sed -i "s|server.sv1=.*|server.sv1=NRO:${CS_NAME}-8080.app.github.dev:443:0,0,0|" "$CFG"
+WS_HOST="${CS_NAME}-8080.app.github.dev"
+
+# Config.properties (SrcTeam.jar đọc file này)
+CFG=~/nro/SRC/Config.properties
+sed -i "s|server.sv1=.*|server.sv1=NRO:${WS_HOST}:443:0,0,0|" "$CFG"
 sed -i "s|server.local=.*|server.local=false|"      "$CFG"
 sed -i "s|database.host=.*|database.host=localhost|" "$CFG"
 sed -i "s|database.name=.*|database.name=nro1|"     "$CFG"
 sed -i "s|database.user=.*|database.user=root|"     "$CFG"
 sed -i "s|database.pass=.*|database.pass=|"          "$CFG"
-echo "  sv1: $(grep 'server.sv1' "$CFG")"
+
+# server.properties (Login.jar + SrcTeam.jar đọc từ resources/config/)
+SPROP=~/nro/SRC/resources/config/server.properties
+sed -i "s|server.sv1=.*|server.sv1=NRO:${WS_HOST}:443:0,0,0|"    "$SPROP"
+sed -i "s|server.db.name=.*|server.db.name=nro1|"                  "$SPROP"
+sed -i "s|server.db.ip=.*|server.db.ip=localhost|"                 "$SPROP"
+sed -i "s|server.db.us=.*|server.db.us=root|"                      "$SPROP"
+sed -i "s|server.db.pw=.*|server.db.pw=|"                           "$SPROP"
+
+echo "  Config.properties sv1 : $(grep 'server.sv1' "$CFG")"
+echo "  server.properties sv1 : $(grep 'server.sv1' "$SPROP" 2>/dev/null)"
+echo "  server.properties db  : $(grep 'server.db.name' "$SPROP" 2>/dev/null)"
 
 # ── 5. WebSocket bridge ──────────────────────
 echo "[5] WebSocket bridge (0.0.0.0:8080 → 127.0.0.1:14445)..."
