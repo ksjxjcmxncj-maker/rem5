@@ -23,6 +23,7 @@ public class MenuController {
     public void openMenuNPC(Session session, int idnpc, Player player) {
         TransactionService.gI().cancelTrade(player);
         Npc npc = null;
+        if (player.zone == null) return;
 
         if (idnpc == ConstNpc.CALICK && player.zone.map.mapId != 102) {
             npc = NpcManager.getNpc(ConstNpc.CALICK);
@@ -40,6 +41,7 @@ public class MenuController {
 
     public void doSelectMenu(Player player, int npcId, int select) throws IOException {
         TransactionService.gI().cancelTrade(player);
+        if (player.zone == null) return;
         switch (npcId) {
             case ConstNpc.RONG_THIENG:
             case ConstNpc.CON_MEO:
