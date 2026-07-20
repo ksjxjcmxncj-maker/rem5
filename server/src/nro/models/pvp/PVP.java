@@ -39,13 +39,17 @@ public abstract class PVP {
 
     public void update() {
         if (this.timeLeftPVP != -1 && this.start && Util.canDoWithTime(lastTimeStart, timeLeftPVP)) {
-            if (player1.nPoint.getCurrPercentHP() < player2.nPoint.getCurrPercentHP()) {
-                finishPVP(player1, TYPE_LOWER_HP);
+            if (player1 != null && player2 != null) {
+                if (player1.nPoint.getCurrPercentHP() < player2.nPoint.getCurrPercentHP()) {
+                    finishPVP(player1, TYPE_LOWER_HP);
+                }
             }
         }
     }
 
     public void finishPVP(Player plLose, byte typeWin) {
+        if (plLose == null || player1 == null || player2 == null) return;
+        
         if (plLose.typePk != ConstPlayer.NON_PK) {
             Player plWin = player1.equals(plLose) ? player2 : player1;
             
