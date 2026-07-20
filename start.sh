@@ -4,11 +4,11 @@ LOG=~/logs
 mkdir -p "$LOG"
 
 echo "[1] MariaDB..."
-if ! mysqladmin -u root ping 2>/dev/null; then
+if ! sudo mysqladmin ping 2>/dev/null; then
   sudo mysqld_safe --user=mysql --datadir=/var/lib/mysql >/dev/null 2>&1 &
   sleep 6
 fi
-mysqladmin -u root ping 2>/dev/null && echo "  ✅ MariaDB OK" || echo "  ❌ MariaDB FAIL"
+sudo mysqladmin ping 2>/dev/null && echo "  ✅ MariaDB OK" || echo "  ❌ MariaDB FAIL"
 
 echo "[2] WebSocket bridge (8080 → 14445)..."
 pkill -f ws_bridge.py 2>/dev/null; sleep 1
