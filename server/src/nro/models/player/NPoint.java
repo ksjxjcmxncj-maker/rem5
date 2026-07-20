@@ -572,37 +572,35 @@ public class NPoint {
         }
         //khỉ
         if (this.player.effectSkill.isMonkey) {
-            if (!this.player.isPet || (this.player.isPet
-                    && ((Pet) this.player).status != Pet.FUSION)) {
+            if (!this.player.isPet || (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).status != nro.models.player.Pet.FUSION)) {
                 int percent = SkillUtil.getPercentHpMonkey(player.effectSkill.levelMonkey);
                 this.hpMax += calPercent(this.hpMax, percent);
             }
         }
         // biến hình
         if (this.player.effectSkill.isBienHinh) {
-            if (!this.player.isPet || (this.player.isPet
-                    && ((Pet) this.player).status != Pet.FUSION)) {
+            if (!this.player.isPet || (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).status != nro.models.player.Pet.FUSION)) {
                 int percent = SkillUtil.getPercentHpBienHinh(player.effectSkill.levelBienHinh);
                 this.hpMax += calPercent(this.hpMax, percent);
             }
         }
         //pet mabư
-        if (this.player.isPet && ((Pet) this.player).isMabu
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isMabu
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.hpMax += calPercent(this.hpMax, 15);
         }
         //pet Baby Fide
-        if (this.player.isPet && ((Pet) this.player).isBabyFide
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isBabyFide
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.hpMax += calPercent(this.hpMax, 30);
         }
         //pet Baby KidBu
-        if (this.player.isPet && ((Pet) this.player).isBabyKidbu
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isBabyKidbu
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.hpMax += calPercent(this.hpMax, 30);
         }
         //pet Baby Cell
-        if (this.player.isPet && ((Pet) this.player).isBabyCell
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isBabyCell
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.hpMax += calPercent(this.hpMax, 30);
         }
@@ -620,8 +618,8 @@ public class NPoint {
         }
         //huýt sáo
         if (!this.player.isPet
-                || (this.player.isPet
-                && ((Pet) this.player).status != Pet.FUSION)) {
+                || (this.player instanceof nro.models.player.Pet
+                && ((nro.models.player.Pet) this.player).status != nro.models.player.Pet.FUSION)) {
             if (this.player.effectSkill.tiLeHPHuytSao != 0) {
                 this.hpMax += calPercent(this.hpMax, this.player.effectSkill.tiLeHPHuytSao);
             }
@@ -696,22 +694,22 @@ public class NPoint {
             this.mpMax += calPercent(this.mpMax, player.ChiSoKI_5);
         }
         //pet mabư
-        if (this.player.isPet && ((Pet) this.player).isMabu
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isMabu
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.mpMax += calPercent(this.mpMax, 15);
         }
         //pet Baby Fide
-        if (this.player.isPet && ((Pet) this.player).isBabyFide
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isBabyFide
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.mpMax += calPercent(this.mpMax, 30);
         }
         //pet Baby Kidbu
-        if (this.player.isPet && ((Pet) this.player).isBabyKidbu
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isBabyKidbu
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.mpMax += calPercent(this.mpMax, 30);
         }
         //pet Baby Cell
-        if (this.player.isPet && ((Pet) this.player).isBabyCell
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isBabyCell
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.mpMax += calPercent(this.mpMax, 30);
         }
@@ -756,8 +754,7 @@ public class NPoint {
         }
         // biến hình
         if (this.player.effectSkill.isBienHinh) {
-            if (!this.player.isPet || (this.player.isPet
-                    && ((Pet) this.player).status != Pet.FUSION)) {
+            if (!this.player.isPet || (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).status != nro.models.player.Pet.FUSION)) {
                 int percent = SkillUtil.getPercentHpBienHinh(player.effectSkill.levelBienHinh);
                 this.mpMax += calPercent(this.mpMax, percent);
             }
@@ -808,22 +805,22 @@ public class NPoint {
             this.dame += calPercent(this.dame, player.ChiSoSD_5);
         }
         //pet mabư
-        if (this.player.isPet && ((Pet) this.player).isMabu
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isMabu
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.dame += calPercent(this.dame, 15);
         }
         //pet Baby Fide
-        if (this.player.isPet && ((Pet) this.player).isBabyFide
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isBabyFide
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.dame += calPercent(this.dame, 30);
         }
         //pet Baby Kidbu
-        if (this.player.isPet && ((Pet) this.player).isBabyKidbu
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isBabyKidbu
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.dame += calPercent(this.dame, 30);
         }
         //pet Baby Cell
-        if (this.player.isPet && ((Pet) this.player).isBabyCell
+        if (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).isBabyCell
                 && ((Pet) this.player).master.fusion.typeFusion == ConstPlayer.HOP_THE_PORATA2) {
             this.dame += calPercent(this.dame, 30);
         }
@@ -872,8 +869,7 @@ public class NPoint {
         }
         // biến hình
         if (this.player.effectSkill.isBienHinh) {
-            if (!this.player.isPet || (this.player.isPet
-                    && ((Pet) this.player).status != Pet.FUSION)) {
+            if (!this.player.isPet || (this.player instanceof nro.models.player.Pet && ((nro.models.player.Pet) this.player).status != nro.models.player.Pet.FUSION)) {
                 int percent = SkillUtil.getPercentHpBienHinh(player.effectSkill.levelBienHinh);
                 this.dame += calPercent(this.dame, percent);
             }
@@ -1581,6 +1577,10 @@ public class NPoint {
     }
 
     public long calPercent(long param, int percent) {
+        return (long)param * percent / 100;
+    }
+    
+    // old method
         return param * percent / 100;
     }
     
