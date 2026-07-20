@@ -190,6 +190,7 @@ public class ShopService {
     }
 
     private Shop getShoDanhHieu(Player player, Shop s) {
+        Log.info(ShopService.class, "getShoDanhHieu called — not yet implemented");
         Shop shop = new Shop(s);
         for (TabShop tabShop : shop.tabShops) {
             for (ItemShop item : tabShop.itemShops) {
