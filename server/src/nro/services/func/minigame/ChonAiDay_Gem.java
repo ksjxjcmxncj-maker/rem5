@@ -17,8 +17,8 @@ import nro.utils.Util;
  */
 public class ChonAiDay_Gem implements Runnable {
 
-    public int gemNormar;
-    public int gemVip;
+    public long gemNormar; // FIX: int→long
+    public long gemVip; // FIX: int→long
     public long lastTimeEnd;
     public static final int TIME_CHONAIDAY = 300000;
     public List<Player> PlayersNormar = new ArrayList<>();
@@ -68,7 +68,7 @@ public class ChonAiDay_Gem implements Runnable {
                         Player pl = listN.get(Util.nextInt(0, numWinners - 1));
                         if (pl != null) {
                             String chatMessage = pl.name + " đã chiến thắng Chọn ai đây giải thưởng";
-                            int goldC = gemNormar * 80 / 100;
+                            long goldC = (long) gemNormar * 80L / 100L; // FIX: int→long overflow
                             Service.gI().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.mumberToLouis(goldC) + " hồng ngọc");
                             pl.inventory.addRuby(goldC); // FIX
                             Service.getInstance().sendMoney(pl);
@@ -87,7 +87,7 @@ public class ChonAiDay_Gem implements Runnable {
                         Player pl = listN.get(Util.nextInt(0, numWinners - 1));
                         if (pl != null) {
                             String chatMessage = pl.name + " đã chiến thắng Chọn Ai Đây ngọc xanh giải VIP";
-                            int goldC = gemVip * 90 / 100;
+                            long goldC = (long) gemVip * 90L / 100L; // FIX: int→long overflow
                             Service.gI().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.mumberToLouis(goldC) + " hồng ngọc");
                             pl.inventory.addRuby(goldC); // FIX
                             Service.getInstance().sendMoney(pl);

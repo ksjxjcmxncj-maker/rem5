@@ -34,7 +34,7 @@ public class CombineServiceNew {
     private static final int COST_DAP_DO_KICH_HOAT = 500000000;
     private static final int COST_DOI_MANH_KICH_HOAT = 500000000;
     private static final int COST_GIA_HAN_CAI_TRANG = 500000000;
-    private static final int COST = 500000000;
+    private static final long COST = 500_000_000L; // FIX: int→long
     
     // phan ra tl
     public static final int PHAN_RA_TL = 87620;
@@ -378,7 +378,7 @@ public class CombineServiceNew {
                     Item trangBiGoc = player.combineNew.itemsCombine.get(0);
                     Item trangBiCanChuyenHoa = player.combineNew.itemsCombine.get(1);
 
-                    int goldChuyenHoa = 2_000_000_000;
+                    long goldChuyenHoa = 2_000_000_000L; // FIX: int→long tránh overflow
 
                     int levelTrangBi = 0;
                     int soLanRotCap = 0;
@@ -1894,7 +1894,7 @@ public class CombineServiceNew {
             Item trangBiCanChuyenHoa = player.combineNew.itemsCombine.get(1);
 
             Item trangBiCanChuyenHoa_2 = ItemService.gI().createNewItem(player.combineNew.itemsCombine.get(1).template.id);
-            int goldChuyenHoa = 2_000_000_000;
+            long goldChuyenHoa = 2_000_000_000L; // FIX: int→long tránh overflow
 
             int levelTrangBi = 0;
             int soLanRotCap = 0;

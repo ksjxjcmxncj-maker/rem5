@@ -106,7 +106,7 @@ public class IntrinsicService {
 
     public void open(Player player) {
         if (player.nPoint.power >= 10000000000L) {
-            int goldRequire = COST_OPEN[player.playerIntrinsic.countOpen] * 1000000;
+            long goldRequire = (long) COST_OPEN[player.playerIntrinsic.countOpen] * 1000000L; // FIX: int→long tránh overflow
             if (player.inventory.gold >= goldRequire) {
                 player.inventory.subGold(goldRequire); // FIX
                 PlayerService.gI().sendInfoHpMpMoney(player);

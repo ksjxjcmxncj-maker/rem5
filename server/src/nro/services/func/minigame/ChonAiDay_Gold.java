@@ -17,8 +17,8 @@ import nro.utils.Util;
  */
 public class ChonAiDay_Gold implements Runnable {
 
-    public int goldNormar;
-    public int goldVip;
+    public long goldNormar; // FIX: int→long
+    public long goldVip; // FIX: int→long
     public long lastTimeEnd;
     public static final int TIME_CHONAIDAY = 300000;
     public List<Player> PlayersNormar = new ArrayList<>();
@@ -68,7 +68,7 @@ public class ChonAiDay_Gold implements Runnable {
                         Player pl = listN.get(Util.nextInt(0, numWinners - 1));
                         if (pl != null) {
                             String chatMessage = pl.name + " đã chiến thắng Chọn ai đây giải thưởng";
-                            int goldC = goldNormar * 80 / 100;
+                            long goldC = (long) goldNormar * 80L / 100L; // FIX: int→long overflow
                             Service.gI().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.numberToMoney(goldC) + " vàng");
                             pl.inventory.addGold(goldC); // FIX: dùng method an toàn
                             Service.getInstance().sendMoney(pl);
@@ -87,7 +87,7 @@ public class ChonAiDay_Gold implements Runnable {
                         Player pl = listN.get(Util.nextInt(0, numWinners - 1));
                         if (pl != null) {
                             String chatMessage = pl.name + " đã chiến thắng Chọn ai đây giải VIP";
-                            int goldC = goldVip * 90 / 100;
+                            long goldC = (long) goldVip * 90L / 100L; // FIX: int→long overflow
                             Service.gI().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.numberToMoney(goldC) + " vàng");
                             pl.inventory.addGold(goldC); // FIX: dùng method an toàn
                             Service.getInstance().sendMoney(pl);

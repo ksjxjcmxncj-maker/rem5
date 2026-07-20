@@ -40,7 +40,8 @@ public class AccountDAO {
         PreparedStatement ps = null;
         try (Connection con = DBService.gI().getConnectionForGame();) {
             ps = con.prepareStatement("update account set last_time_login = '2000-01-01', "
-                    + "last_time_logout = '2001-01-01' where server_login = " + Manager.SERVER);
+                    + "last_time_logout = '2001-01-01' where server_login = ?");
+            ps.setInt(1, Manager.SERVER); // FIX: bind SERVER
             ps.executeUpdate();
         } catch (Exception e) {
             Log.error(AccountDAO.class, e);

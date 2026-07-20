@@ -14,8 +14,8 @@ import nro.utils.Util;
  */
 public class TaiXiu implements Runnable {
 
-    public int goldTai;
-    public int goldXiu;
+    public long goldTai; // FIX: int→long
+    public long goldXiu; // FIX: int→long
     public boolean ketquaTai = false;
     public boolean ketquaXiu = false;
 
@@ -138,12 +138,12 @@ public class TaiXiu implements Runnable {
                             for (int i = 0; i < PlayersTai.size(); i++) {
                                 Player pl = this.PlayersTai.get(i);
                                 if (pl != null && Client.gI().getPlayer(pl.name) != null) {
-                                    int goldC = pl.goldTai + pl.goldTai * 80 / 100;
+                                    long goldC = (long) pl.goldTai + pl.goldTai * 80L / 100L; // FIX: int→long overflow
                                     Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
                                             + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(TÀI)\n\n|1|Bạn đã chiến thắng!!");
                                     Service.getInstance().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.format(goldC) + " Hồng ngọc");
                                     pl.inventory.addRuby(goldC); // FIX
-                                    pl.taixiu.win += pl.goldTai * 80 / 100;
+                                    pl.taixiu.win += (long) pl.goldTai * 80L / 100L; // FIX: overflow
                                     Service.getInstance().sendMoney(pl);
                                     InventoryService.gI().sendItemBags(pl);
                                     Message m;
@@ -186,12 +186,12 @@ public class TaiXiu implements Runnable {
                             for (int i = 0; i < PlayersXiu.size(); i++) {
                                 Player pl = this.PlayersXiu.get(i);
                                 if (pl != null && Client.gI().getPlayer(pl.name) != null) {
-                                    int goldC = pl.goldXiu + pl.goldXiu * 80 / 100;
+                                    long goldC = (long) pl.goldXiu + pl.goldXiu * 80L / 100L; // FIX: int→long overflow
                                     Service.getInstance().sendThongBao(pl, "Số hệ thống quay ra\n" + x + " : "
                                             + y + " : " + z + "\n|5|Tổng là : " + tong + "\n(XỈU)\n\n|1|Bạn đã chiến thắng!!");
                                     Service.getInstance().sendThongBao(pl, "Chúc mừng bạn đã dành chiến thắng và nhận được " + Util.format(goldC) + " Hồng ngọc");
                                     pl.inventory.addRuby(goldC); // FIX
-                                    pl.taixiu.win += pl.goldXiu * 80 / 100;
+                                    pl.taixiu.win += (long) pl.goldXiu * 80L / 100L; // FIX: overflow
                                     Service.getInstance().sendMoney(pl);
                                     InventoryService.gI().sendItemBags(pl);
                                     Message m;

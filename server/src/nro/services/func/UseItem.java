@@ -780,21 +780,21 @@ public class UseItem {
         if (time != 0) {
             Item itemReward = null;
             int param = item.itemOptions.get(0).param;
-            int gold = 0;
+            long gold = 0; // FIX: int→long tránh overflow
             int[] listItem = {441, 442, 443, 444, 445, 446, 447, 220, 221, 222, 223, 224, 225};
             int[] listClothesReward;
             int[] listItemReward;
             String text = "Bạn nhận được\n";
             if (param < 8) {
-                gold = 100000 * param;
+                gold = 100000L * param; // FIX: L suffix
                 listClothesReward = new int[]{randClothes(param)};
                 listItemReward = Util.pickNRandInArr(listItem, 3);
             } else if (param < 10) {
-                gold = 250000 * param;
+                gold = 250000L * param; // FIX: L suffix
                 listClothesReward = new int[]{randClothes(param), randClothes(param)};
                 listItemReward = Util.pickNRandInArr(listItem, 4);
             } else {
-                gold = 500000 * param;
+                gold = 500000L * param; // FIX: L suffix
                 listClothesReward = new int[]{randClothes(param), randClothes(param), randClothes(param)};
                 listItemReward = Util.pickNRandInArr(listItem, 5);
                 int ruby = Util.nextInt(1, 5);

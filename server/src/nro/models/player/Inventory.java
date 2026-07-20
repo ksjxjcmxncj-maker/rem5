@@ -72,9 +72,13 @@ public class Inventory {
         }
     }
 
-    public void subGold(int num) {
+    public void subGold(long num) { // FIX: long overload
         this.gold -= num;
-        if (this.gold < 0) this.gold = 0; // FIX: không để gold âm
+        if (this.gold < 0) this.gold = 0;
+    }
+
+    public void subGold(int num) {
+        subGold((long) num);
     }
 
     public void subRuby(int num) {

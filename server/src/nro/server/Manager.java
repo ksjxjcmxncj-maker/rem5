@@ -760,7 +760,7 @@ public class Manager {
             Log.success("Thông báo tải dữ liệu images by name thành công (" + IMAGES_BY_NAME.size() + ")");
 
             //load clan
-            ps = con.prepareStatement("select * from clan_sv" + SERVER);
+            ps = con.prepareStatement("select * from clan_sv" + SERVER // INFO: SERVER là int constant nội bộ);
             rs = ps.executeQuery();
             while (rs.next()) {
                 Clan clan = new Clan();
