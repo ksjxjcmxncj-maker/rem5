@@ -23,7 +23,7 @@ public class EffectMapService {
 
     }
 
-    public static EffectMapService gI() {
+    public static synchronized EffectMapService gI() {
         if (i == null) {
             i = new EffectMapService();
         }

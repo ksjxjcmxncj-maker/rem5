@@ -18,7 +18,7 @@ public class NPC_ToSuKaio extends Player {
     }
     private static NPC_ToSuKaio instance;
     
-    public static NPC_ToSuKaio getInstance() {
+    public static synchronized NPC_ToSuKaio getInstance() {
         if (instance == null) {
             instance = new NPC_ToSuKaio();
         }

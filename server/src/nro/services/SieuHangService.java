@@ -67,7 +67,7 @@ public class SieuHangService {
         }
     }
 
-    public static Object gI() {
+    public static synchronized Object gI() {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

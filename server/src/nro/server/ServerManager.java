@@ -40,6 +40,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -76,7 +77,7 @@ public class ServerManager {
 
     public static String timeStart;
 
-    public static final Map CLIENTS = new HashMap();
+    public static final Map CLIENTS = new ConcurrentHashMap(); // FIX: thread-safe
 
     public static String NAME = "";
     public static int PORT = 14445;
@@ -114,7 +115,7 @@ public class ServerManager {
         }
     }
 
-    public static ServerManager gI() {
+    public static synchronized ServerManager gI() {
         if (instance == null) {
             instance = new ServerManager();
             instance.init();

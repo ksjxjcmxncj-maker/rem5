@@ -19,7 +19,7 @@ public class FlagBagService {
     private List<FlagBag> flagClan = new ArrayList<>();
     private static FlagBagService i;
 
-    public static FlagBagService gI() {
+    public static synchronized FlagBagService gI() {
         if (i == null) {
             i = new FlagBagService();
         }

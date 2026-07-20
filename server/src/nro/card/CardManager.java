@@ -23,7 +23,7 @@ public class CardManager {
 
     private static final CardManager instance = new CardManager();
 
-    public static CardManager getInstance() {
+    public static synchronized CardManager getInstance() {
         return instance;
     }
 

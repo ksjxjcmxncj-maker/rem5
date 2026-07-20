@@ -14,6 +14,7 @@ import nro.utils.Util;
 import nro.services.*;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -115,7 +116,7 @@ public class SummonDragon {
     private byte select;
 
     private SummonDragon() {
-        this.pl_dragonStar = new HashMap<>();
+        this.pl_dragonStar = new ConcurrentHashMap<>(); // FIX: thread-safe
         this.update = new Thread(() -> {
             while (active) {
                 try {

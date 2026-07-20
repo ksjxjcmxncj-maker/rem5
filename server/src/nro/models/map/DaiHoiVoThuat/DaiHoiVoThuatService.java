@@ -25,7 +25,7 @@ public class DaiHoiVoThuatService {
 
     private static DaiHoiVoThuatService instance;
 
-    public static DaiHoiVoThuatService gI() {
+    public static synchronized DaiHoiVoThuatService gI() {
         if (instance == null) {
             instance = new DaiHoiVoThuatService();
         }

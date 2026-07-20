@@ -40,14 +40,14 @@ public class ConsignmentShop {
 
     private static final byte UP_TOP = 5;
 
-    public static ConsignmentShop getInstance() {
+    public static synchronized ConsignmentShop getInstance() {
         return INSTANCE;
     }
 
     @Getter
     private List<ConsignmentItem> list = new ArrayList<>();
 
-    private Map<Long, ConsignmentItem> mapItemsExpired = new HashMap<>();
+    private Map<Long, ConsignmentItem> mapItemsExpired = new ConcurrentHashMap<>(); // FIX: thread-safe
 
     public String[] tabName = {"Trang bị", "Phụ kiện", "Hỗ trợ", "Linh tinh", ""};
 

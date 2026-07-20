@@ -21,7 +21,7 @@ public class Maintenance extends Thread {
 
     }
 
-    public static Maintenance gI() {
+    public static synchronized Maintenance gI() {
         if (i == null) {
             i = new Maintenance();
         }

@@ -29,7 +29,7 @@ public class InventoryService {
 
     private static InventoryService i;
 
-    public static InventoryService gI() {
+    public static synchronized InventoryService gI() {
         if (i == null) {
             i = new InventoryService();
         }

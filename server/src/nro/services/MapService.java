@@ -25,7 +25,7 @@ public class MapService {
 
     private static MapService i;
 
-    public static MapService gI() {
+    public static synchronized MapService gI() {
         if (i == null) {
             i = new MapService();
         }

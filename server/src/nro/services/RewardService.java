@@ -86,7 +86,7 @@ public class RewardService {
 
     }
 
-    public static RewardService gI() {
+    public static synchronized RewardService gI() {
         if (i == null) {
             i = new RewardService();
         }

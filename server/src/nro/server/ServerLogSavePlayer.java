@@ -28,7 +28,7 @@ public class ServerLogSavePlayer implements Runnable {
         }
     }
 
-    public static ServerLogSavePlayer gI() {
+    public static synchronized ServerLogSavePlayer gI() {
         if (i == null) {
             i = new ServerLogSavePlayer();
         }

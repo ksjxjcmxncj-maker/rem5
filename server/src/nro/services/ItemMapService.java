@@ -16,7 +16,7 @@ public class ItemMapService {
 
     private static ItemMapService i;
 
-    public static ItemMapService gI() {
+    public static synchronized ItemMapService gI() {
         if (i == null) {
             i = new ItemMapService();
         }

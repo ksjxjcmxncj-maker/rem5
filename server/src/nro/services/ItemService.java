@@ -25,7 +25,7 @@ public class ItemService {
 
     private static ItemService i;
 
-    public static ItemService gI() {
+    public static synchronized ItemService gI() {
         if (i == null) {
             i = new ItemService();
         }

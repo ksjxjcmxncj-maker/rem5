@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,7 @@ public class Hit {
 
     public Hit() {
         hits = new ArrayList<>();
-        targets = new HashMap<>();
+        targets = new ConcurrentHashMap<>(); // FIX: thread-safe
     }
 
     public void addTarget(int targetID, int type) {

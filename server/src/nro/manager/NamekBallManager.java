@@ -22,7 +22,7 @@ public class NamekBallManager extends AbsManager<NamekBall> {
 
     private static final NamekBallManager INSTANCE = new NamekBallManager();
 
-    public static NamekBallManager gI() {
+    public static synchronized NamekBallManager gI() {
         return INSTANCE;
     }
 

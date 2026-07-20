@@ -34,7 +34,7 @@ public class TopBanDoKhoBau {
     
     private List<Player> list2 = new ArrayList<>();
 
-    public static TopBanDoKhoBau getInstance() {
+    public static synchronized TopBanDoKhoBau getInstance() {
         return INSTANCE;
     }
 

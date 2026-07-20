@@ -18,7 +18,7 @@ public class EffSkinService {
     public static final byte STONE_EFFECT = 42;
     private static EffSkinService i;
 
-    public static EffSkinService gI() {
+    public static synchronized EffSkinService gI() {
         if (i == null) {
             i = new EffSkinService();
         }

@@ -102,7 +102,7 @@ public class Session {
             this.dos.write(data);
             this.dos.flush();
         } catch (Exception exception) {
-            // empty catch block
+            // suppressed: send path errors are non-fatal
         }
     }
     
@@ -117,7 +117,7 @@ public class Session {
                 int clientID = ms.reader().readInt();
                 int userID = ms.reader().readInt();
                 String username = ms.reader().readUTF();
-                String password = ms.reader().readUTF();
+                String password = ms.reader().readUTF(); // WARNING: password truyền dạng plaintext — cân nhắc hash phía login server
                 User user = new User(username, password, this.serverID, clientID, this);
                 user.setUserID(userID);
                 UserManager.getInstance().add(user);
@@ -315,8 +315,8 @@ public class Session {
                     }
                 }
             } catch (Exception exception) {
-                // empty catch block
-            }
+            // suppressed: send path errors are non-fatal
+        }
             Session.this.closeMessage();
         }
 

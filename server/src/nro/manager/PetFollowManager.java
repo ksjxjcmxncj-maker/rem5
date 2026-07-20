@@ -15,7 +15,7 @@ public class PetFollowManager extends AbsManager<PetFollow> {
 
     private static final PetFollowManager INSTANCE = new PetFollowManager();
 
-    public static PetFollowManager gI() {
+    public static synchronized PetFollowManager gI() {
         return INSTANCE;
     }
 

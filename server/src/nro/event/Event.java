@@ -17,7 +17,7 @@ public abstract class Event {
 
     private static Event instance;
 
-    public static Event getInstance() {
+    public static synchronized Event getInstance() {
         return instance;
     }
 

@@ -20,7 +20,7 @@ public class KhiGasHuyDietService {
 
     }
 
-    public static KhiGasHuyDietService gI() {
+    public static synchronized KhiGasHuyDietService gI() {
         if (i == null) {
             i = new KhiGasHuyDietService();
         }

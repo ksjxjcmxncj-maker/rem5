@@ -16,7 +16,7 @@ public class DHVT23Service {
 
     private static DHVT23Service i;
 
-    public static DHVT23Service gI() {
+    public static synchronized DHVT23Service gI() {
         if (i == null) {
             i = new DHVT23Service();
         }

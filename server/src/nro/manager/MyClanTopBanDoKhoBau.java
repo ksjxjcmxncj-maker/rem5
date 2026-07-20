@@ -32,7 +32,7 @@ public class MyClanTopBanDoKhoBau {
 
     private static final MyClanTopBanDoKhoBau INSTANCE = new MyClanTopBanDoKhoBau();
 
-    public static MyClanTopBanDoKhoBau getInstance() {
+    public static synchronized MyClanTopBanDoKhoBau getInstance() {
         return INSTANCE;
     }
 

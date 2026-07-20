@@ -25,7 +25,7 @@ public class ChonAiDay_Gold implements Runnable {
     public List<Player> PlayersVIP = new ArrayList<>();
     private static ChonAiDay_Gold instance;
 
-    public static ChonAiDay_Gold gI() {
+    public static synchronized ChonAiDay_Gold gI() {
         if (instance == null) {
             instance = new ChonAiDay_Gold();
         }

@@ -7,6 +7,7 @@ import nro.utils.Log;
 import nro.utils.Util;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 /**
@@ -19,7 +20,7 @@ public class TransactionService implements Runnable {
 
     private static final int TIME_DELAY_TRADE = 30000;
 
-    static final Map<Player, Trade> PLAYER_TRADE = new HashMap<Player, Trade>();
+    static final Map<Player, Trade> PLAYER_TRADE = new ConcurrentHashMap<>(); // FIX: thread-safe
 
     private static final byte SEND_INVITE_TRADE = 0;
     private static final byte ACCEPT_TRADE = 1;

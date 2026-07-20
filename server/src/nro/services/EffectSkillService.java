@@ -38,7 +38,7 @@ public class EffectSkillService {
 
     }
 
-    public static EffectSkillService gI() {
+    public static synchronized EffectSkillService gI() {
         if (i == null) {
             i = new EffectSkillService();
         }

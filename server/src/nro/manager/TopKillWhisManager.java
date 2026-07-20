@@ -31,7 +31,7 @@ public class TopKillWhisManager {
     private List<Player> list = new ArrayList<>();
     private static final TopKillWhisManager INSTANCE = new TopKillWhisManager();
 
-    public static TopKillWhisManager getInstance() {
+    public static synchronized TopKillWhisManager getInstance() {
         return INSTANCE;
     }
 

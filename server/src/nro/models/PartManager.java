@@ -27,7 +27,7 @@ public class PartManager {
 
     private static final PartManager instance = new PartManager();
 
-    public static PartManager getInstance() {
+    public static synchronized PartManager getInstance() {
         return instance;
     }
 

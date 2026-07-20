@@ -26,6 +26,7 @@ public class SkillUtil {
     }
 
     public static Skill createSkill(int tempId, int level) {
+        if (level <= 0) return createEmptySkill(); // FIX: tránh ArrayIndexOutOfBounds khi level=0
         Skill skill = null;
         try {
             skill = nClassTD.getSkillTemplate(tempId).skillss.get(level - 1);
@@ -46,6 +47,7 @@ public class SkillUtil {
     }
     
     public static Skill getSkill(int tempId, int level) {
+        if (level <= 0) return null; // FIX: tránh ArrayIndexOutOfBounds khi level=0
         Skill skill = null;
         try {
             skill = nClassTD.getSkillTemplate(tempId).skillss.get(level - 1);

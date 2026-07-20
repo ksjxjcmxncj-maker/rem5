@@ -80,7 +80,7 @@ public class LoginController {
         } catch (Exception e) {
             Log.error(LoginController.class, e);
         } finally {
-            ps.close();
+            try { if (ps != null) ps.close(); } catch (Exception ignore) {}
         }
     }
 

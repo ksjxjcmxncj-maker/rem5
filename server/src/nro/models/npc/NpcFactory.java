@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -104,7 +105,7 @@ public class NpcFactory {
     private static boolean nhanDeTu = true;
 
     // playerid - object
-    public static final java.util.Map<Long, Object> PLAYERID_OBJECT = new HashMap<Long, Object>();
+    public static final java.util.Map<Long, Object> PLAYERID_OBJECT = new ConcurrentHashMap<>(); // FIX: thread-safe
 
     private NpcFactory() {
 

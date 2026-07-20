@@ -64,7 +64,7 @@ public class ClanService {
     private ClanService() {
     }
 
-    public static ClanService gI() {
+    public static synchronized ClanService gI() {
         if (i == null) {
             i = new ClanService();
         }

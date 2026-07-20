@@ -16,6 +16,7 @@ import nro.utils.Util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,9 +38,9 @@ public class PVPServcice implements Runnable {
     private static PVPServcice i;
 
     private static List<PVP> PVPS = new ArrayList<>();
-    private static Map<Player, Player> PLAYER_VS_PLAYER = new HashMap<Player, Player>();
-    private static Map<Player, PVP> PLAYER_PVP = new HashMap<Player, PVP>();
-    private static Map<Player, Integer> PLAYER_GOLD = new HashMap<Player, Integer>();
+    private static final Map<Player, Player> PLAYER_VS_PLAYER = new ConcurrentHashMap<>(); // FIX: thread-safe
+    private static final Map<Player, PVP> PLAYER_PVP = new ConcurrentHashMap<>(); // FIX: thread-safe
+    private static final Map<Player, Integer> PLAYER_GOLD = new ConcurrentHashMap<>(); // FIX: thread-safe
 
     private PVPServcice() {
         this.optionsGoldChallenge = new String[GOLD_CHALLENGE.length];
@@ -48,7 +49,7 @@ public class PVPServcice implements Runnable {
         }
     }
 
-    public static PVPServcice gI() {
+    public static synchronized PVPServcice gI() {
         if (i == null) {
             i = new PVPServcice();
             new Thread(i).start();

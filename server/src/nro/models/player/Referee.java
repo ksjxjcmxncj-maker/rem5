@@ -21,7 +21,7 @@ public class Referee extends Player {
     }
     private static Referee instance;
 
-    public static Referee getInstance() {
+    public static synchronized Referee getInstance() {
         if (instance == null) {
             instance = new Referee();
         }

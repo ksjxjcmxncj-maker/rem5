@@ -20,7 +20,7 @@ public class BanDoKhoBauService {
 
     }
 
-    public static BanDoKhoBauService gI() {
+    public static synchronized BanDoKhoBauService gI() {
         if (i == null) {
             i = new BanDoKhoBauService();
         }

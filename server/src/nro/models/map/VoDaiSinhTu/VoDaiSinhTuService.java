@@ -18,7 +18,7 @@ public class VoDaiSinhTuService {
 
     private static VoDaiSinhTuService i;
 
-    public static VoDaiSinhTuService gI() {
+    public static synchronized VoDaiSinhTuService gI() {
         if (i == null) {
             i = new VoDaiSinhTuService();
         }

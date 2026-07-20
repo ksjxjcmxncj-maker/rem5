@@ -35,7 +35,7 @@ public class FriendAndEnemyService {
 
     private static FriendAndEnemyService i;
 
-    public static FriendAndEnemyService gI() {
+    public static synchronized FriendAndEnemyService gI() {
         if (i == null) {
             i = new FriendAndEnemyService();
         }

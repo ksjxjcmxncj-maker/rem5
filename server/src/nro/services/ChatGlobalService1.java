@@ -30,7 +30,7 @@ public class ChatGlobalService1 implements Runnable {
         new Thread(this, "**Chat global").start();
     }
 
-    public static ChatGlobalService1 gI() {
+    public static synchronized ChatGlobalService1 gI() {
         if (i == null) {
             i = new ChatGlobalService1();
         }

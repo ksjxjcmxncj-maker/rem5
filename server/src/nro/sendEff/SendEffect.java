@@ -15,7 +15,7 @@ public class SendEffect {
 
     private static SendEffect instance;
 
-    public static SendEffect getInstance() {
+    public static synchronized SendEffect getInstance() {
         if (instance == null) {
             instance = new SendEffect();
         }

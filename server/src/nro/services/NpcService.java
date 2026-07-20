@@ -18,7 +18,7 @@ public class NpcService {
 
     private static NpcService i;
 
-    public static NpcService gI() {
+    public static synchronized NpcService gI() {
         if (i == null) {
             i = new NpcService();
         }

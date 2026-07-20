@@ -16,7 +16,7 @@ public class PetService {
 
     private static PetService i;
 
-    public static PetService gI() {
+    public static synchronized PetService gI() {
         if (i == null) {
             i = new PetService();
         }

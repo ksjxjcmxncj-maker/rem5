@@ -19,7 +19,7 @@ public class MiniPetManager implements IManager<MinipetTemplate> {
 
     private List<MinipetTemplate> list = new ArrayList<>();
 
-    public static MiniPetManager gI() {
+    public static synchronized MiniPetManager gI() {
         return INSTANCE;
     }
 

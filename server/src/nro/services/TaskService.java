@@ -47,7 +47,7 @@ public class TaskService {
 
     private static TaskService i;
 
-    public static TaskService gI() {
+    public static synchronized TaskService gI() {
         if (i == null) {
             i = new TaskService();
         }

@@ -18,7 +18,7 @@ public class ConnPool {
     public String password;
     public static ConnPool i;
 
-    public static ConnPool gI() {
+    public static synchronized ConnPool gI() {
         if (i == null) {
             i = new ConnPool("jdbc:mysql://" + DBService.DB_HOST + ":" + DBService.DB_PORT + "/" + DBService.DB_NAME
                     + "?autoReconnect=True", DBService.DB_USER, DBService.DB_PASSWORD, DBService.MAX_CONN);

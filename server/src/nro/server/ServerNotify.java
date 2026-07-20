@@ -23,7 +23,7 @@ public class ServerNotify extends Thread {
         this.start();
     }
 
-    public static ServerNotify gI() {
+    public static synchronized ServerNotify gI() {
         if (i == null) {
             i = new ServerNotify();
         }

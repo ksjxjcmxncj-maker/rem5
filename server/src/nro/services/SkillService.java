@@ -38,7 +38,7 @@ public class SkillService {
 
     }
 
-    public static SkillService gI() {
+    public static synchronized SkillService gI() {
         if (i == null) {
             i = new SkillService();
         }

@@ -55,7 +55,7 @@ public class BossManager {
 
     }
 
-    public static BossManager gI() {
+    public static synchronized BossManager gI() {
         if (intance == null) {
             intance = new BossManager();
         }

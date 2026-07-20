@@ -19,7 +19,7 @@ public class DoanhTraiService {
 
     }
 
-    public static DoanhTraiService gI() {
+    public static synchronized DoanhTraiService gI() {
         if (i == null) {
             i = new DoanhTraiService();
         }

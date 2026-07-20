@@ -21,7 +21,7 @@ public class AttributeTemplateManager {
 
     private static final AttributeTemplateManager instance = new AttributeTemplateManager();
 
-    public static AttributeTemplateManager getInstance() {
+    public static synchronized AttributeTemplateManager getInstance() {
         return instance;
     }
 

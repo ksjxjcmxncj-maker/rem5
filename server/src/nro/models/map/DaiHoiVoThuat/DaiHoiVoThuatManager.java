@@ -25,7 +25,7 @@ public class DaiHoiVoThuatManager {
 
     public int hourDHVT = 0;
 
-    public static DaiHoiVoThuatManager gI() {
+    public static synchronized DaiHoiVoThuatManager gI() {
         if (instance == null) {
             instance = new DaiHoiVoThuatManager();
         }

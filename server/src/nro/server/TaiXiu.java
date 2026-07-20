@@ -29,7 +29,7 @@ public class TaiXiu implements Runnable {
     private static TaiXiu instance;
     public int x, y, z;
 
-    public static TaiXiu gI() {
+    public static synchronized TaiXiu gI() {
         if (instance == null) {
             instance = new TaiXiu();
         }

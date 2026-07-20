@@ -106,11 +106,7 @@ public class HistoryTransactionDAO {
         } catch (Exception e) {
             Log.error(HistoryTransactionDAO.class, e);
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
-                java.util.logging.Logger.getLogger(HistoryTransactionDAO.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            try { if (ps != null) ps.close(); } catch (Exception ignore) {}
         }
     }
 
@@ -123,11 +119,7 @@ public class HistoryTransactionDAO {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                ps.close();
-            } catch (SQLException ex) {
-//                java.util.logging.Logger.getLogger(HistoryTransactionDAO.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            try { if (ps != null) ps.close(); } catch (Exception ignore) {}
         }
     }
 

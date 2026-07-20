@@ -17,7 +17,7 @@ public class AchiveManager implements IManager<AchivementTemplate> {
 
     private static final AchiveManager INSTANCE = new AchiveManager();
 
-    public static AchiveManager getInstance() {
+    public static synchronized AchiveManager getInstance() {
         return INSTANCE;
     }
 

@@ -99,6 +99,7 @@ public class NguaChinLmao extends BigBoss {
                 Service.gI().sendMessAllPlayerInMap(this.zone, msg);
                 lastBigBossAttackTime = System.currentTimeMillis();
             } catch (Exception e) {
+            Log.error(this.getClass(), e); // FIX: log lỗi
             } finally {
                 if (msg != null) {
                     msg.cleanup();

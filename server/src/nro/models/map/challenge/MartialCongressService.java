@@ -16,7 +16,7 @@ public class MartialCongressService {
 
     private static MartialCongressService i;
 
-    public static MartialCongressService gI() {
+    public static synchronized MartialCongressService gI() {
         if (i == null) {
             i = new MartialCongressService();
         }

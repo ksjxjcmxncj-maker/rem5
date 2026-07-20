@@ -31,7 +31,7 @@ public class TopPowerManager {
     private List<Player> list = new ArrayList<>();
     private static final TopPowerManager INSTANCE = new TopPowerManager();
 
-    public static TopPowerManager getInstance() {
+    public static synchronized TopPowerManager getInstance() {
         return INSTANCE;
     }
 

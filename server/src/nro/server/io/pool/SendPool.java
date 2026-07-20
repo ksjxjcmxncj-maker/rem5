@@ -19,7 +19,7 @@ public class SendPool {
         this.pool = Executors.newFixedThreadPool(MAX_THREAD);
     }
 
-    public static SendPool gI() {
+    public static synchronized SendPool gI() {
         if (i == null) {
             i = new SendPool();
         }

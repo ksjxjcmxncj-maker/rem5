@@ -13,6 +13,7 @@ import nro.services.*;
 import nro.services.*;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import nro.consts.ConstItem;
 import nro.models.item.ItemOption;
@@ -27,7 +28,7 @@ import nro.utils.Util;
  */
 public class Input {
 
-    private static final Map<Integer, Object> PLAYER_ID_OBJECT = new HashMap<Integer, Object>();
+    private static final Map<Integer, Object> PLAYER_ID_OBJECT = new ConcurrentHashMap<>(); // FIX: thread-safe
 
     public static final int CHANGE_PASSWORD = 500;
     public static final int GIFT_CODE = 501;
@@ -62,7 +63,7 @@ public static final int TAI_taixiu = 323508;
 
     }
 
-    public static Input gI() {
+    public static synchronized Input gI() {
         if (intance == null) {
             intance = new Input();
         }

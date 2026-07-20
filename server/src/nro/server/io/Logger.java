@@ -16,7 +16,7 @@
 //public class Logger  extends Thread  {
 //    private static Logger i;
 //
-//    public static Logger gI() {
+//    public static synchronized Logger gI() {
 //        if (i == null) {
 //            i = new Logger();
 //        }

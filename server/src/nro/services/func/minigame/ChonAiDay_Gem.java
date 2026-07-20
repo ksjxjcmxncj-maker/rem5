@@ -25,7 +25,7 @@ public class ChonAiDay_Gem implements Runnable {
     public List<Player> PlayersVIP = new ArrayList<>();
     private static ChonAiDay_Gem instance;
 
-    public static ChonAiDay_Gem gI() {
+    public static synchronized ChonAiDay_Gem gI() {
         if (instance == null) {
             instance = new ChonAiDay_Gem();
         }

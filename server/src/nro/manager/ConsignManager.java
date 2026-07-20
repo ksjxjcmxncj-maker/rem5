@@ -20,7 +20,7 @@ public class ConsignManager {
 
     private static final ConsignManager INSTANCE = new ConsignManager();
 
-    public static ConsignManager getInstance() {
+    public static synchronized ConsignManager getInstance() {
         return INSTANCE;
     }
 

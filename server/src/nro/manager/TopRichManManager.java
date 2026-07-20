@@ -31,7 +31,7 @@ public class TopRichManManager {
     private List<Player> list = new ArrayList<>();
     private static final TopRichManManager INSTANCE = new TopRichManManager();
 
-    public static TopRichManManager getInstance() {
+    public static synchronized TopRichManManager getInstance() {
         return INSTANCE;
     }
 

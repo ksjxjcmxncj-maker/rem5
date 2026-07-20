@@ -35,7 +35,7 @@ public class MobService {
 
     }
 
-    public static MobService gI() {
+    public static synchronized MobService gI() {
         if (i == null) {
             i = new MobService();
         }

@@ -23,7 +23,7 @@ public class NamekBallWar {
     @Getter
     private Player[] holders = new Player[7];
 
-    public static NamekBallWar gI() {
+    public static synchronized NamekBallWar gI() {
         return INSTANCE;
     }
 

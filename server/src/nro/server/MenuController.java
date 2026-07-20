@@ -13,7 +13,7 @@ public class MenuController {
 
     private static MenuController instance;
 
-    public static MenuController getInstance() {
+    public static synchronized MenuController getInstance() {
         if (instance == null) {
             instance = new MenuController();
         }

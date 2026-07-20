@@ -20,7 +20,7 @@ public class IntrinsicService {
     private static IntrinsicService i;
     private static final int[] COST_OPEN = {10, 20, 40, 80, 160, 320, 640, 1280};
 
-    public static IntrinsicService gI() {
+    public static synchronized IntrinsicService gI() {
         if (i == null) {
             i = new IntrinsicService();
         }

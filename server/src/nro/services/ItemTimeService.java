@@ -29,7 +29,7 @@ public class ItemTimeService {
 
     private static ItemTimeService i;
 
-    public static ItemTimeService gI() {
+    public static synchronized ItemTimeService gI() {
         if (i == null) {
             i = new ItemTimeService();
         }

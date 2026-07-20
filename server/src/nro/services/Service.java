@@ -75,14 +75,14 @@ public class Service {
 
     private static Service instance;
 
-    public static Service getInstance() {
+    public static synchronized Service getInstance() {
         if (instance == null) {
             instance = new Service();
         }
         return instance;
     }
 
-    public static Service gI() {
+    public static synchronized Service gI() {
         if (instance == null) {
             instance = new Service();
         }

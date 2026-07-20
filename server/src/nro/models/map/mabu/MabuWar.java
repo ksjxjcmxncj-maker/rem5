@@ -39,7 +39,7 @@ public class MabuWar {
     public boolean initBoss;
     public boolean clearBoss;
 
-    public static MabuWar gI() {
+    public static synchronized MabuWar gI() {
         if (i == null) {
             i = new MabuWar();
         }

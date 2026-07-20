@@ -116,7 +116,7 @@ public class CombineServiceNew {
         this.whis = NpcManager.getNpc(ConstNpc.WHIS);
     }
 
-    public static CombineServiceNew gI() {
+    public static synchronized CombineServiceNew gI() {
         if (i == null) {
             i = new CombineServiceNew();
         }

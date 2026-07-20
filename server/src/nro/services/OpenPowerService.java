@@ -20,7 +20,7 @@ public class OpenPowerService {
 
     }
 
-    public static OpenPowerService gI() {
+    public static synchronized OpenPowerService gI() {
         if (i == null) {
             i = new OpenPowerService();
         }

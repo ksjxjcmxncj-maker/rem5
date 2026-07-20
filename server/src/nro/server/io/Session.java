@@ -21,6 +21,7 @@ import nro.services.TaskService;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 import static nro.server.Manager.KEY_SERVER;
@@ -28,7 +29,7 @@ import nro.manager.SieuHangManager;
 
 public class Session {
 
-    private static final Map<String, AntiLogin> ANTILOGIN = new HashMap<>();
+    private static final Map<String, AntiLogin> ANTILOGIN = new ConcurrentHashMap<>(); // FIX: thread-safe
 
     private static final int TIME_WAIT_READ_MESSAGE = 180000;
 
@@ -134,7 +135,7 @@ public class Session {
                 this.itemsReward.add(item);
             }
         } catch (Exception e) {
-
+            Log.error(Session.class, e); // FIX: log lỗi parse reward
         }
     }
 
@@ -211,6 +212,7 @@ public class Session {
                 Resources.getInstance().sendResVersion(this);
             }
         } catch (Exception e) {
+            Log.error(Session.class, e); // FIX: log lỗi parse reward
         } finally {
             msg.cleanup();
         }
@@ -234,6 +236,7 @@ public class Session {
                 Resources.getInstance().sendResVersion(this);
             }
         } catch (Exception e) {
+            Log.error(Session.class, e); // FIX: log lỗi parse reward
         } finally {
             msg.cleanup();
         }

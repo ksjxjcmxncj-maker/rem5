@@ -15,7 +15,7 @@ public class DHVT23Manager {
     private static List<DHVT23> list = new ArrayList<>();
     private static List<DHVT23> toRemove = new ArrayList<>();
 
-    public static DHVT23Manager gI() {
+    public static synchronized DHVT23Manager gI() {
         if (i == null) {
             i = new DHVT23Manager();
         }

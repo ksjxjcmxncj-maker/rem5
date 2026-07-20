@@ -23,7 +23,7 @@ public class Pet_Broly extends Player {
     }
     private static Pet_Broly instance;
 
-    public static Pet_Broly getInstance() {
+    public static synchronized Pet_Broly getInstance() {
         if (instance == null) {
             instance = new Pet_Broly();
         }

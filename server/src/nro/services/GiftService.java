@@ -29,7 +29,7 @@ public class GiftService {
 
     }
 
-    public static GiftService gI() {
+    public static synchronized GiftService gI() {
         if (i == null) {
             i = new GiftService();
         }

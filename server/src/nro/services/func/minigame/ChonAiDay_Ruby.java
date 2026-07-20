@@ -25,7 +25,7 @@ public class ChonAiDay_Ruby implements Runnable {
     public List<Player> PlayersVIP = new ArrayList<>();
     private static ChonAiDay_Ruby instance;
 
-    public static ChonAiDay_Ruby gI() {
+    public static synchronized ChonAiDay_Ruby gI() {
         if (instance == null) {
             instance = new ChonAiDay_Ruby();
         }

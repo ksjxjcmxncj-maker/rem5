@@ -22,7 +22,7 @@ public class SubMenuService {
     private SubMenuService() {
     }
 
-    public static SubMenuService gI() {
+    public static synchronized SubMenuService gI() {
         if (i == null) {
             i = new SubMenuService();
         }

@@ -17,6 +17,7 @@ import nro.services.func.TransactionService;
 import nro.utils.Log;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,10 +35,10 @@ public class Client implements Runnable {
 
     @Getter
     public final List<Session> sessions = new ArrayList<>();
-    private final Map<Integer, Session> sessions_id = new HashMap<Integer, Session>();
-    private final Map<Long, Player> players_id = new HashMap<Long, Player>();
-    private final Map<Integer, Player> players_userId = new HashMap<Integer, Player>();
-    private final Map<String, Player> players_name = new HashMap<String, Player>();
+    private final Map<Integer, Session> sessions_id = new ConcurrentHashMap<>(); // FIX: thread-safe
+    private final Map<Long, Player> players_id = new ConcurrentHashMap<>(); // FIX: thread-safe
+    private final Map<Integer, Player> players_userId = new ConcurrentHashMap<>(); // FIX: thread-safe
+    private final Map<String, Player> players_name = new ConcurrentHashMap<>(); // FIX: thread-safe
     private final List<Player> players = new ArrayList<>();
 
     private boolean running = true;
@@ -52,7 +53,7 @@ public class Client implements Runnable {
         }
     }
 
-    public static Client gI() {
+    public static synchronized Client gI() {
         if (i == null) {
             i = new Client();
         }
