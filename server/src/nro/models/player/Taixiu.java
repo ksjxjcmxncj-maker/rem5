@@ -52,27 +52,38 @@ public class Taixiu {
         this.trainArmor = null;
         if (this.itemsBody != null) {
             for (Item it : this.itemsBody) {
-                it.dispose();
+                if (it != null) {
+                    it.dispose();
+                }
             }
             this.itemsBody.clear();
         }
         if (this.itemsBag != null) {
             for (Item it : this.itemsBag) {
-                it.dispose();
+                if (it != null) {
+                    it.dispose();
+                }
             }
             this.itemsBag.clear();
         }
         if (this.itemsBox != null) {
             for (Item it : this.itemsBox) {
-                it.dispose();
+                if (it != null) {
+                    it.dispose();
+                }
             }
             this.itemsBox.clear();
         }
         if (this.itemsBoxCrackBall != null) {
             for (Item it : this.itemsBoxCrackBall) {
-                it.dispose();
+                if (it != null) {
+                    it.dispose();
+                }
             }
             this.itemsBoxCrackBall.clear();
+        }
+        if (this.giftCode != null) {
+            this.giftCode.clear();
         }
         this.itemsBody = null;
         this.itemsBag = null;
@@ -81,5 +92,3 @@ public class Taixiu {
     }
 
 }
-
-
