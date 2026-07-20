@@ -496,7 +496,7 @@ public class SummonDragon {
             case ConstNpc.SHENRON_1_1:
                 switch (this.select) {
                     case 0: //20 tr vàng
-                        this.playerSummonShenron.inventory.addGold(2000000000);
+                        this.playerSummonShenron.inventory.addGold(20000000);
                         PlayerService.gI().sendInfoHpMpMoney(this.playerSummonShenron);
                         break;
                     case 1: //găng tay đang đeo lên 1 cấp
