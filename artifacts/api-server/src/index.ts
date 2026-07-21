@@ -23,6 +23,9 @@ if (Number.isNaN(port) || port <= 0) {
 const wss = new WebSocketServer({ noServer: true });
 
 wss.on("connection", (clientWs) => {
+  // Lấy URL mới nhất từ wsUrl store (keepalive Codespace cập nhật sau mỗi restart)
+  const GAME_WS_URL = getWsUrl();
+
   logger.info({ gameWsUrl: GAME_WS_URL }, "APK connected — opening relay to Codespace");
 
   // Queue messages từ APK trong lúc gameWs chưa OPEN
@@ -31,8 +34,6 @@ wss.on("connection", (clientWs) => {
   let relayReady = false;
   let closed = false;
 
-  // Lấy URL mới nhất từ wsUrl store (keepalive Codespace cập nhật sau mỗi restart)
-  const GAME_WS_URL = getWsUrl();
   const gameWs = new WebSocket(GAME_WS_URL, {
     handshakeTimeout: 15000,
   });
