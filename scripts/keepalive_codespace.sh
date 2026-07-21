@@ -14,6 +14,18 @@ CODESPACES=(
   "cautious-space-halibut-p7rwgqwxrg5gfrrqg|Github|OldMain"
 )
 
+# ── Token fallback: lấy từ git remote URL nếu env var chưa set ──────────────
+_GIT_TOKEN=$(git -C "$(dirname "$0")/.." remote get-url origin 2>/dev/null | sed 's|https://\([^@]*\)@.*|\1|')
+[ -z "$(printenv GITHUB_NRO_TOKEN)" ] && [ -n "$_GIT_TOKEN" ] && export GITHUB_NRO_TOKEN="$_GIT_TOKEN"
+[ -z "$(printenv Github)" ]           && [ -n "$_GIT_TOKEN" ] && export Github="$_GIT_TOKEN"
+
+# ── REPLIT_API_URL: URL của chính Replit server này ──────────────────────────
+REPLIT_SELF_URL="${REPLIT_API_URL:-https://${REPLIT_DEV_DOMAIN:-localhost}}"
+# SESSION_SECRET được inject bởi Replit (không cần hardcode)
+
+# Thư mục gốc của repo (để cập nhật state/active-codespace.json)
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"; }
 
 install_gh() {
@@ -2702,6 +2714,29 @@ stop_active() {
 }
 
 # ─── MAIN ───────────────────────────────────────────────────────────────────
+# ── Push WSS URL lên Replit API server ──────────────────────────────────────
+push_wss_url() {
+  local CS=$(echo "$1" | cut -d'|' -f1)
+  local WSS="wss://${CS}-8080.app.github.dev"
+
+  # Cập nhật state file (để API server đọc khi khởi động lại)
+  cat > "${REPO_ROOT}/state/active-codespace.json" << EOF
+{"name":"$CS","account":"A","wsUrl":"$WSS","startedAt":"$(date -u +%Y-%m-%dT%H:%M:%SZ)"}
+EOF
+
+  # Push lên /api/ws-url endpoint
+  if [ -n "$REPLIT_SELF_URL" ] && [ "$REPLIT_SELF_URL" != "https://localhost" ]; then
+    local RESP
+    RESP=$(curl -s -X POST "${REPLIT_SELF_URL}/api/ws-url" \
+      -H "Content-Type: application/json" \
+      -H "x-update-secret: ${SESSION_SECRET:-dev-secret}" \
+      -d "{\"url\":\"$WSS\"}" --max-time 10 2>/dev/null)
+    log "WSS URL → ${WSS} | API: $RESP"
+  else
+    log "WSS URL cập nhật state: ${WSS} (REPLIT_SELF_URL chưa set)"
+  fi
+}
+
 install_gh
 log "=== NRO Keep-alive v2 khởi động === Active: $(get_active | cut -d'|' -f3)"
 
@@ -2712,6 +2747,8 @@ while true; do
 
   if is_active_hours; then
     if ping_codespace "$(get_active)"; then
+      # Cập nhật WSS URL lên Replit API mỗi lần ping thành công
+      push_wss_url "$(get_active)"
       # Server alive → chạy diagnostics lần đầu (compile + restart)
       run_diagnostics "$(get_active)"
       # Sau diagnostics: chạy upgrade scan

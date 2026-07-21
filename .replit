@@ -41,3 +41,8 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+REPLIT_API_URL = "https://782510aa-ab1c-4df5-aabf-2e7e258b848b-00-1jqgt4wdqjtt0.sisko.replit.dev"

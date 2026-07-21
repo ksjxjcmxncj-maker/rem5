@@ -5,7 +5,7 @@ const router = Router();
 // URL hiện tại của Cloudflare tunnel — cập nhật bởi Codespace keepalive
 let currentWsUrl: string =
   process.env["GAME_WS_URL"] ||
-  "wss://salon-rankings-locks-separation.trycloudflare.com";
+  "wss://improved-fishstick-966vx76qqgx7cqjp-8080.app.github.dev";
 
 const UPDATE_SECRET = process.env["SESSION_SECRET"] || "dev-secret";
 
