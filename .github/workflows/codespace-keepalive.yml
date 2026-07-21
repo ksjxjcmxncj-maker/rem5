@@ -26,14 +26,15 @@ jobs:
           echo "http_url=https://${CS_NAME}-8080.app.github.dev" >> $GITHUB_OUTPUT
           echo "Active CS: $CS_NAME"
 
-      - name: Check active hours (VN time)
+      - name: Check active hours (VN time 04:00–23:50)
         id: time
         run: |
           VN_HOUR=$(TZ=Asia/Ho_Chi_Minh date '+%H' | sed 's/^0*//' || echo "12")
           VN_HOUR=${VN_HOUR:-12}
-          if [ "$VN_HOUR" -ge 4 ]; then
+          # Hoạt động từ 04:00 đến 23:xx (dừng lúc 23:50 do node-cron)
+          if [ "$VN_HOUR" -ge 4 ] && [ "$VN_HOUR" -le 23 ]; then
             echo "active=true"  >> $GITHUB_OUTPUT
-            echo "VN ${VN_HOUR}h — trong gio hoat dong"
+            echo "VN ${VN_HOUR}h — trong gio hoat dong (04:00-23:50)"
           else
             echo "active=false" >> $GITHUB_OUTPUT
             echo "VN ${VN_HOUR}h — ngoai gio (00:00-04:00)"

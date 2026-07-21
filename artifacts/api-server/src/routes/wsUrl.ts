@@ -1,8 +1,9 @@
 import { Router } from "express";
+import { logger } from "../lib/logger.js";
 
 const router = Router();
 
-// URL hiện tại của Cloudflare tunnel — cập nhật bởi Codespace keepalive
+// URL hiện tại của WS bridge — cập nhật bởi Codespace keepalive hoặc failover nội bộ
 let currentWsUrl: string =
   process.env["GAME_WS_URL"] ||
   "wss://improved-fishstick-966vx76qqgx7cqjp-8080.app.github.dev";
@@ -26,10 +27,15 @@ router.post("/ws-url", (req, res) => {
     res.status(400).json({ error: "invalid url — must start with wss://" });
     return;
   }
-  currentWsUrl = url;
-  console.log(`[ws-url] Updated → ${url}`);
+  setCurrentWsUrl(url);
   res.json({ ok: true, url: currentWsUrl });
 });
+
+/** Setter dùng bởi codespace-manager khi failover nội bộ */
+export function setCurrentWsUrl(url: string): void {
+  currentWsUrl = url;
+  logger.info({ url }, "[ws-url] Updated");
+}
 
 /** Dùng getter để index.ts lấy URL mới nhất tại thời điểm connection */
 export function getWsUrl(): string { return currentWsUrl; }

@@ -2,5 +2,10 @@
   "name": "improved-fishstick-966vx76qqgx7cqjp",
   "account": "A",
   "wsUrl": "wss://improved-fishstick-966vx76qqgx7cqjp-8080.app.github.dev",
-  "startedAt": "2026-07-21T00:00:00Z"
+  "startedAt": "2026-07-21T00:00:00Z",
+  "accounts": [
+    { "id": "A" },
+    { "id": "B" },
+    { "id": "C" }
+  ]
 }

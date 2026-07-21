@@ -1,5 +1,6 @@
 import { schedule, type ScheduledTask } from "node-cron";
 import { logger } from "./logger.js";
+import { setCurrentWsUrl } from "../routes/wsUrl.js";
 
 // ─── Account config ────────────────────────────────────────────────────────
 interface CodespaceAccount {
@@ -10,31 +11,36 @@ interface CodespaceAccount {
   repo: string; // GitHub repo: "login/rem5"
 }
 
+// BUG FIX: Tên env var đã được chuẩn hóa. Trong Replit Secrets đặt đúng các tên sau:
+//   GITHUB_TOKEN_PRIMARY  — token tài khoản ksjxjcmxncj-maker
+//   GITHUB_TOKEN_BACKUP1  — token tài khoản kgxxyixgikcgxittixxi-collab
+//   GITHUB_TOKEN_BACKUP2  — token tài khoản idkyoohdtsu-netizen
+//   GITHUB_TOKEN_BACKUP3  — token tài khoản kdjfjcjks
 export const ACCOUNTS: CodespaceAccount[] = [
   {
     label: "Primary (ksjxjcmxncj-maker)",
-    token: process.env["GITHUB_PERSONAZL_ACCESS_TOKEN"] ?? "",
+    token: process.env["GITHUB_TOKEN_PRIMARY"] ?? "",
     codespaceId: "improved-fishstick-966vx76qqgx7cqjp",
     login: "ksjxjcmxncj-maker",
     repo: "ksjxjcmxncj-maker/rem5",
   },
   {
     label: "Backup-1 (kgxxyixgikcgxittixxi-collab)",
-    token: process.env["GITHUB_PERSONALA_ACCESS_TOKEN"] ?? "",
+    token: process.env["GITHUB_TOKEN_BACKUP1"] ?? "",
     codespaceId: "crispy-space-capybara-5v564w74jqgf45x4",
     login: "kgxxyixgikcgxittixxi-collab",
     repo: "kgxxyixgikcgxittixxi-collab/rem5",
   },
   {
     label: "Backup-2 (idkyoohdtsu-netizen)",
-    token: process.env["GITHUB_PERSONACL_ACCESS_TOKEN"] ?? "",
+    token: process.env["GITHUB_TOKEN_BACKUP2"] ?? "",
     codespaceId: "cuddly-space-orbit-qvvrx7jq5gv6246wg",
     login: "idkyoohdtsu-netizen",
     repo: "idkyoohdtsu-netizen/rem5",
   },
   {
-    label: "Backup-4 (kdjfjcjks)",
-    token: process.env["GITHUB_PERSONASL_ACCESS_TOKEND"] ?? "",
+    label: "Backup-3 (kdjfjcjks)",
+    token: process.env["GITHUB_TOKEN_BACKUP3"] ?? "",
     codespaceId: "glowing-yodel-jr6p46ppvgg3wwp",
     login: "kdjfjcjks",
     repo: "kdjfjcjks/rem5",
@@ -223,6 +229,16 @@ export async function syncRepos(
 
 // ─── Core manager logic ────────────────────────────────────────────────────
 
+/**
+ * Cập nhật wsUrl trong bộ nhớ và thông báo cho route wsUrl.ts.
+ * Gọi sau mỗi lần chuyển codespace thành công.
+ */
+function applyActiveWebUrl(url: string): void {
+  state.activeWebUrl = url;
+  // BUG FIX: Cập nhật URL in-memory để APK luôn lấy đúng URL sau failover
+  setCurrentWsUrl(url);
+}
+
 /** Chọn codespace tốt nhất (bỏ qua bản đang bảo trì). */
 async function activateBestAccount(): Promise<void> {
   for (let i = 0; i < ACCOUNTS.length; i++) {
@@ -246,7 +262,7 @@ async function activateBestAccount(): Promise<void> {
       state.activeIndex = i;
       state.activeLabel = acc.label;
       state.activeCodespaceId = acc.codespaceId;
-      state.activeWebUrl = cs.webUrl;
+      applyActiveWebUrl(cs.webUrl);
       state.lastError = null;
       logger.info({ label: acc.label, csState: cs.state }, "Already active");
       return;
@@ -259,7 +275,8 @@ async function activateBestAccount(): Promise<void> {
       continue;
     }
 
-    for (let t = 0; t < 12; t++) {
+    // BUG FIX: Tăng từ 12×5s=60s lên 36×5s=180s — codespace cần 2-3 phút để khởi động
+    for (let t = 0; t < 36; t++) {
       await sleep(5000);
       const cs2 = await getCodespaceState(acc);
       if (!cs2) break;
@@ -268,7 +285,7 @@ async function activateBestAccount(): Promise<void> {
         state.activeIndex = i;
         state.activeLabel = acc.label;
         state.activeCodespaceId = acc.codespaceId;
-        state.activeWebUrl = cs2.webUrl;
+        applyActiveWebUrl(cs2.webUrl);
         state.lastError = null;
         logger.info({ label: acc.label }, "Started successfully");
         return;
