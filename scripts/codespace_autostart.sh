@@ -1,11 +1,10 @@
 #!/bin/bash
-# Auto-start NRO Game Server + WebSocket Bridge — WebSocket ONLY
+# Auto-start NRO Game Server + WebSocket Bridge + Bore tunnel
 # Goi boi devcontainer.json postStartCommand
 
 LOG_DIR="$HOME/logs"
 mkdir -p "$LOG_DIR"
 
-# Redirect log nhưng KHÔNG block (không dùng exec >>)
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_DIR/autostart.log"; }
 
 log ""
@@ -111,6 +110,40 @@ PYEOF
   fi
   nohup python3 "$WS_BRIDGE" >> "$LOG_DIR/ws_bridge.log" 2>&1 &
   log "[START] ws_bridge PID=$! script=$WS_BRIDGE"
+fi
+
+# 4. Bore tunnel (TCP 14445 → bore.pub:5798)
+BORE_BIN=""
+for b in ~/bin/bore /usr/local/bin/bore /tmp/bore; do
+  [ -f "$b" ] && BORE_BIN="$b" && break
+done
+
+if [ -z "$BORE_BIN" ]; then
+  log "[DOWNLOAD] bore không có — đang tải..."
+  mkdir -p ~/bin
+  # x86_64 cho Codespace (Linux x86_64)
+  wget -q "https://github.com/ekzhang/bore/releases/latest/download/bore-v0.5.0-x86_64-unknown-linux-musl.tar.gz" \
+       -O /tmp/bore.tar.gz 2>/dev/null \
+  || curl -sL "https://github.com/ekzhang/bore/releases/latest/download/bore-v0.5.0-x86_64-unknown-linux-musl.tar.gz" \
+       -o /tmp/bore.tar.gz 2>/dev/null
+  tar -xzf /tmp/bore.tar.gz -C ~/bin/ 2>/dev/null
+  chmod +x ~/bin/bore 2>/dev/null
+  rm -f /tmp/bore.tar.gz
+  [ -f ~/bin/bore ] && BORE_BIN=~/bin/bore && log "[OK] bore downloaded → ~/bin/bore" \
+    || log "[WARN] Không tải được bore"
+fi
+
+if [ -n "$BORE_BIN" ]; then
+  if pgrep -f "bore local" > /dev/null 2>&1; then
+    log "[OK] bore tunnel running"
+  else
+    nohup "$BORE_BIN" local 14445 --to bore.pub --port 5798 >> "$LOG_DIR/bore.log" 2>&1 &
+    log "[START] bore tunnel PID=$!"
+    sleep 3
+    grep -q "listening\|Listening" "$LOG_DIR/bore.log" 2>/dev/null \
+      && log "[OK] bore tunnel kết nối bore.pub:5798 thành công" \
+      || log "[WARN] bore chưa xác nhận kết nối — xem $LOG_DIR/bore.log"
+  fi
 fi
 
 log "=== Autostart hoàn tất — xem log tại $LOG_DIR ==="
