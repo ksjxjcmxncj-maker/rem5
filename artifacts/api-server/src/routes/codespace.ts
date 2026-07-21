@@ -45,7 +45,7 @@ router.post("/codespace/stop", async (_req, res) => {
 router.post("/codespace/maintenance/enter", async (req, res) => {
   const { index, files } = req.body as { index?: number; files?: string[] };
   if (index === undefined || !Number.isInteger(index) || index < 0 || index >= ACCOUNTS.length) {
-    res.status(400).json({ ok: false, error: `index phải là 0, 1 hoặc 2` });
+    res.status(400).json({ ok: false, error: `index phải từ 0 đến ${ACCOUNTS.length - 1}` });
     return;
   }
   try {
@@ -64,7 +64,7 @@ router.post("/codespace/maintenance/enter", async (req, res) => {
 router.post("/codespace/maintenance/exit", async (req, res) => {
   const { index } = req.body as { index?: number };
   if (index === undefined || !Number.isInteger(index) || index < 0 || index >= ACCOUNTS.length) {
-    res.status(400).json({ ok: false, error: `index phải là 0, 1 hoặc 2` });
+    res.status(400).json({ ok: false, error: `index phải từ 0 đến ${ACCOUNTS.length - 1}` });
     return;
   }
   try {
@@ -83,7 +83,7 @@ router.post("/codespace/maintenance/exit", async (req, res) => {
 router.post("/codespace/sync", async (req, res) => {
   const { sourceIndex = 0, files } = req.body as { sourceIndex?: number; files?: string[] };
   if (!Number.isInteger(sourceIndex) || sourceIndex < 0 || sourceIndex >= ACCOUNTS.length) {
-    res.status(400).json({ ok: false, error: `sourceIndex phải là 0, 1 hoặc 2` });
+    res.status(400).json({ ok: false, error: `sourceIndex phải từ 0 đến ${ACCOUNTS.length - 1}` });
     return;
   }
   try {
