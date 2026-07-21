@@ -1,0 +1,146 @@
+name: Codespace Account Rotation
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      force_rotate:
+        description: 'Force rotation ngay'
+        type: boolean
+        default: false
+
+# SETUP truoc khi dung:
+#   Secrets: GITHUB_TOKEN_A, GITHUB_TOKEN_B, GITHUB_TOKEN_C
+#            (PAT scope: codespace write + repo write)
+#   Variable: REPLIT_API_URL (https://xxx.replit.dev)
+#   Moi account fork rem5, co Codespace san sang
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GITHUB_TOKEN_A: ${{ secrets.GITHUB_TOKEN_A }}
+      GITHUB_TOKEN_B: ${{ secrets.GITHUB_TOKEN_B }}
+      GITHUB_TOKEN_C: ${{ secrets.GITHUB_TOKEN_C }}
+      SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      REPLIT_API_URL: ${{ vars.REPLIT_API_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN_A }}
+
+      - name: Check rotation needed
+        id: check
+        run: |
+          STARTED_AT=$(node -e "const j=require('./state/active-codespace.json');console.log(j.startedAt||'2000-01-01')")
+          ACCOUNT=$(node    -e "const j=require('./state/active-codespace.json');console.log(j.account)")
+          CS_NAME=$(node    -e "const j=require('./state/active-codespace.json');console.log(j.name)")
+          STARTED_SEC=$(date -d "$STARTED_AT" +%s 2>/dev/null || echo 0)
+          NOW_SEC=$(date +%s)
+          ELAPSED_H=$(( (NOW_SEC - STARTED_SEC) / 3600 ))
+          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
+          echo "name=$CS_NAME"    >> $GITHUB_OUTPUT
+          echo "elapsed_h=$ELAPSED_H" >> $GITHUB_OUTPUT
+          FORCE="${{ github.event.inputs.force_rotate }}"
+          if [ "$ELAPSED_H" -ge 55 ] || [ "$FORCE" = "true" ]; then
+            echo "need_rotate=true"  >> $GITHUB_OUTPUT
+            echo "Rotation: ${ELAPSED_H}h (force=$FORCE)"
+          else
+            echo "need_rotate=false" >> $GITHUB_OUTPUT
+            echo "OK: ${ELAPSED_H}h < 55h"
+          fi
+
+      - name: Backup database
+        if: steps.check.outputs.need_rotate == 'true'
+        run: |
+          ACCOUNT="${{ steps.check.outputs.account }}"
+          case "$ACCOUNT" in
+            A) export GH_TOKEN="$GITHUB_TOKEN_A" ;;
+            B) export GH_TOKEN="$GITHUB_TOKEN_B" ;;
+            C) export GH_TOKEN="$GITHUB_TOKEN_C" ;;
+          esac
+          CS="${{ steps.check.outputs.name }}"
+          gh codespace ssh -c "$CS" -- bash -c \
+            'mkdir -p ~/backups && mysqldump -u root nro1 2>/dev/null | gzip > ~/backups/nro1_latest.sql.gz && ls -lh ~/backups/nro1_latest.sql.gz && echo OK_BACKUP'
+
+      - name: Select next account
+        if: steps.check.outputs.need_rotate == 'true'
+        id: next
+        run: |
+          CURRENT="${{ steps.check.outputs.account }}"
+          ACCOUNTS=($(node -e "const j=require('./state/active-codespace.json');console.log(j.accounts.map(a=>a.id).join(' '))"))
+          N=${#ACCOUNTS[@]}
+          NEXT="${ACCOUNTS[0]}"
+          for i in "${!ACCOUNTS[@]}"; do
+            if [ "${ACCOUNTS[$i]}" = "$CURRENT" ]; then
+              NEXT_IDX=$(( (i + 1) % N ))
+              NEXT="${ACCOUNTS[$NEXT_IDX]}"; break
+            fi
+          done
+          echo "next=$NEXT" >> $GITHUB_OUTPUT
+          echo "Rotate: $CURRENT -> $NEXT"
+
+      - name: Create Codespace on next account
+        if: steps.check.outputs.need_rotate == 'true'
+        id: newcs
+        run: |
+          NEXT="${{ steps.next.outputs.next }}"
+          case "$NEXT" in
+            A) export GH_TOKEN="$GITHUB_TOKEN_A" ;;
+            B) export GH_TOKEN="$GITHUB_TOKEN_B" ;;
+            C) export GH_TOKEN="$GITHUB_TOKEN_C" ;;
+          esac
+          REPO=$(gh api /user --jq '.login' 2>/dev/null)/rem5
+          echo "Creating on $REPO (account $NEXT)..."
+          NEW_NAME=$(gh codespace create --repo "$REPO" --branch main \
+            --machine basicLinux32gb --json name -q '.name' 2>/dev/null)
+          [ -z "$NEW_NAME" ] && { echo FAIL_CREATE; exit 1; }
+          echo "new_name=$NEW_NAME" >> $GITHUB_OUTPUT
+          echo "New CS: $NEW_NAME"
+          for i in $(seq 1 20); do
+            STATE=$(gh codespace view -c "$NEW_NAME" --json state -q '.state' 2>/dev/null)
+            echo "State ($i/20): $STATE"
+            [ "$STATE" = "Available" ] && break; sleep 15
+          done
+
+      - name: Update state and push URL
+        if: steps.check.outputs.need_rotate == 'true'
+        run: |
+          NEW_CS="${{ steps.newcs.outputs.new_name }}"
+          NEXT="${{ steps.next.outputs.next }}"
+          NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          NEW_WS="wss://${NEW_CS}-8080.app.github.dev"
+          node -e "
+            const fs=require('fs');
+            const s=JSON.parse(fs.readFileSync('./state/active-codespace.json','utf8'));
+            s.name='$NEW_CS'; s.account='$NEXT';
+            s.wsUrl='$NEW_WS'; s.startedAt='$NOW';
+            fs.writeFileSync('./state/active-codespace.json',JSON.stringify(s,null,2));
+            console.log('State updated:',s.name,s.account);
+          "
+          git config user.email "nro-bot@github.com"
+          git config user.name "NRO Rotation Bot"
+          git add state/active-codespace.json
+          git commit -m "rotate: ${{ steps.check.outputs.account }} -> $NEXT ($NEW_CS)"
+          git push
+          sleep 60
+          curl -s -X POST "${REPLIT_API_URL}/api/ws-url" \
+            -H "Content-Type: application/json" \
+            -H "x-update-secret: ${SESSION_SECRET}" \
+            -d "{\"url\":\"$NEW_WS\"}"
+          echo "URL: $NEW_WS"
+
+      - name: Stop old Codespace
+        if: steps.check.outputs.need_rotate == 'true'
+        run: |
+          OLD_ACCOUNT="${{ steps.check.outputs.account }}"
+          case "$OLD_ACCOUNT" in
+            A) export GH_TOKEN="$GITHUB_TOKEN_A" ;;
+            B) export GH_TOKEN="$GITHUB_TOKEN_B" ;;
+            C) export GH_TOKEN="$GITHUB_TOKEN_C" ;;
+          esac
+          gh codespace stop -c "${{ steps.check.outputs.name }}" 2>/dev/null \
+            && echo "Stopped: ${{ steps.check.outputs.name }}" || echo "Stop failed"
