@@ -48,7 +48,7 @@ sleep 10 && pgrep -f NgocRongOnline && tail -5 ~/logs/server.log
 Repo:   akah3674-glitch/rem5
 Remote: github (không phải origin)
 Push:   git push github main
-Token:  Replit Secret GITHUB_PERSONAL_ACCESS_TOKEN
+Token:  Replit Secret GITHUB_PERSONAL_ACCESS_TOKEN (đã xác nhận lưu 2026-07-21)
 ```
 
 ## Game Server Info
@@ -128,3 +128,13 @@ tail -5 ~/logs/frp.log   # phải thấy "start proxy success"
 - Commit `ab2a28cdb` chứa token lộ trong .replit — NOT ancestor of main (đã rebase)
 - .replit hiện tại đã sạch (xóa [userenv.shared] với token)
 - Nếu push bị block lại: dùng `GH_TOKEN="${GITHUB_PERSONAL_ACCESS_TOKEN}" git push github main`
+
+## Push lên GitHub từ Replit (2026-07-21)
+```bash
+# Clone
+git clone https://${GITHUB_PERSONAL_ACCESS_TOKEN}@github.com/ksjxjcmxncj-maker/rem5.git /tmp/rem5_work
+cd /tmp/rem5_work && git config user.email "agent@replit.com" && git config user.name "Replit Agent"
+# Push
+git push origin main
+```
+**Lưu ý:** Dùng `ksjxjcmxncj-maker/rem5` (KHÔNG phải `akah3674-glitch/rem5` — tài khoản cũ)
