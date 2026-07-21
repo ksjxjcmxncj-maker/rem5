@@ -317,9 +317,10 @@ async function stopActive(): Promise<void> {
 
 /**
  * Đánh dấu 1 tài khoản vào bảo trì.
- * - Stop codespace của nó (nếu đang chạy).
- * - Tự động bật bản còn lại.
- * - Đồng bộ file sang các bản còn lại.
+ * Luồng:
+ *   1. Sync file từ bản đang chạy → bản bảo trì (đảm bảo bản bảo trì có code mới nhất trước khi sửa).
+ *   2. Stop codespace của bản bảo trì (nếu đang chạy).
+ *   3. Bật bản còn lại.
  */
 export async function enterMaintenance(
   index: number,
@@ -332,35 +333,54 @@ export async function enterMaintenance(
     state.maintenanceIndices.push(index);
   }
 
-  // Nếu bản này đang active thì chuyển sang bản khác
+  // Bước 1: Sync từ bản đang active → bản bảo trì (trước khi stop)
+  // Nếu không có active thì bỏ qua (không có gì để sync)
+  const paths = syncFiles ?? SYNC_PATHS;
+  let syncResults: SyncResult[] = [];
+  if (state.activeIndex !== null && state.activeIndex !== index) {
+    logger.info({ label: acc.label, from: ACCOUNTS[state.activeIndex]!.label },
+      "Maintenance enter: syncing latest from active → maintained account");
+    // Chỉ sync vào bản đang bảo trì, không phải tất cả
+    const src = ACCOUNTS[state.activeIndex]!;
+    for (const filePath of paths) {
+      const srcFile = await getRepoFile(src.token, src.repo, filePath);
+      if (!srcFile) {
+        syncResults.push({ file: filePath, target: acc.repo, ok: false, error: "not found on source" });
+        continue;
+      }
+      const existing = await getRepoFile(acc.token, acc.repo, filePath);
+      const res = await putRepoFile(acc.token, acc.repo, filePath,
+        srcFile.content, existing?.sha ?? null,
+        `sync pre-maintenance: ${filePath} from ${src.repo}`);
+      syncResults.push({ file: filePath, target: acc.repo, ...res });
+    }
+    state.lastSync = new Date().toISOString();
+  }
+
+  // Bước 2: Stop codespace bản bảo trì nếu đang active
   if (state.activeIndex === index) {
     await stopCodespace(acc);
     state.activeIndex = null;
     state.activeLabel = null;
     state.activeCodespaceId = null;
     state.activeWebUrl = null;
-    logger.info({ label: acc.label }, "Maintenance: stopped active codespace");
+    logger.info({ label: acc.label }, "Maintenance enter: stopped codespace");
   }
 
-  // Bật bản còn lại nếu đang trong giờ hoạt động
+  // Bước 3: Bật bản còn lại nếu đang trong giờ hoạt động
   if (state.running) {
     await activateBestAccount();
   }
 
-  // Đồng bộ file từ bản bảo trì sang các bản còn lại
-  logger.info({ label: acc.label }, "Maintenance: syncing files to remaining accounts");
-  const syncResults = await syncRepos(index, syncFiles ?? SYNC_PATHS);
-
-  return {
-    started: state.activeLabel,
-    syncResults,
-  };
+  return { started: state.activeLabel, syncResults };
 }
 
 /**
  * Kết thúc bảo trì cho 1 tài khoản.
- * - Đồng bộ file mới nhất từ bản đang chạy về bản vừa bảo trì xong.
- * - Đưa tài khoản vào danh sách ứng viên lại (ưu tiên theo index).
+ * Luồng:
+ *   1. Sync file từ bản vừa bảo trì xong → tất cả các bản còn lại
+ *      (bảo trì xong thường có code/config mới hơn).
+ *   2. Đưa tài khoản trở lại vòng xoay.
  */
 export async function exitMaintenance(
   index: number,
@@ -368,13 +388,13 @@ export async function exitMaintenance(
   const acc = ACCOUNTS[index];
   if (!acc) throw new Error(`Invalid account index: ${index}`);
 
-  // Đồng bộ từ bản hiện tại về bản vừa bảo trì xong
-  const sourceIndex = state.activeIndex ?? 0;
-  const syncResults = await syncRepos(sourceIndex, SYNC_PATHS);
+  // Sync từ bản vừa bảo trì xong → tất cả các bản còn lại
+  logger.info({ label: acc.label }, "Maintenance exit: syncing updates → remaining accounts");
+  const syncResults = await syncRepos(index, SYNC_PATHS);
 
   // Bỏ khỏi danh sách bảo trì
   state.maintenanceIndices = state.maintenanceIndices.filter((i) => i !== index);
-  logger.info({ label: acc.label }, "Maintenance: ended, account back in rotation");
+  logger.info({ label: acc.label }, "Maintenance exit: account back in rotation");
 
   return { syncResults };
 }
