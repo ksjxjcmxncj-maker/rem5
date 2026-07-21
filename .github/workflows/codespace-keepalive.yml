@@ -79,9 +79,16 @@ jobs:
               for d in ~/nro/SRC /home/codespace/nro/SRC; do
                 [ -f "$d/NgocRongOnline.jar" ] && {
                   cd "$d"
+                  # Đảm bảo Xvfb chạy (cần cho JFrame, dialog AWT)
+                  if ! pgrep -x Xvfb > /dev/null 2>&1; then
+                    nohup Xvfb :99 -screen 0 1024x768x24 >> "$LOG/xvfb.log" 2>&1 &
+                    sleep 2
+                  fi
+                  export DISPLAY=:99
                   nohup java -Xms512m -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=30 \
                     -XX:G1HeapRegionSize=4m -XX:+ParallelRefProcEnabled \
                     -Djava.net.preferIPv4Stack=true \
+                    -Djava.awt.headless=true \
                     -jar NgocRongOnline.jar >> "$LOG/server.log" 2>&1 &
                   sleep 15; break; }
               done

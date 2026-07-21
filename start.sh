@@ -30,11 +30,21 @@ LIB=$(find ~/nro -name "lib" -type d | head -1)
 echo "  JAR game : $JAR"
 echo "  JAR login: $JAR_LOGIN"
 
+echo "[3.5] Khởi động Xvfb virtual display :99..."
+if ! pgrep -x Xvfb > /dev/null 2>&1; then
+  nohup Xvfb :99 -screen 0 1024x768x24 > $LOG/xvfb.log 2>&1 &
+  sleep 2
+  echo "✅ Xvfb PID: $!"
+else
+  echo "✅ Xvfb đã chạy rồi"
+fi
+export DISPLAY=:99
+
 if [ -n "$JAR_LOGIN" ]; then
   SDIR=$(dirname "$JAR_LOGIN")
   CP="$(basename $JAR_LOGIN)"; [ -n "$LIB" ] && CP="$CP:$LIB/*"
   cd "$SDIR"
-  nohup java -Xms128m -Xmx512m -cp "$CP" Main > $LOG/login.log 2>&1 &
+  nohup java -Xms128m -Xmx512m -Djava.awt.headless=true -cp "$CP" Main > $LOG/login.log 2>&1 &
   echo "✅ Login server PID: $!"
   sleep 2
 fi
@@ -43,7 +53,12 @@ if [ -n "$JAR" ]; then
   SDIR=$(dirname "$JAR")
   CP="$(basename $JAR)"; [ -n "$LIB" ] && CP="$CP:$LIB/*"
   cd "$SDIR"
-  nohup java -Xms256m -Xmx1g -cp "$CP" Main > $LOG/server.log 2>&1 &
+  # Dùng Python double-fork daemon nếu có, nếu không thì nohup
+  if command -v python3 > /dev/null 2>&1 && [ -f "$(dirname $0)/start_daemon.py" ]; then
+    DISPLAY=:99 python3 "$(dirname $0)/start_daemon.py" "$CP" >> $LOG/server.log 2>&1
+  else
+    DISPLAY=:99 nohup java -Xms256m -Xmx1g -Djava.awt.headless=true -cp "$CP" Main > $LOG/server.log 2>&1 &
+  fi
   echo "✅ Game server PID: $!"
   sleep 5
 fi
