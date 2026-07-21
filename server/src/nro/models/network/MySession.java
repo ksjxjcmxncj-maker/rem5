@@ -5,6 +5,8 @@ import java.net.Socket;
 import nro.models.player.Player;
 import nro.models.server.Controller;
 import nro.models.data.DataGame;
+import nro.models.data.LocalManager;
+import nro.models.data.LocalResultSet;
 import nro.models.database.MrBlue;
 import nro.models.item.Item;
 import java.io.IOException;
@@ -106,7 +108,19 @@ public class MySession extends Session {
             Service.gI().sendThongBaoOK(this, "Server này chỉ để lưu dữ liệu\nVui lòng qua server khác");
             return;
         }
-        if (Maintenance.isRunning) {
+        // Kiểm tra quyền admin từ DB trước khi check bảo trì / giới hạn người chơi
+        if (!this.isAdmin) {
+            try {
+                LocalResultSet rsAdminCheck = LocalManager.executeQuery(
+                        "SELECT is_admin FROM account WHERE username = ? AND password = ?", username, password);
+                if (rsAdminCheck.first()) {
+                    this.isAdmin = rsAdminCheck.getBoolean("is_admin");
+                }
+                rsAdminCheck.dispose();
+            } catch (Exception ignored) {}
+        }
+
+        if (Maintenance.isRunning && !this.isAdmin) {
             Service.gI().sendThongBaoOK(this, "Server đang trong thời gian bảo trì, vui lòng quay lại sau");
             return;
         }
