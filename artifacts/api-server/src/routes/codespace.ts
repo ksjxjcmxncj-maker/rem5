@@ -7,12 +7,13 @@ import {
   enterMaintenance,
   exitMaintenance,
   syncRepos,
+  refreshTokens,
   ACCOUNTS,
 } from "../lib/codespace-manager.js";
 
 const router: IRouter = Router();
 
-/** GET /api/codespace/status — trạng thái hiện tại */
+/** GET /api/codespace/status — trạng thái hiện tại + kết quả match token */
 router.get("/codespace/status", (_req, res) => {
   res.json({ ...getStatus(), accounts: getAccounts() });
 });
@@ -38,9 +39,21 @@ router.post("/codespace/stop", async (_req, res) => {
 });
 
 /**
+ * POST /api/codespace/refresh-tokens
+ * Chạy lại auto-detect token → tài khoản (dùng khi thêm secret mới)
+ */
+router.post("/codespace/refresh-tokens", async (_req, res) => {
+  try {
+    await refreshTokens();
+    res.json({ ok: true, accounts: getAccounts(), status: getStatus() });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err) });
+  }
+});
+
+/**
  * POST /api/codespace/maintenance/enter
- * Body: { index: 0|1|2, files?: string[] }
- * Đưa 1 tài khoản vào bảo trì → bật bản còn lại + đồng bộ file
+ * Body: { index: 0|1|2|3, files?: string[] }
  */
 router.post("/codespace/maintenance/enter", async (req, res) => {
   const { index, files } = req.body as { index?: number; files?: string[] };
@@ -58,8 +71,7 @@ router.post("/codespace/maintenance/enter", async (req, res) => {
 
 /**
  * POST /api/codespace/maintenance/exit
- * Body: { index: 0|1|2 }
- * Kết thúc bảo trì → đồng bộ file mới nhất về bản vừa xong + đưa lại vào rotation
+ * Body: { index: 0|1|2|3 }
  */
 router.post("/codespace/maintenance/exit", async (req, res) => {
   const { index } = req.body as { index?: number };
@@ -77,8 +89,7 @@ router.post("/codespace/maintenance/exit", async (req, res) => {
 
 /**
  * POST /api/codespace/sync
- * Body: { sourceIndex?: 0|1|2, files?: string[] }
- * Đồng bộ thủ công file từ 1 repo sang tất cả repo còn lại
+ * Body: { sourceIndex?: 0|1|2|3, files?: string[] }
  */
 router.post("/codespace/sync", async (req, res) => {
   const { sourceIndex = 0, files } = req.body as { sourceIndex?: number; files?: string[] };

@@ -5,47 +5,107 @@ import { setCurrentWsUrl } from "../routes/wsUrl.js";
 // ─── Account config ────────────────────────────────────────────────────────
 interface CodespaceAccount {
   label: string;
-  token: string;
+  token: string;          // được điền tự động bởi matchTokensToAccounts()
   codespaceId: string;
   login: string;
-  repo: string; // GitHub repo: "login/rem5"
+  repo: string;
 }
 
-// BUG FIX: Tên env var đã được chuẩn hóa. Trong Replit Secrets đặt đúng các tên sau:
-//   GITHUB_TOKEN_PRIMARY  — token tài khoản ksjxjcmxncj-maker
-//   GITHUB_TOKEN_BACKUP1  — token tài khoản kgxxyixgikcgxittixxi-collab
-//   GITHUB_TOKEN_BACKUP2  — token tài khoản idkyoohdtsu-netizen
-//   GITHUB_TOKEN_BACKUP3  — token tài khoản kdjfjcjks
+// Pool tất cả tên env var chứa token — thứ tự không quan trọng,
+// hệ thống tự tìm token nào thuộc tài khoản nào khi khởi động.
+const TOKEN_ENV_VARS = [
+  "GITHUB_PERSONHHAL_ACCESS_TOKEN",
+  "GITHUB_PERGSONJAL_ACCESS_TOKEN",
+  "GITHUGB_PERSONJAJL_ACCESS_TOKEN",
+  "GITHUB_PERSONAJL_ACCESS_TOKEN",
+  "J",
+];
+
 export const ACCOUNTS: CodespaceAccount[] = [
   {
     label: "Primary (ksjxjcmxncj-maker)",
-    token: process.env["GITHUB_TOKEN_PRIMARY"] ?? "",
+    token: "",
     codespaceId: "improved-fishstick-966vx76qqgx7cqjp",
     login: "ksjxjcmxncj-maker",
     repo: "ksjxjcmxncj-maker/rem5",
   },
   {
     label: "Backup-1 (kgxxyixgikcgxittixxi-collab)",
-    token: process.env["GITHUB_TOKEN_BACKUP1"] ?? "",
+    token: "",
     codespaceId: "crispy-space-capybara-5v564w74jqgf45x4",
     login: "kgxxyixgikcgxittixxi-collab",
     repo: "kgxxyixgikcgxittixxi-collab/rem5",
   },
   {
     label: "Backup-2 (idkyoohdtsu-netizen)",
-    token: process.env["GITHUB_TOKEN_BACKUP2"] ?? "",
+    token: "",
     codespaceId: "cuddly-space-orbit-qvvrx7jq5gv6246wg",
     login: "idkyoohdtsu-netizen",
     repo: "idkyoohdtsu-netizen/rem5",
   },
   {
     label: "Backup-3 (kdjfjcjks)",
-    token: process.env["GITHUB_TOKEN_BACKUP3"] ?? "",
+    token: "",
     codespaceId: "glowing-yodel-jr6p46ppvgg3wwp",
     login: "kdjfjcjks",
     repo: "kdjfjcjks/rem5",
   },
 ];
+
+// ─── Token auto-detection ──────────────────────────────────────────────────
+
+/**
+ * Đọc tất cả token từ env vars, gọi GitHub /user để xác định login,
+ * rồi gán đúng token vào đúng tài khoản trong ACCOUNTS.
+ * Không cần nhớ thứ tự — hệ thống tự map khi khởi động.
+ */
+async function matchTokensToAccounts(): Promise<void> {
+  // Reset tokens
+  for (const acc of ACCOUNTS) acc.token = "";
+
+  const pool = TOKEN_ENV_VARS
+    .map((name) => ({ name, value: process.env[name] ?? "" }))
+    .filter(({ value }) => value.length > 10);
+
+  if (pool.length === 0) {
+    logger.error("No tokens found in env vars — check Replit Secrets");
+    return;
+  }
+
+  for (const { name, value: token } of pool) {
+    try {
+      const res = await fetch("https://api.github.com/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "codespace-manager",
+        },
+      });
+      if (!res.ok) {
+        logger.warn({ envVar: name, status: res.status }, "Token invalid or expired — skip");
+        continue;
+      }
+      const body = (await res.json()) as Record<string, unknown>;
+      const login = String(body["login"] ?? "");
+      const acc = ACCOUNTS.find((a) => a.login === login);
+      if (acc) {
+        acc.token = token;
+        logger.info({ envVar: name, label: acc.label, login }, "Token matched ✓");
+      } else {
+        logger.info({ envVar: name, login }, "Token valid but login not in ACCOUNTS — unused");
+      }
+    } catch (err) {
+      logger.warn({ envVar: name, err }, "Token check request failed");
+    }
+  }
+
+  // Báo cáo kết quả
+  for (const acc of ACCOUNTS) {
+    if (!acc.token) {
+      logger.warn({ label: acc.label, login: acc.login }, "No token found — account will be skipped in rotation");
+    }
+  }
+}
 
 // ─── State ─────────────────────────────────────────────────────────────────
 export interface ManagerStatus {
@@ -54,12 +114,13 @@ export interface ManagerStatus {
   activeLabel: string | null;
   activeCodespaceId: string | null;
   activeWebUrl: string | null;
-  maintenanceIndices: number[];    // tài khoản đang bảo trì
+  maintenanceIndices: number[];
   lastCheck: string | null;
   lastError: string | null;
   lastSync: string | null;
   nextStart: string;
   nextStop: string;
+  tokenMatchLog: string[];
 }
 
 let state: ManagerStatus = {
@@ -74,6 +135,7 @@ let state: ManagerStatus = {
   lastSync: null,
   nextStart: "04:00 ICT",
   nextStop: "23:50 ICT",
+  tokenMatchLog: [],
 };
 
 const tasks: ScheduledTask[] = [];
@@ -126,7 +188,6 @@ function sleep(ms: number) { return new Promise<void>((r) => setTimeout(r, ms));
 
 // ─── Repo sync helpers ─────────────────────────────────────────────────────
 
-/** Lấy nội dung + SHA của 1 file từ 1 repo */
 async function getRepoFile(
   token: string,
   repo: string,
@@ -142,12 +203,11 @@ async function getRepoFile(
   };
 }
 
-/** Push 1 file lên repo (tạo mới hoặc update) */
 async function putRepoFile(
   token: string,
   repo: string,
   filePath: string,
-  content: string,      // base64
+  content: string,
   sha: string | null,
   message: string,
 ): Promise<{ ok: boolean; error?: string }> {
@@ -163,7 +223,6 @@ async function putRepoFile(
 
 // ─── Sync logic ────────────────────────────────────────────────────────────
 
-/** Các file cần đồng bộ giữa các repo */
 const SYNC_PATHS = [
   "scripts/codespace_autostart.sh",
   "scripts/ws_bridge_server.py",
@@ -178,10 +237,6 @@ export interface SyncResult {
   error?: string;
 }
 
-/**
- * Đồng bộ file từ sourceIndex sang tất cả repo khác (bỏ qua bản đang bảo trì nếu muốn).
- * Nếu không truyền filePaths thì dùng SYNC_PATHS mặc định.
- */
 export async function syncRepos(
   sourceIndex = 0,
   filePaths: string[] = SYNC_PATHS,
@@ -193,7 +248,6 @@ export async function syncRepos(
   const results: SyncResult[] = [];
 
   for (const filePath of filePaths) {
-    // Đọc file từ source
     const srcFile = await getRepoFile(src.token, src.repo, filePath);
     if (!srcFile) {
       logger.warn({ repo: src.repo, filePath }, "Sync: file not found on source — skip");
@@ -203,15 +257,11 @@ export async function syncRepos(
       continue;
     }
 
-    // Push sang từng target
     for (const t of targets) {
       const existing = await getRepoFile(t.token, t.repo, filePath);
       const res = await putRepoFile(
-        t.token,
-        t.repo,
-        filePath,
-        srcFile.content,
-        existing?.sha ?? null,
+        t.token, t.repo, filePath,
+        srcFile.content, existing?.sha ?? null,
         `sync: ${filePath} from ${src.repo}`,
       );
       results.push({ file: filePath, target: t.repo, ...res });
@@ -229,17 +279,11 @@ export async function syncRepos(
 
 // ─── Core manager logic ────────────────────────────────────────────────────
 
-/**
- * Cập nhật wsUrl trong bộ nhớ và thông báo cho route wsUrl.ts.
- * Gọi sau mỗi lần chuyển codespace thành công.
- */
 function applyActiveWebUrl(url: string): void {
   state.activeWebUrl = url;
-  // BUG FIX: Cập nhật URL in-memory để APK luôn lấy đúng URL sau failover
   setCurrentWsUrl(url);
 }
 
-/** Chọn codespace tốt nhất (bỏ qua bản đang bảo trì). */
 async function activateBestAccount(): Promise<void> {
   for (let i = 0; i < ACCOUNTS.length; i++) {
     if (state.maintenanceIndices.includes(i)) {
@@ -275,7 +319,7 @@ async function activateBestAccount(): Promise<void> {
       continue;
     }
 
-    // BUG FIX: Tăng từ 12×5s=60s lên 36×5s=180s — codespace cần 2-3 phút để khởi động
+    // Chờ tối đa 180s (36×5s) — codespace thật cần 2-3 phút để khởi động
     for (let t = 0; t < 36; t++) {
       await sleep(5000);
       const cs2 = await getCodespaceState(acc);
@@ -339,13 +383,6 @@ async function stopActive(): Promise<void> {
 
 // ─── Maintenance API ───────────────────────────────────────────────────────
 
-/**
- * Đánh dấu 1 tài khoản vào bảo trì.
- * Luồng:
- *   1. Sync file từ bản đang chạy → bản bảo trì (đảm bảo bản bảo trì có code mới nhất trước khi sửa).
- *   2. Stop codespace của bản bảo trì (nếu đang chạy).
- *   3. Bật bản còn lại.
- */
 export async function enterMaintenance(
   index: number,
   syncFiles?: string[],
@@ -357,14 +394,11 @@ export async function enterMaintenance(
     state.maintenanceIndices.push(index);
   }
 
-  // Bước 1: Sync từ bản đang active → bản bảo trì (trước khi stop)
-  // Nếu không có active thì bỏ qua (không có gì để sync)
   const paths = syncFiles ?? SYNC_PATHS;
   let syncResults: SyncResult[] = [];
   if (state.activeIndex !== null && state.activeIndex !== index) {
     logger.info({ label: acc.label, from: ACCOUNTS[state.activeIndex]!.label },
       "Maintenance enter: syncing latest from active → maintained account");
-    // Chỉ sync vào bản đang bảo trì, không phải tất cả
     const src = ACCOUNTS[state.activeIndex]!;
     for (const filePath of paths) {
       const srcFile = await getRepoFile(src.token, src.repo, filePath);
@@ -381,7 +415,6 @@ export async function enterMaintenance(
     state.lastSync = new Date().toISOString();
   }
 
-  // Bước 2: Stop codespace bản bảo trì nếu đang active
   if (state.activeIndex === index) {
     await stopCodespace(acc);
     state.activeIndex = null;
@@ -391,7 +424,6 @@ export async function enterMaintenance(
     logger.info({ label: acc.label }, "Maintenance enter: stopped codespace");
   }
 
-  // Bước 3: Bật bản còn lại nếu đang trong giờ hoạt động
   if (state.running) {
     await activateBestAccount();
   }
@@ -399,24 +431,15 @@ export async function enterMaintenance(
   return { started: state.activeLabel, syncResults };
 }
 
-/**
- * Kết thúc bảo trì cho 1 tài khoản.
- * Luồng:
- *   1. Sync file từ bản vừa bảo trì xong → tất cả các bản còn lại
- *      (bảo trì xong thường có code/config mới hơn).
- *   2. Đưa tài khoản trở lại vòng xoay.
- */
 export async function exitMaintenance(
   index: number,
 ): Promise<{ syncResults: SyncResult[] }> {
   const acc = ACCOUNTS[index];
   if (!acc) throw new Error(`Invalid account index: ${index}`);
 
-  // Sync từ bản vừa bảo trì xong → tất cả các bản còn lại
   logger.info({ label: acc.label }, "Maintenance exit: syncing updates → remaining accounts");
   const syncResults = await syncRepos(index, SYNC_PATHS);
 
-  // Bỏ khỏi danh sách bảo trì
   state.maintenanceIndices = state.maintenanceIndices.filter((i) => i !== index);
   logger.info({ label: acc.label }, "Maintenance exit: account back in rotation");
 
@@ -426,9 +449,23 @@ export async function exitMaintenance(
 // ─── Public API ────────────────────────────────────────────────────────────
 
 export function startManager(): void {
+  // Tự động phát hiện token → tài khoản khi khởi động
+  matchTokensToAccounts().then(() => {
+    const matched = ACCOUNTS.filter((a) => a.token).map((a) => a.label);
+    const missing = ACCOUNTS.filter((a) => !a.token).map((a) => a.label);
+    state.tokenMatchLog = [
+      ...matched.map((l) => `✓ ${l}`),
+      ...missing.map((l) => `✗ ${l} — no token`),
+    ];
+    logger.info({ matched: matched.length, missing: missing.length }, "Token auto-detection complete");
+  }).catch((err) => {
+    logger.error({ err }, "Token auto-detection failed");
+  });
+
   tasks.push(
     schedule("0 4 * * *", async () => {
-      logger.info("Scheduler: 04:00 — starting");
+      logger.info("Scheduler: 04:00 — re-matching tokens then starting");
+      await matchTokensToAccounts(); // refresh tokens mỗi ngày để phát hiện token hết hạn
       state.running = true;
       await activateBestAccount();
     }, { timezone: "Asia/Ho_Chi_Minh" }),
@@ -447,10 +484,23 @@ export function startManager(): void {
     }),
   );
 
-  logger.info("Codespace manager started — 04:00–23:50 ICT, health check 5 min, sync enabled");
+  logger.info("Codespace manager started — 04:00–23:50 ICT, health check 5 min, token auto-detect enabled");
 }
 
 export function getStatus(): ManagerStatus { return { ...state }; }
-export function getAccounts() { return ACCOUNTS.map((a, i) => ({ index: i, label: a.label, login: a.login, codespaceId: a.codespaceId })); }
-export async function manualStart(): Promise<void> { state.running = true; await activateBestAccount(); }
+export function getAccounts() {
+  return ACCOUNTS.map((a, i) => ({
+    index: i,
+    label: a.label,
+    login: a.login,
+    codespaceId: a.codespaceId,
+    hasToken: a.token.length > 0,
+  }));
+}
+export async function manualStart(): Promise<void> {
+  await matchTokensToAccounts();
+  state.running = true;
+  await activateBestAccount();
+}
 export async function manualStop(): Promise<void> { await stopActive(); }
+export async function refreshTokens(): Promise<void> { await matchTokensToAccounts(); }
