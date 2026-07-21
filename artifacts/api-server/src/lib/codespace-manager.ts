@@ -33,13 +33,6 @@ export const ACCOUNTS: CodespaceAccount[] = [
     repo: "idkyoohdtsu-netizen/rem5",
   },
   {
-    label: "Backup-3 (remksjf)",
-    token: process.env["GITHUB_PERSO_NAL_ACCESS_TOKEN"] ?? "",
-    codespaceId: "expert-orbit-6vrgvgpvwq9xhrrp7",
-    login: "remksjf",
-    repo: "remksjf/rem5",
-  },
-  {
     label: "Backup-4 (kdjfjcjks)",
     token: process.env["GITHUB_PERSONASL_ACCESS_TOKEND"] ?? "",
     codespaceId: "glowing-yodel-jr6p46ppvgg3wwp",
