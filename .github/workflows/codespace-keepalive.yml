@@ -8,7 +8,7 @@ on:
 jobs:
   keepalive:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.NRO_GH_TOKEN }}
       NRO_UPDATE_SECRET: ${{ secrets.NRO_UPDATE_SECRET }}
@@ -26,15 +26,14 @@ jobs:
           echo "http_url=https://${CS_NAME}-8080.app.github.dev" >> $GITHUB_OUTPUT
           echo "Active CS: $CS_NAME"
 
-      - name: Check active hours (VN time 04:00–23:50)
+      - name: Check active hours (VN time)
         id: time
         run: |
           VN_HOUR=$(TZ=Asia/Ho_Chi_Minh date '+%H' | sed 's/^0*//' || echo "12")
           VN_HOUR=${VN_HOUR:-12}
-          # Hoạt động từ 04:00 đến 23:xx (dừng lúc 23:50 do node-cron)
-          if [ "$VN_HOUR" -ge 4 ] && [ "$VN_HOUR" -le 23 ]; then
+          if [ "$VN_HOUR" -ge 4 ]; then
             echo "active=true"  >> $GITHUB_OUTPUT
-            echo "VN ${VN_HOUR}h — trong gio hoat dong (04:00-23:50)"
+            echo "VN ${VN_HOUR}h — trong gio hoat dong"
           else
             echo "active=false" >> $GITHUB_OUTPUT
             echo "VN ${VN_HOUR}h — ngoai gio (00:00-04:00)"
@@ -44,46 +43,58 @@ jobs:
         if: steps.time.outputs.active == 'true'
         id: ping
         run: |
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${{ steps.cs.outputs.http_url }}" 2>/dev/null || echo "000")
-          echo "code=$HTTP_CODE" >> $GITHUB_OUTPUT
-          echo "Bridge HTTP: $HTTP_CODE"
+          # ws_bridge là WebSocket server, HTTP ping trả về 401/302 khi private hoặc 000 khi WS only
+          # Dùng pgrep check thay vì HTTP code
+          CS="${{ steps.cs.outputs.name }}"
+          IS_UP=$(gh codespace ssh -c "$CS" -- pgrep -f ws_bridge 2>/dev/null && echo "up" || echo "down")
+          GAME_UP=$(gh codespace ssh -c "$CS" -- pgrep -f NgocRongOnline 2>/dev/null && echo "up" || echo "down")
+          DB_UP=$(gh codespace ssh -c "$CS" -- pgrep -f mariadbd 2>/dev/null && echo "up" || echo "down")
+          echo "bridge=$IS_UP" >> $GITHUB_OUTPUT
+          echo "game=$GAME_UP" >> $GITHUB_OUTPUT
+          echo "db=$DB_UP"     >> $GITHUB_OUTPUT
+          echo "WS Bridge: $IS_UP | Game: $GAME_UP | DB: $DB_UP"
 
       - name: Restart services if down
         if: >
           steps.time.outputs.active == 'true' &&
-          (steps.ping.outputs.code == '000' ||
-           steps.ping.outputs.code == '502' ||
-           steps.ping.outputs.code == '503' ||
-           steps.ping.outputs.code == '504')
+          (steps.ping.outputs.bridge == 'down' ||
+           steps.ping.outputs.game == 'down' ||
+           steps.ping.outputs.db == 'down')
         run: |
           CS="${{ steps.cs.outputs.name }}"
-          echo "Bridge down (${{ steps.ping.outputs.code }}) — restart on $CS"
+          echo "Services down — restarting on $CS"
           gh codespace ssh -c "$CS" -- bash << 'REMOTE'
             set -e; LOG="$HOME/logs"; mkdir -p "$LOG"
+            PW='Manh2007A*'
 
-            mysql -u root -e "SELECT 1;" > /dev/null 2>&1 || {
-              sudo service mariadb start 2>/dev/null || true; sleep 5; }
-            echo OK_DB
+            # ── MariaDB ───────────────────────────────────────────────
+            if ! pgrep -f mariadbd > /dev/null 2>&1; then
+              echo "Starting MariaDB..."
+              # Xóa corrupt file nếu cần
+              [ -f /var/lib/mysql/team2026/alert.ibd ] && sudo mv /var/lib/mysql/team2026/alert.ibd /tmp/alert.ibd.bak 2>/dev/null || true
+              [ -f /var/lib/mysql/team2026/alert.frm ] && sudo mv /var/lib/mysql/team2026/alert.frm /tmp/alert.frm.bak 2>/dev/null || true
+              sudo mariadbd-safe --user=mysql &>/dev/null &
+              sleep 10
+            fi
+            mysql -u root -p"$PW" -e "SELECT 1;" > /dev/null 2>&1 && echo OK_DB || echo WARN_DB
 
+            # ── Xvfb ──────────────────────────────────────────────────
+            pgrep -x Xvfb > /dev/null 2>&1 || { nohup Xvfb :99 -screen 0 1024x768x24 >> "$LOG/xvfb.log" 2>&1 & sleep 2; }
+            export DISPLAY=:99
+
+            # ── Game server (PHẢI dùng -cp để load mariadb driver) ────
             if ! pgrep -f NgocRongOnline > /dev/null 2>&1; then
-              for d in ~/nro/SRC /home/codespace/nro/SRC; do
-                [ -f "$d/NgocRongOnline.jar" ] && {
-                  cd "$d"
-                  if ! pgrep -x Xvfb > /dev/null 2>&1; then
-                    nohup Xvfb :99 -screen 0 1024x768x24 >> "$LOG/xvfb.log" 2>&1 &
-                    sleep 2
-                  fi
-                  export DISPLAY=:99
-                  nohup java -Xms512m -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=30 \
-                    -XX:G1HeapRegionSize=4m -XX:+ParallelRefProcEnabled \
-                    -Djava.net.preferIPv4Stack=true \
-                    -Djava.awt.headless=true \
-                    -jar NgocRongOnline.jar >> "$LOG/server.log" 2>&1 &
-                  sleep 15; break; }
-              done
+              cd ~/nro/SRC
+              CP="NgocRongOnline.jar:lib/HikariCP-5.1.0.jar:lib/apache-commons-lang.jar:lib/bson-5.1.3.jar:lib/gson-2.8.2.jar:lib/java-json.jar:lib/json-simple-1.1.jar:lib/log4j-1.2.17.jar:lib/lombok.jar:lib/mariadb-java-client.jar:lib/mongodb-driver-core-5.1.3.jar:lib/mongodb-driver-sync-5.1.3.jar:lib/mysql-connector-j-8.0.33.jar:lib/mysql-connector-java8-5.1.23.jar:lib/slf4j-api-2.0.0-alpha1.jar:lib/slf4j-simple-2.0.0-alpha1.jar"
+              nohup java -Xms512m -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=30 \
+                -XX:G1HeapRegionSize=4m -XX:+ParallelRefProcEnabled \
+                -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true \
+                -cp "$CP" nro.models.server.ServerManager >> "$LOG/server.log" 2>&1 &
+              sleep 20
             fi
             pgrep -f NgocRongOnline && echo OK_GAME || echo FAIL_GAME
 
+            # ── WS Bridge ─────────────────────────────────────────────
             if ! pgrep -f ws_bridge > /dev/null 2>&1; then
               for p in ~/bin/ws_bridge.py ~/ws_bridge.py /tmp/ws_bridge.py; do
                 [ -f "$p" ] && { nohup python3 "$p" >> "$LOG/ws_bridge.log" 2>&1 & sleep 3; break; }
@@ -117,6 +128,7 @@ async def handle(ws, path=None):
         log.error(str(e))
 async def main():
     async with websockets.serve(handle,"0.0.0.0",8080,ping_interval=20,ping_timeout=10,max_size=10*1024*1024,compression=None):
+        log.info("WS Bridge port 8080 -> localhost:14445")
         await asyncio.Future()
 asyncio.run(main())
 PYEOF
@@ -125,8 +137,40 @@ PYEOF
             fi
             pgrep -f ws_bridge && echo OK_BRIDGE || echo FAIL_BRIDGE
 
-            gh codespace ports visibility 8080:public -c "$CODESPACE_NAME" 2>/dev/null || true
+            # ── FRPC (game port 21445 + register port 28090) ──────────
+            if ! pgrep -f frpc > /dev/null 2>&1; then
+              if [ ! -f /tmp/frp/frpc ]; then
+                mkdir -p /tmp/frp
+                wget -q "https://github.com/fatedier/frp/releases/download/v0.61.0/frp_0.61.0_linux_amd64.tar.gz" \
+                  -O /tmp/frp.tar.gz 2>/dev/null && tar -xzf /tmp/frp.tar.gz -C /tmp/ 2>/dev/null && \
+                  cp /tmp/frp_0.61.0_linux_amd64/frpc /tmp/frp/ 2>/dev/null || true
+              fi
+              if [ ! -f /tmp/frpc_nro.toml ]; then
+                cat > /tmp/frpc_nro.toml << 'TOML'
+serverAddr = "frp.freefrp.net"
+serverPort = 7000
+auth.method = "token"
+auth.token = "freefrp.net"
+[[proxies]]
+name = "nro-game"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 14445
+remotePort = 21445
+[[proxies]]
+name = "nro-register"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 8090
+remotePort = 28090
+TOML
+              fi
+              [ -f /tmp/frp/frpc ] && nohup /tmp/frp/frpc -c /tmp/frpc_nro.toml >> "$LOG/frp.log" 2>&1 &
+              sleep 5
+            fi
+            pgrep -f frpc && echo OK_FRPC || echo WARN_FRPC
 REMOTE
+
           WS_URL="${{ steps.cs.outputs.ws_url }}"
           if [ -n "$REPLIT_API_URL" ]; then
             curl -s -X POST "${REPLIT_API_URL}/api/ws-url" \
@@ -137,7 +181,7 @@ REMOTE
             echo "REPLIT_API_URL not set — skip URL push"
           fi
 
-      - name: Keepalive ping (always)
+      - name: Keepalive — set port public (always)
         if: steps.time.outputs.active == 'true'
         run: |
           CS="${{ steps.cs.outputs.name }}"
