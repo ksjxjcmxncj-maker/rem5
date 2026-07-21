@@ -82,6 +82,10 @@ router.post("/codespace/maintenance/exit", async (req, res) => {
  */
 router.post("/codespace/sync", async (req, res) => {
   const { sourceIndex = 0, files } = req.body as { sourceIndex?: number; files?: string[] };
+  if (!Number.isInteger(sourceIndex) || sourceIndex < 0 || sourceIndex >= ACCOUNTS.length) {
+    res.status(400).json({ ok: false, error: `sourceIndex phải là 0, 1 hoặc 2` });
+    return;
+  }
   try {
     const results = await syncRepos(sourceIndex, files);
     res.json({ ok: true, results, status: getStatus() });
