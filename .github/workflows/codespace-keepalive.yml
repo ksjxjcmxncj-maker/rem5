@@ -1,4 +1,4 @@
-name: WS Keepalive — Ping & Auto-Restart
+name: NRO Keepalive — 24/7
 
 on:
   schedule:
@@ -8,7 +8,7 @@ on:
 jobs:
   keepalive:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     env:
       GH_TOKEN: ${{ secrets.NRO_GH_TOKEN }}
       NRO_UPDATE_SECRET: ${{ secrets.NRO_UPDATE_SECRET }}
@@ -17,146 +17,100 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Load active codespace state
+      - name: Get Codespace name
         id: cs
         run: |
           CS_NAME=$(node -e "const j=require('./state/active-codespace.json');console.log(j.name)")
-          echo "name=$CS_NAME"   >> $GITHUB_OUTPUT
-          echo "ws_url=wss://${CS_NAME}-8080.app.github.dev"   >> $GITHUB_OUTPUT
-          echo "http_url=https://${CS_NAME}-8080.app.github.dev" >> $GITHUB_OUTPUT
+          echo "name=$CS_NAME" >> $GITHUB_OUTPUT
           echo "Active CS: $CS_NAME"
 
-      - name: Check active hours (VN time)
-        id: time
+      - name: Start Codespace if not running
         run: |
-          VN_HOUR=$(TZ=Asia/Ho_Chi_Minh date '+%H' | sed 's/^0*//' || echo "12")
-          VN_HOUR=${VN_HOUR:-12}
-          if [ "$VN_HOUR" -ge 4 ]; then
-            echo "active=true"  >> $GITHUB_OUTPUT
-            echo "VN ${VN_HOUR}h — trong gio hoat dong"
-          else
-            echo "active=false" >> $GITHUB_OUTPUT
-            echo "VN ${VN_HOUR}h — ngoai gio (00:00-04:00)"
+          CS="${{ steps.cs.outputs.name }}"
+          STATE=$(gh codespace view -c "$CS" --json state -q '.state' 2>/dev/null || echo "Unknown")
+          echo "Current state: $STATE"
+          if [ "$STATE" != "Available" ]; then
+            echo "Starting Codespace..."
+            gh codespace start -c "$CS" 2>/dev/null || true
+            for i in $(seq 1 24); do
+              sleep 15
+              STATE=$(gh codespace view -c "$CS" --json state -q '.state' 2>/dev/null || echo "Unknown")
+              echo "  ($i/24) state=$STATE"
+              [ "$STATE" = "Available" ] && break
+            done
           fi
+          echo "Final state: $STATE"
+          [ "$STATE" = "Available" ] || { echo "ERROR: CS not available"; exit 1; }
 
-      - name: Ping WS bridge
-        if: steps.time.outputs.active == 'true'
-        id: ping
-        run: |
-          # ws_bridge là WebSocket server, HTTP ping trả về 401/302 khi private hoặc 000 khi WS only
-          # Dùng pgrep check thay vì HTTP code
-          CS="${{ steps.cs.outputs.name }}"
-          IS_UP=$(gh codespace ssh -c "$CS" -- pgrep -f ws_bridge 2>/dev/null && echo "up" || echo "down")
-          GAME_UP=$(gh codespace ssh -c "$CS" -- pgrep -f NgocRongOnline 2>/dev/null && echo "up" || echo "down")
-          DB_UP=$(gh codespace ssh -c "$CS" -- pgrep -f mariadbd 2>/dev/null && echo "up" || echo "down")
-          echo "bridge=$IS_UP" >> $GITHUB_OUTPUT
-          echo "game=$GAME_UP" >> $GITHUB_OUTPUT
-          echo "db=$DB_UP"     >> $GITHUB_OUTPUT
-          echo "WS Bridge: $IS_UP | Game: $GAME_UP | DB: $DB_UP"
-
-      - name: Restart services if down
-        if: >
-          steps.time.outputs.active == 'true' &&
-          (steps.ping.outputs.bridge == 'down' ||
-           steps.ping.outputs.game == 'down' ||
-           steps.ping.outputs.db == 'down')
+      - name: Check services & restart if down
         run: |
           CS="${{ steps.cs.outputs.name }}"
-          echo "Services down — restarting on $CS"
-          gh codespace ssh -c "$CS" -- bash << 'REMOTE'
-            set -e; LOG="$HOME/logs"; mkdir -p "$LOG"
-            PW='Manh2007A*'
+          DB_UP=$(gh codespace ssh -c "$CS" -- pgrep -f mariadbd > /dev/null 2>&1 && echo up || echo down)
+          GAME_UP=$(gh codespace ssh -c "$CS" -- pgrep -f NgocRongOnline > /dev/null 2>&1 && echo up || echo down)
+          FRPC_UP=$(gh codespace ssh -c "$CS" -- pgrep -f frpc > /dev/null 2>&1 && echo up || echo down)
+          echo "DB=$DB_UP  GAME=$GAME_UP  FRPC=$FRPC_UP"
 
-            # ── MariaDB ───────────────────────────────────────────────
-            if ! pgrep -f mariadbd > /dev/null 2>&1; then
-              echo "Starting MariaDB..."
-              # Xóa corrupt file nếu cần
-              [ -f /var/lib/mysql/team2026/alert.ibd ] && sudo mv /var/lib/mysql/team2026/alert.ibd /tmp/alert.ibd.bak 2>/dev/null || true
-              [ -f /var/lib/mysql/team2026/alert.frm ] && sudo mv /var/lib/mysql/team2026/alert.frm /tmp/alert.frm.bak 2>/dev/null || true
-              sudo mariadbd-safe --user=mysql &>/dev/null &
-              sleep 10
-            fi
-            mysql -u root -p"$PW" -e "SELECT 1;" > /dev/null 2>&1 && echo OK_DB || echo WARN_DB
+          if [ "$DB_UP" = "down" ] || [ "$GAME_UP" = "down" ] || [ "$FRPC_UP" = "down" ]; then
+            echo "One or more services down — restarting..."
+            gh codespace ssh -c "$CS" -- bash << 'REMOTE'
+              set -e
+              LOG="$HOME/logs"; mkdir -p "$LOG"
 
-            # ── Xvfb ──────────────────────────────────────────────────
-            pgrep -x Xvfb > /dev/null 2>&1 || { nohup Xvfb :99 -screen 0 1024x768x24 >> "$LOG/xvfb.log" 2>&1 & sleep 2; }
-            export DISPLAY=:99
-
-            # ── Game server (PHẢI dùng -cp để load mariadb driver) ────
-            if ! pgrep -f NgocRongOnline > /dev/null 2>&1; then
-              cd ~/nro/SRC
-              CP="NgocRongOnline.jar:lib/HikariCP-5.1.0.jar:lib/apache-commons-lang.jar:lib/bson-5.1.3.jar:lib/gson-2.8.2.jar:lib/java-json.jar:lib/json-simple-1.1.jar:lib/log4j-1.2.17.jar:lib/lombok.jar:lib/mariadb-java-client.jar:lib/mongodb-driver-core-5.1.3.jar:lib/mongodb-driver-sync-5.1.3.jar:lib/mysql-connector-j-8.0.33.jar:lib/mysql-connector-java8-5.1.23.jar:lib/slf4j-api-2.0.0-alpha1.jar:lib/slf4j-simple-2.0.0-alpha1.jar"
-              nohup java -Xms512m -Xmx1g -XX:+UseG1GC -XX:MaxGCPauseMillis=30 \
-                -XX:G1HeapRegionSize=4m -XX:+ParallelRefProcEnabled \
-                -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true \
-                -cp "$CP" nro.models.server.ServerManager >> "$LOG/server.log" 2>&1 &
-              sleep 20
-            fi
-            pgrep -f NgocRongOnline && echo OK_GAME || echo FAIL_GAME
-
-            # ── WS Bridge ─────────────────────────────────────────────
-            if ! pgrep -f ws_bridge > /dev/null 2>&1; then
-              for p in ~/bin/ws_bridge.py ~/ws_bridge.py /tmp/ws_bridge.py; do
-                [ -f "$p" ] && { nohup python3 "$p" >> "$LOG/ws_bridge.log" 2>&1 & sleep 3; break; }
-              done
-              if ! pgrep -f ws_bridge > /dev/null 2>&1; then
-                cat > /tmp/ws_bridge.py << 'PYEOF'
-#!/usr/bin/env python3
-import asyncio, logging, sys, subprocess
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s')
-log = logging.getLogger(__name__)
-try:
-    import websockets
-except ImportError:
-    subprocess.run([sys.executable,"-m","pip","install","websockets","-q"])
-    import websockets
-async def handle(ws, path=None):
-    try:
-        r, w = await asyncio.open_connection("127.0.0.1", 14445)
-        async def a2b():
-            async for d in ws:
-                if isinstance(d, bytes): w.write(d); await w.drain()
-            w.close()
-        async def b2a():
-            while True:
-                d = await r.read(65536)
-                if not d: break
-                await ws.send(d)
-            await ws.close()
-        await asyncio.gather(a2b(), b2a(), return_exceptions=True)
-    except Exception as e:
-        log.error(str(e))
-async def main():
-    async with websockets.serve(handle,"0.0.0.0",8080,ping_interval=20,ping_timeout=10,max_size=10*1024*1024,compression=None):
-        log.info("WS Bridge port 8080 -> localhost:14445")
-        await asyncio.Future()
-asyncio.run(main())
-PYEOF
-                nohup python3 /tmp/ws_bridge.py >> "$LOG/ws_bridge.log" 2>&1 & sleep 3
+              # ── MariaDB ───────────────────────────────────────────────
+              if ! pgrep -f mariadbd > /dev/null 2>&1; then
+                echo "Starting MariaDB..."
+                sudo mariadbd-safe --user=mysql &>/dev/null &
+                sleep 10
               fi
-            fi
-            pgrep -f ws_bridge && echo OK_BRIDGE || echo FAIL_BRIDGE
+              mysql -u root -e "SELECT 1;" > /dev/null 2>&1 && echo OK_DB || echo WARN_DB
 
-            # ── FRPC (game port 21445 + register port 28090) ──────────
-            if ! pgrep -f frpc > /dev/null 2>&1; then
-              if [ ! -f /tmp/frp/frpc ]; then
-                mkdir -p /tmp/frp
-                wget -q "https://github.com/fatedier/frp/releases/download/v0.61.0/frp_0.61.0_linux_amd64.tar.gz" \
-                  -O /tmp/frp.tar.gz 2>/dev/null && tar -xzf /tmp/frp.tar.gz -C /tmp/ 2>/dev/null && \
-                  cp /tmp/frp_0.61.0_linux_amd64/frpc /tmp/frp/ 2>/dev/null || true
+              # ── Xvfb (display giả cho Java GUI nếu cần) ───────────────
+              pgrep -x Xvfb > /dev/null 2>&1 || {
+                nohup Xvfb :99 -screen 0 1024x768x24 >> "$LOG/xvfb.log" 2>&1 &
+                sleep 2
+              }
+              export DISPLAY=:99
+
+              # ── Game server ───────────────────────────────────────────
+              if ! pgrep -f NgocRongOnline > /dev/null 2>&1; then
+                echo "Starting game server..."
+                cd ~/nro/SRC
+                nohup java -Xms512m -Xmx1g \
+                  -XX:+UseG1GC -XX:MaxGCPauseMillis=30 \
+                  -XX:G1HeapRegionSize=4m -XX:+ParallelRefProcEnabled \
+                  -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC \
+                  -cp "NgocRongOnline.jar:lib/*" \
+                  -jar NgocRongOnline.jar >> "$LOG/server.log" 2>&1 &
+                sleep 8
               fi
-              if [ ! -f /tmp/frpc_nro.toml ]; then
+              pgrep -f NgocRongOnline && echo OK_GAME || echo WARN_GAME
+
+              # ── FRPC (TCP 14445, WebSocket 14446, Register 8090) ──────
+              if ! pgrep -f frpc > /dev/null 2>&1; then
+                if [ ! -f /tmp/frp/frpc ]; then
+                  mkdir -p /tmp/frp
+                  wget -q "https://github.com/fatedier/frp/releases/download/v0.61.0/frp_0.61.0_linux_amd64.tar.gz" \
+                    -O /tmp/frp.tar.gz \
+                    && tar -xzf /tmp/frp.tar.gz -C /tmp/ \
+                    && cp /tmp/frp_0.61.0_linux_amd64/frpc /tmp/frp/
+                fi
                 cat > /tmp/frpc_nro.toml << 'TOML'
 serverAddr = "frp.freefrp.net"
 serverPort = 7000
 auth.method = "token"
 auth.token = "freefrp.net"
 [[proxies]]
-name = "nro-game"
+name = "nro-game-tcp"
 type = "tcp"
 localIP = "127.0.0.1"
 localPort = 14445
 remotePort = 21445
+[[proxies]]
+name = "nro-game-ws"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 14446
+remotePort = 21446
 [[proxies]]
 name = "nro-register"
 type = "tcp"
@@ -164,26 +118,33 @@ localIP = "127.0.0.1"
 localPort = 8090
 remotePort = 28090
 TOML
+                nohup /tmp/frp/frpc -c /tmp/frpc_nro.toml >> "$LOG/frp.log" 2>&1 &
+                sleep 5
               fi
-              [ -f /tmp/frp/frpc ] && nohup /tmp/frp/frpc -c /tmp/frpc_nro.toml >> "$LOG/frp.log" 2>&1 &
-              sleep 5
-            fi
-            pgrep -f frpc && echo OK_FRPC || echo WARN_FRPC
-REMOTE
+              pgrep -f frpc && echo OK_FRPC || echo WARN_FRPC
 
-          WS_URL="${{ steps.cs.outputs.ws_url }}"
-          if [ -n "$REPLIT_API_URL" ]; then
-            curl -s -X POST "${REPLIT_API_URL}/api/ws-url" \
-              -H "Content-Type: application/json" \
-              -H "x-update-secret: ${NRO_UPDATE_SECRET}" \
-              -d "{\"url\":\"$WS_URL\"}" && echo "URL pushed: $WS_URL"
+              # ── Status cuối ───────────────────────────────────────────
+              echo "=== Status ==="
+              pgrep -f mariadbd     && echo "  DB   : running" || echo "  DB   : DOWN"
+              pgrep -f NgocRongOnline && echo "  GAME : running" || echo "  GAME : DOWN"
+              pgrep -f frpc          && echo "  FRPC : running" || echo "  FRPC : DOWN"
+              tail -3 "$LOG/server.log" 2>/dev/null || true
+REMOTE
           else
-            echo "REPLIT_API_URL not set — skip URL push"
+            echo "All services running — nothing to do"
           fi
 
-      - name: Keepalive — set port public (always)
-        if: steps.time.outputs.active == 'true'
+      - name: Set port public & push WS URL
         run: |
           CS="${{ steps.cs.outputs.name }}"
           gh codespace ports visibility 8080:public -c "$CS" 2>/dev/null || true
-          echo "Keepalive OK: $(TZ=Asia/Ho_Chi_Minh date '+%H:%M VN') — $CS"
+
+          WS_URL="wss://${CS}-8080.app.github.dev"
+          if [ -n "$REPLIT_API_URL" ] && [ -n "$NRO_UPDATE_SECRET" ]; then
+            curl -s -X POST "${REPLIT_API_URL}/api/ws-url" \
+              -H "Content-Type: application/json" \
+              -H "x-update-secret: ${NRO_UPDATE_SECRET}" \
+              -d "{\"url\":\"$WS_URL\"}" && echo "WS URL pushed: $WS_URL"
+          fi
+
+          echo "Keepalive OK: $(TZ=Asia/Ho_Chi_Minh date '+%H:%M:%S VN') — $CS"
