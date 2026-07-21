@@ -1039,6 +1039,9 @@ public final class Manager {
         if ((value = properties.get("server.port")) != null) {
             ServerManager.PORT = Integer.parseInt(String.valueOf(value));
         }
+        if ((value = properties.get("server.wsport")) != null) {
+            ServerManager.WS_PORT = Integer.parseInt(String.valueOf(value));
+        }
         String linkServer = "";
         if ((value = properties.get("server.ip")) != null) {
             ServerManager.IP = String.valueOf(value);

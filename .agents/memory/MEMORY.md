@@ -6,3 +6,4 @@
 - [NRO Teamobi2026 Upgrade](nro-teamobi2026-upgrade.md) — Phase 16: cai_trang 351 bộ + items INSERT IGNORE
 - [NRO Teamobi DB Deep Dive](nro-teamobi-db-deepdive.md) — flag_bag/intrinsic/npc_template; ItemMap+options pattern
 - [NRO No-TCP Bridge](nro-no-tcp-research.md) — APK inject DONE ✅; v1.1.0 released; WSS Codespace port 8080 public
+- [WebSocket Upgrade](websocket-upgrade.md) — Code push xong ✅; cần compile+test trên Codespace (port 14446, path /game)

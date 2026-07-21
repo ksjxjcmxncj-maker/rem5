@@ -45,6 +45,7 @@ import nro.models.services.ClanService;
 import nro.models.services.TaskService;
 import nro.models.shop.ShopTab;
 import nro.models.shop_ky_gui.ConsignShopManager;
+import nro.netty.NettyWsServer;
 
 /**
  *
@@ -60,6 +61,7 @@ public class ServerManager {
     public static String NAME = "Ngọc Rồng Online";
     public static String IP = "36.50.135.149";
     public static int PORT = 14445;
+    public static int WS_PORT = 14446;
     public static int EVENT_SEVER = 0;
     private static ServerManager instance;
     public static boolean isRunning;
@@ -106,6 +108,10 @@ public class ServerManager {
         try {
             isRunning = true;
             activeServerSocket();
+
+            // Khởi động WebSocket server song song (port WS_PORT)
+            new NettyWsServer(WS_PORT).start();
+            Logger.success("WebSocket server started on port " + WS_PORT + "\n");
 
             // Gửi các nhiệm vụ cập nhật theo từng dịch vụ
             new Thread(NgocRongNamecService.gI(), "Update NRNM").start();
