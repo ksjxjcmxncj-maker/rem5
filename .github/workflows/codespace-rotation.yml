@@ -1,8 +1,8 @@
 name: Codespace Account Rotation
 
+# Rotation bị tắt — chỉ cần 1 account, không cần rotate.
+# Bật lại bằng workflow_dispatch nếu muốn test.
 on:
-  schedule:
-    - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
       force_rotate:
@@ -64,7 +64,7 @@ jobs:
           esac
           CS="${{ steps.check.outputs.name }}"
           gh codespace ssh -c "$CS" -- bash -c \
-            'mkdir -p ~/backups && mysqldump -u root nro1 2>/dev/null | gzip > ~/backups/nro1_latest.sql.gz && ls -lh ~/backups/nro1_latest.sql.gz && echo OK_BACKUP'
+            'mkdir -p ~/backups && mysqldump -u root nro1 2>/dev/null | gzip > ~/backups/nro1_latest.sql.gz && echo OK_BACKUP'
 
       - name: Select next account
         if: steps.check.outputs.need_rotate == 'true'
