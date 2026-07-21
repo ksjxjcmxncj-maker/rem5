@@ -1,20 +1,6 @@
 {
   "name": "improved-fishstick-966vx76qqgx7cqjp",
-  "account": "B",
+  "account": "A",
   "wsUrl": "wss://improved-fishstick-966vx76qqgx7cqjp-8080.app.github.dev",
-  "startedAt": "2026-07-21T00:00:00Z",
-  "accounts": [
-    {
-      "id": "A",
-      "tokenSecret": "GITHUB_TOKEN_A"
-    },
-    {
-      "id": "B",
-      "tokenSecret": "GITHUB_TOKEN_B"
-    },
-    {
-      "id": "C",
-      "tokenSecret": "GITHUB_TOKEN_C"
-    }
-  ]
+  "startedAt": "2026-07-21T00:00:00Z"
 }
