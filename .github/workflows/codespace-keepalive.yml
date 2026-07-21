@@ -10,10 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     env:
-      GITHUB_TOKEN_A: ${{ secrets.GITHUB_TOKEN_A }}
-      GITHUB_TOKEN_B: ${{ secrets.GITHUB_TOKEN_B }}
-      GITHUB_TOKEN_C: ${{ secrets.GITHUB_TOKEN_C }}
-      SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      GH_TOKEN: ${{ secrets.NRO_GH_TOKEN }}
+      NRO_UPDATE_SECRET: ${{ secrets.NRO_UPDATE_SECRET }}
       REPLIT_API_URL: ${{ vars.REPLIT_API_URL }}
 
     steps:
@@ -23,12 +21,10 @@ jobs:
         id: cs
         run: |
           CS_NAME=$(node -e "const j=require('./state/active-codespace.json');console.log(j.name)")
-          ACCOUNT=$(node  -e "const j=require('./state/active-codespace.json');console.log(j.account)")
           echo "name=$CS_NAME"   >> $GITHUB_OUTPUT
-          echo "account=$ACCOUNT" >> $GITHUB_OUTPUT
           echo "ws_url=wss://${CS_NAME}-8080.app.github.dev"   >> $GITHUB_OUTPUT
           echo "http_url=https://${CS_NAME}-8080.app.github.dev" >> $GITHUB_OUTPUT
-          echo "Active: $ACCOUNT / $CS_NAME"
+          echo "Active CS: $CS_NAME"
 
       - name: Check active hours (VN time)
         id: time
@@ -47,7 +43,7 @@ jobs:
         if: steps.time.outputs.active == 'true'
         id: ping
         run: |
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 ${{ steps.cs.outputs.http_url }} 2>/dev/null || echo "000")
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${{ steps.cs.outputs.http_url }}" 2>/dev/null || echo "000")
           echo "code=$HTTP_CODE" >> $GITHUB_OUTPUT
           echo "Bridge HTTP: $HTTP_CODE"
 
@@ -59,13 +55,6 @@ jobs:
            steps.ping.outputs.code == '503' ||
            steps.ping.outputs.code == '504')
         run: |
-          ACCOUNT="${{ steps.cs.outputs.account }}"
-          case "$ACCOUNT" in
-            A) export GH_TOKEN="$GITHUB_TOKEN_A" ;;
-            B) export GH_TOKEN="$GITHUB_TOKEN_B" ;;
-            C) export GH_TOKEN="$GITHUB_TOKEN_C" ;;
-            *) export GH_TOKEN="$GITHUB_TOKEN_A" ;;
-          esac
           CS="${{ steps.cs.outputs.name }}"
           echo "Bridge down (${{ steps.ping.outputs.code }}) — restart on $CS"
           gh codespace ssh -c "$CS" -- bash << 'REMOTE'
@@ -79,7 +68,6 @@ jobs:
               for d in ~/nro/SRC /home/codespace/nro/SRC; do
                 [ -f "$d/NgocRongOnline.jar" ] && {
                   cd "$d"
-                  # Đảm bảo Xvfb chạy (cần cho JFrame, dialog AWT)
                   if ! pgrep -x Xvfb > /dev/null 2>&1; then
                     nohup Xvfb :99 -screen 0 1024x768x24 >> "$LOG/xvfb.log" 2>&1 &
                     sleep 2
@@ -97,7 +85,7 @@ jobs:
 
             if ! pgrep -f ws_bridge > /dev/null 2>&1; then
               for p in ~/bin/ws_bridge.py ~/ws_bridge.py /tmp/ws_bridge.py; do
-                [ -f "$p" ] && { nohup python3 "$p" >> "$LOG/ws_bridge.log" 2>&1 &; sleep 3; break; }
+                [ -f "$p" ] && { nohup python3 "$p" >> "$LOG/ws_bridge.log" 2>&1 & sleep 3; break; }
               done
               if ! pgrep -f ws_bridge > /dev/null 2>&1; then
                 cat > /tmp/ws_bridge.py << 'PYEOF'
@@ -131,7 +119,7 @@ async def main():
         await asyncio.Future()
 asyncio.run(main())
 PYEOF
-                nohup python3 /tmp/ws_bridge.py >> "$LOG/ws_bridge.log" 2>&1 &; sleep 3
+                nohup python3 /tmp/ws_bridge.py >> "$LOG/ws_bridge.log" 2>&1 & sleep 3
               fi
             fi
             pgrep -f ws_bridge && echo OK_BRIDGE || echo FAIL_BRIDGE
@@ -139,20 +127,18 @@ PYEOF
             gh codespace ports visibility 8080:public -c "$CODESPACE_NAME" 2>/dev/null || true
 REMOTE
           WS_URL="${{ steps.cs.outputs.ws_url }}"
-          curl -s -X POST "${REPLIT_API_URL}/api/ws-url" \
-            -H "Content-Type: application/json" \
-            -H "x-update-secret: ${SESSION_SECRET}" \
-            -d "{\"url\":\"$WS_URL\"}" && echo "URL pushed: $WS_URL"
+          if [ -n "$REPLIT_API_URL" ]; then
+            curl -s -X POST "${REPLIT_API_URL}/api/ws-url" \
+              -H "Content-Type: application/json" \
+              -H "x-update-secret: ${NRO_UPDATE_SECRET}" \
+              -d "{\"url\":\"$WS_URL\"}" && echo "URL pushed: $WS_URL"
+          else
+            echo "REPLIT_API_URL not set — skip URL push"
+          fi
 
-      - name: Ping keepalive (always)
+      - name: Keepalive ping (always)
         if: steps.time.outputs.active == 'true'
         run: |
-          ACCOUNT="${{ steps.cs.outputs.account }}"
-          case "$ACCOUNT" in
-            A) export GH_TOKEN="$GITHUB_TOKEN_A" ;;
-            B) export GH_TOKEN="$GITHUB_TOKEN_B" ;;
-            C) export GH_TOKEN="$GITHUB_TOKEN_C" ;;
-            *) export GH_TOKEN="$GITHUB_TOKEN_A" ;;
-          esac
-          gh codespace ports visibility 8080:public -c "${{ steps.cs.outputs.name }}" 2>/dev/null || true
-          echo "Keepalive: $(TZ=Asia/Ho_Chi_Minh date '+%H:%M VN')"
+          CS="${{ steps.cs.outputs.name }}"
+          gh codespace ports visibility 8080:public -c "$CS" 2>/dev/null || true
+          echo "Keepalive OK: $(TZ=Asia/Ho_Chi_Minh date '+%H:%M VN') — $CS"
