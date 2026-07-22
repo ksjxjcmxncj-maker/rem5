@@ -1,4 +1,4 @@
-name: NRO Keepalive — 24/7
+name: NRO Keepalive
 
 on:
   schedule:
@@ -8,143 +8,93 @@ on:
 jobs:
   keepalive:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 10
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN_A || secrets.NRO_GH_TOKEN }}
-      NRO_UPDATE_SECRET: ${{ secrets.NRO_UPDATE_SECRET }}
+      GH_TOKEN: ${{ secrets.NRO_GH_TOKEN }}
       REPLIT_API_URL: ${{ vars.REPLIT_API_URL }}
+      NRO_UPDATE_SECRET: ${{ secrets.NRO_UPDATE_SECRET }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get Codespace name
-        id: cs
+      - name: Check & ensure Codespace is Available
         run: |
-          CS_NAME=$(node -e "const j=require('./state/active-codespace.json');console.log(j.name)")
-          echo "name=$CS_NAME" >> $GITHUB_OUTPUT
-          echo "Active CS: $CS_NAME"
+          CS=$(node -e "console.log(require('./state/active-codespace.json').name)")
+          echo "Codespace: $CS"
 
-      - name: Start Codespace if not running
-        run: |
-          CS="${{ steps.cs.outputs.name }}"
-          STATE=$(gh codespace view -c "$CS" --json state -q '.state' 2>/dev/null || echo "Unknown")
-          echo "Current state: $STATE"
+          STATE=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/user/codespaces/$CS" \
+            | grep -o '"state":"[^"]*"' | cut -d'"' -f4 || echo "Unknown")
+          echo "State: $STATE"
+
           if [ "$STATE" != "Available" ]; then
-            echo "Starting Codespace..."
-            gh codespace start -c "$CS" 2>/dev/null || true
-            for i in $(seq 1 24); do
+            echo "Not available — starting..."
+            curl -sf -X POST -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/user/codespaces/$CS/start" || true
+            for i in $(seq 1 20); do
               sleep 15
-              STATE=$(gh codespace view -c "$CS" --json state -q '.state' 2>/dev/null || echo "Unknown")
-              echo "  ($i/24) state=$STATE"
+              STATE=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" \
+                "https://api.github.com/user/codespaces/$CS" \
+                | grep -o '"state":"[^"]*"' | cut -d'"' -f4 || echo "Unknown")
+              echo "  ($i/20) $STATE"
               [ "$STATE" = "Available" ] && break
             done
           fi
           echo "Final state: $STATE"
-          [ "$STATE" = "Available" ] || { echo "ERROR: CS not available"; exit 1; }
 
-      - name: Check services & restart if down
+      - name: Check game services & restart Codespace if down
         run: |
-          CS="${{ steps.cs.outputs.name }}"
-          DB_UP=$(gh codespace ssh -c "$CS" -- pgrep -f mariadbd > /dev/null 2>&1 && echo up || echo down)
-          GAME_UP=$(gh codespace ssh -c "$CS" -- pgrep -f NgocRongOnline > /dev/null 2>&1 && echo up || echo down)
-          FRPC_UP=$(gh codespace ssh -c "$CS" -- pgrep -f frpc > /dev/null 2>&1 && echo up || echo down)
-          echo "DB=$DB_UP  GAME=$GAME_UP  FRPC=$FRPC_UP"
+          CS=$(node -e "console.log(require('./state/active-codespace.json').name)")
 
-          if [ "$DB_UP" = "down" ] || [ "$GAME_UP" = "down" ] || [ "$FRPC_UP" = "down" ]; then
-            echo "One or more services down — restarting..."
-            gh codespace ssh -c "$CS" -- bash << 'REMOTE'
-              set -e
-              LOG="$HOME/logs"; mkdir -p "$LOG"
+          # Kiểm tra FRPC port 21445 (TCP tunnel game server)
+          FRPC_OK=$(timeout 5 bash -c 'echo >/dev/tcp/frp.freefrp.net/21445' 2>&1 \
+            && echo yes || echo no)
+          echo "FRPC 21445: $FRPC_OK"
 
-              # ── MariaDB ───────────────────────────────────────────────
-              if ! pgrep -f mariadbd > /dev/null 2>&1; then
-                echo "Starting MariaDB..."
-                sudo mariadbd-safe --user=mysql &>/dev/null &
-                sleep 10
-              fi
-              mysql -u root -e "SELECT 1;" > /dev/null 2>&1 && echo OK_DB || echo WARN_DB
+          if [ "$FRPC_OK" = "no" ]; then
+            echo "Game services DOWN — stop+start Codespace to trigger postStartCommand..."
 
-              # ── Xvfb (display giả cho Java GUI nếu cần) ───────────────
-              pgrep -x Xvfb > /dev/null 2>&1 || {
-                nohup Xvfb :99 -screen 0 1024x768x24 >> "$LOG/xvfb.log" 2>&1 &
-                sleep 2
-              }
-              export DISPLAY=:99
+            curl -sf -X POST -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/user/codespaces/$CS/stop" || true
+            sleep 25
 
-              # ── Game server ───────────────────────────────────────────
-              if ! pgrep -f NgocRongOnline > /dev/null 2>&1; then
-                echo "Starting game server..."
-                cd ~/nro/SRC
-                nohup java -Xms512m -Xmx1g \
-                  -XX:+UseG1GC -XX:MaxGCPauseMillis=30 \
-                  -XX:G1HeapRegionSize=4m -XX:+ParallelRefProcEnabled \
-                  -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC \
-                  -cp "NgocRongOnline.jar:lib/*" \
-                  -jar NgocRongOnline.jar >> "$LOG/server.log" 2>&1 &
-                sleep 8
-              fi
-              pgrep -f NgocRongOnline && echo OK_GAME || echo WARN_GAME
+            curl -sf -X POST -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/user/codespaces/$CS/start" || true
 
-              # ── FRPC (TCP 14445, WebSocket 14446, Register 8090) ──────
-              if ! pgrep -f frpc > /dev/null 2>&1; then
-                if [ ! -f /tmp/frp/frpc ]; then
-                  mkdir -p /tmp/frp
-                  wget -q "https://github.com/fatedier/frp/releases/download/v0.61.0/frp_0.61.0_linux_amd64.tar.gz" \
-                    -O /tmp/frp.tar.gz \
-                    && tar -xzf /tmp/frp.tar.gz -C /tmp/ \
-                    && cp /tmp/frp_0.61.0_linux_amd64/frpc /tmp/frp/
-                fi
-                cat > /tmp/frpc_nro.toml << 'TOML'
-serverAddr = "frp.freefrp.net"
-serverPort = 7000
-auth.method = "token"
-auth.token = "freefrp.net"
-[[proxies]]
-name = "nro-game-tcp"
-type = "tcp"
-localIP = "127.0.0.1"
-localPort = 14445
-remotePort = 21445
-[[proxies]]
-name = "nro-game-ws"
-type = "tcp"
-localIP = "127.0.0.1"
-localPort = 14446
-remotePort = 21446
-[[proxies]]
-name = "nro-register"
-type = "tcp"
-localIP = "127.0.0.1"
-localPort = 8090
-remotePort = 28090
-TOML
-                nohup /tmp/frp/frpc -c /tmp/frpc_nro.toml >> "$LOG/frp.log" 2>&1 &
-                sleep 5
-              fi
-              pgrep -f frpc && echo OK_FRPC || echo WARN_FRPC
+            echo "Waiting for Codespace + postStartCommand (~90s)..."
+            sleep 90
 
-              # ── Status cuối ───────────────────────────────────────────
-              echo "=== Status ==="
-              pgrep -f mariadbd     && echo "  DB   : running" || echo "  DB   : DOWN"
-              pgrep -f NgocRongOnline && echo "  GAME : running" || echo "  GAME : DOWN"
-              pgrep -f frpc          && echo "  FRPC : running" || echo "  FRPC : DOWN"
-              tail -3 "$LOG/server.log" 2>/dev/null || true
-REMOTE
+            for i in $(seq 1 12); do
+              sleep 15
+              STATE=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" \
+                "https://api.github.com/user/codespaces/$CS" \
+                | grep -o '"state":"[^"]*"' | cut -d'"' -f4 || echo "Unknown")
+              echo "  ($i/12) $STATE"
+              [ "$STATE" = "Available" ] && break
+            done
+
+            # Verify FRPC came up
+            sleep 20
+            FRPC_AFTER=$(timeout 5 bash -c 'echo >/dev/tcp/frp.freefrp.net/21445' 2>&1 \
+              && echo yes || echo no)
+            echo "FRPC after restart: $FRPC_AFTER"
           else
-            echo "All services running — nothing to do"
+            echo "Game services OK"
           fi
 
-      - name: Set port public & push WS URL
-        run: |
-          CS="${{ steps.cs.outputs.name }}"
-          gh codespace ports visibility 8080:public -c "$CS" 2>/dev/null || true
+          echo "Keepalive done: $(TZ=Asia/Ho_Chi_Minh date '+%Y-%m-%d %H:%M:%S VN')"
 
+      - name: Push WS URL to Replit
+        if: always()
+        run: |
+          CS=$(node -e "console.log(require('./state/active-codespace.json').name)")
           WS_URL="wss://${CS}-8080.app.github.dev"
+
           if [ -n "$REPLIT_API_URL" ] && [ -n "$NRO_UPDATE_SECRET" ]; then
             curl -s -X POST "${REPLIT_API_URL}/api/ws-url" \
               -H "Content-Type: application/json" \
               -H "x-update-secret: ${NRO_UPDATE_SECRET}" \
-              -d "{\"url\":\"$WS_URL\"}" && echo "WS URL pushed: $WS_URL"
+              -d "{\"url\":\"$WS_URL\"}" && echo "WS URL updated: $WS_URL"
+          else
+            echo "SKIP: REPLIT_API_URL or NRO_UPDATE_SECRET not set"
           fi
-
-          echo "Keepalive OK: $(TZ=Asia/Ho_Chi_Minh date '+%H:%M:%S VN') — $CS"
