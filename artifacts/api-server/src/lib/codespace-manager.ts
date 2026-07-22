@@ -1,6 +1,10 @@
 import { schedule, type ScheduledTask } from "node-cron";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { logger } from "./logger.js";
 import { setCurrentWsUrl } from "../routes/wsUrl.js";
+
+const execFileAsync = promisify(execFile);
 
 // ─── Account config ────────────────────────────────────────────────────────
 interface CodespaceAccount {
@@ -279,9 +283,33 @@ export async function syncRepos(
 
 // ─── Core manager logic ────────────────────────────────────────────────────
 
-function applyActiveWebUrl(url: string): void {
-  state.activeWebUrl = url;
-  setCurrentWsUrl(url);
+/** Xây dựng WSS URL ổn định từ codespace ID (port 8080 forwarding) */
+function buildWssUrl(codespaceId: string): string {
+  return `wss://${codespaceId}-8080.app.github.dev`;
+}
+
+function applyActiveAccount(acc: CodespaceAccount, webUrl: string): void {
+  state.activeWebUrl = webUrl;
+  // Dùng GitHub port forwarding URL ổn định thay vì webUrl (https://...) 
+  const wssUrl = buildWssUrl(acc.codespaceId);
+  setCurrentWsUrl(wssUrl);
+  logger.info({ wssUrl }, "WSS URL set");
+}
+
+/** Set port 8080 public trên Codespace qua gh CLI (GitHub API không hỗ trợ trực tiếp) */
+async function setPort8080Public(acc: CodespaceAccount): Promise<void> {
+  try {
+    await execFileAsync("gh", [
+      "codespace", "ports", "visibility",
+      "8080:public", "-c", acc.codespaceId,
+    ], {
+      env: { ...process.env, GH_TOKEN: acc.token },
+      timeout: 30_000,
+    });
+    logger.info({ codespaceId: acc.codespaceId }, "Port 8080 → public ✓");
+  } catch (err) {
+    logger.warn({ err }, "setPort8080Public: failed (may already be public or gh not found)");
+  }
 }
 
 async function activateBestAccount(): Promise<void> {
@@ -306,9 +334,11 @@ async function activateBestAccount(): Promise<void> {
       state.activeIndex = i;
       state.activeLabel = acc.label;
       state.activeCodespaceId = acc.codespaceId;
-      applyActiveWebUrl(cs.webUrl);
+      applyActiveAccount(acc, cs.webUrl);
       state.lastError = null;
       logger.info({ label: acc.label, csState: cs.state }, "Already active");
+      // Set port 8080 public (async, không block)
+      setPort8080Public(acc).catch(() => {});
       return;
     }
 
@@ -329,9 +359,11 @@ async function activateBestAccount(): Promise<void> {
         state.activeIndex = i;
         state.activeLabel = acc.label;
         state.activeCodespaceId = acc.codespaceId;
-        applyActiveWebUrl(cs2.webUrl);
+        applyActiveAccount(acc, cs2.webUrl);
         state.lastError = null;
         logger.info({ label: acc.label }, "Started successfully");
+        // Chờ game server khởi động rồi set port public
+        setTimeout(() => setPort8080Public(acc).catch(() => {}), 60_000);
         return;
       }
     }
@@ -366,6 +398,8 @@ async function healthCheck(): Promise<void> {
     await activateBestAccount();
   } else {
     logger.info({ label: acc.label, csState: cs.state }, "Health check: OK");
+    // Set port 8080 public mỗi health check để đảm bảo không bị reset về private
+    setPort8080Public(acc).catch(() => {});
   }
 }
 
